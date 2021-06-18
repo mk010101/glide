@@ -76,6 +76,8 @@
         }
     }
 
+    const regVUs = /[-+=.\w%]+/g;
+    const regTypes = /Null|Number|String|Object|Array/g;
     function getObjType(val) {
         return Object.prototype.toString.call(val);
     }
@@ -187,15 +189,76 @@
             return "transform";
         else if (is.propFilter(prop))
             return "filter";
+        else if (is.propColor(prop))
+            return "color";
         else if (is.propDirect(prop))
             return "direct";
         return "css";
     }
+    function getValueType(val = null) {
+        let t = getObjType(val).match(regTypes)[0];
+        switch (t) {
+            case "Null":
+                return "null";
+            case "Number":
+                return "number";
+            case "String":
+                return "string";
+        }
+        return;
+    }
+    function getValueUnit(val) {
+        const increment = val.match(/-=|\+=|\*=|\/=/g);
+        if (increment)
+            increment[0] = increment[0].replace("=", "");
+        val = val.replace("-=", "");
+        const v = val.match(/[-.\d]+|[%\w]+/g);
+        if (v.length === 1)
+            v.push(null);
+        return {
+            value: parseFloat(v[0]),
+            unit: v.length === 1 ? "" : v[1],
+            increment: increment ? increment[0] : null
+        };
+    }
+    function getValuesUnits(val) {
+        let vus = [];
+        let vtype = getValueType(val);
+        if (vtype === "null") {
+            return [{
+                    value: 0,
+                    unit: null,
+                    increment: null
+                }];
+        }
+        else if (vtype === "number") {
+            return [{
+                    value: val,
+                    unit: null,
+                    increment: null
+                }];
+        }
+        let arr = val.match(regVUs);
+        for (let i = 0; i < arr.length; i++) {
+            vus.push(getValueUnit(arr[i]));
+        }
+        return vus;
+    }
     function getVo(targetType, prop, val) {
         let vo = new Vo();
         vo.targetType = targetType;
+        vo.tweenType = getTweenType(targetType, prop);
         vo.prop = prop;
-        vo.values = [val];
+        switch (vo.tweenType) {
+            case "css":
+                let vus = getValuesUnits(val);
+                for (let i = 0; i < vus.length; i++) {
+                    vo.values.push(vus[i].value);
+                    vo.units.push(vus[i].unit);
+                    vo.increments.push(vus[i].increment);
+                }
+                break;
+        }
         return vo;
     }
 
@@ -210,7 +273,11 @@
             if (this.type === "dom") {
                 this.style = this.target.style;
                 this.cssTxt = this.style.cssText;
+                this.tweenable = this.style;
                 this.computedStyle = window.getComputedStyle(this.target);
+            }
+            else {
+                this.tweenable = this.target;
             }
         }
         getExistingValue(prop) {
@@ -315,6 +382,7 @@
             this.computed = null;
             this.ease = quadInOut;
             this.target = target;
+            this.type = type;
             this.prop = prop;
             this.duration = duration;
             this.delay = delay;
@@ -371,9 +439,21 @@
             let tws = this.currentKf.tweens;
             for (let i = 0; i < tws.length; i++) {
                 const tween = tws[i];
+                const twType = tween.type;
                 let elapsed = minMax(this.time - tween.start - tween.delay, 0, tween.duration) / tween.duration;
                 let eased = isNaN(elapsed) ? 1 : tween.ease(elapsed);
-                tween.target[tween.prop] = tween.from.values[0] + eased * (tween.to.values[0] - tween.from.values[0]);
+                let from = tween.from;
+                let to = tween.to;
+                switch (twType) {
+                    case "css":
+                        let str = "";
+                        for (let j = 0; j < from.values.length; j++) {
+                            let val = from.values[j] + eased * (to.values[j] - tween.from.values[j]);
+                            str += `${val}${to.units[j]}`;
+                        }
+                        tween.target[tween.prop] = str;
+                        break;
+                }
             }
             this.dispatch(Evt.progress, null);
             if (this.currentTime >= this.currentKf.totalDuration) {
@@ -439,7 +519,7 @@
                 }
                 const twType = getTweenType(target.type, prop);
                 let delay = options.delay || 0;
-                let tw = new Tween(target.target, twType, prop, duration, delay, 0);
+                let tw = new Tween(target.tweenable, twType, prop, duration, delay, 0);
                 let from = getVo(target.type, prop, target.getExistingValue(prop));
                 let to = getVo(target.type, prop, val);
                 tw.from = from;

@@ -1,4 +1,4 @@
-import {TargetType, TweenType} from "../types";
+import {TargetType, TweenType, ValueType, ValueUnit} from "../types";
 import {Vo} from "../core/vo";
 
 export const regValues = /[-%\w]+[-\d.]*/gi;
@@ -141,11 +141,89 @@ export function getTweenType(targetType:any, prop:any):TweenType {
         return "transform";
     else if (is.propFilter(prop))
         return "filter";
+    else if (is.propColor(prop))
+        return "color";
     else if (is.propDirect(prop))
         return "direct";
 
     return "css";
 }
+
+export function getValueType(val: any = null): ValueType {
+
+    let t = getObjType(val).match(regTypes)[0];
+    switch (t) {
+        case "Null":
+            return "null";
+        case "Number":
+            return "number";
+        case "String":
+            return "string";
+    }
+    return;
+}
+
+/**
+ * Returns a default unit.
+ * @param prop
+ */
+export function getDefaultUnit(prop: string): string {
+
+    if (is.unitDegrees(prop))
+        return "deg";
+    else if (is.unitPercent(prop))
+        return "%";
+    else if (is.unitless(prop))
+        return "";
+
+    return "px";
+}
+
+/**
+ * Returns an object with parsed value, unit and increment
+ * @param val
+ * @return {ValueUnit}
+ */
+export function getValueUnit(val: string): ValueUnit {
+    const increment = val.match(/-=|\+=|\*=|\/=/g);
+    if (increment) increment[0] = increment[0].replace("=", "");
+    val = val.replace("-=", "");
+
+    const v: any[] = val.match(/[-.\d]+|[%\w]+/g);
+    if (v.length === 1) v.push(null);
+    return {
+        value: parseFloat(v[0]),
+        unit: v.length === 1 ? "" : v[1],
+        increment: increment ? increment[0] : null
+    };
+}
+
+export function getValuesUnits(val: any): ValueUnit[] {
+    let vus: ValueUnit[] = [];
+
+    let vtype = getValueType(val);
+
+    if (vtype === "null") {
+        return [{
+            value: 0,
+            unit: null,
+            increment: null
+        }];
+    } else if (vtype === "number") {
+        return [{
+            value: val,
+            unit: null,
+            increment: null
+        }];
+    }
+
+    let arr = val.match(regVUs);
+    for (let i = 0; i < arr.length; i++) {
+        vus.push(getValueUnit(arr[i]));
+    }
+    return vus;
+}
+
 
 /**
  * Creates {Vo} object
@@ -157,9 +235,22 @@ export function getVo(targetType: TargetType, prop:any, val:any) {
 
     let vo = new Vo();
     vo.targetType = targetType;
-    //vo.tweenType
+    vo.tweenType = getTweenType(targetType, prop);
     vo.prop = prop;
-    vo.values = [val];
+
+    switch (vo.tweenType) {
+
+        case "css":
+            let vus:ValueUnit[] = getValuesUnits(val);
+            for (let i = 0; i < vus.length; i++) {
+                vo.values.push(vus[i].value);
+                vo.units.push(vus[i].unit);
+                vo.increments.push(vus[i].increment);
+            }
+
+            break;
+
+    }
 
     return vo;
 

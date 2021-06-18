@@ -13,6 +13,7 @@ export class Tween {
         this.computed = null;
         this.ease = quadInOut;
         this.target = target;
+        this.type = type;
         this.prop = prop;
         this.duration = duration;
         this.delay = delay;

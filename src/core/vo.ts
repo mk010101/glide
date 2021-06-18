@@ -6,7 +6,7 @@ export class Vo {
     prop:any = "";
     values: number[] = [];
     units: string[] = [];
-    increments: number[] = [];
+    increments: string[] = [];
     keep:boolean = false;
     keepStr:string = "";
 

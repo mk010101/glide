@@ -5,6 +5,7 @@ import {Keyframe} from "./keyframe";
 import {Tween} from "./tween";
 import {Evt} from "./events";
 import {Value} from "../types";
+import {Vo} from "./vo";
 
 export class G extends Dispatcher {
 
@@ -69,11 +70,26 @@ export class G extends Dispatcher {
         for (let i = 0; i < tws.length; i++) {
 
             const tween = tws[i];
+            const twType = tween.type;
 
             let elapsed = minMax(this.time - tween.start - tween.delay, 0, tween.duration) / tween.duration;
             let eased = isNaN(elapsed) ? 1 : tween.ease(elapsed);
+            let from:Vo = tween.from;
+            let to:Vo = tween.to;
 
-            tween.target[tween.prop] = tween.from.values[0] + eased * (tween.to.values[0] - tween.from.values[0]);
+            switch (twType) {
+                case "css":
+                    let str = "";
+
+                    for (let j = 0; j < from.values.length; j++) {
+                        let val = from.values[j] + eased * (to.values[j] - tween.from.values[j]);
+                        str += `${val}${to.units[j]}`;
+                    }
+                    tween.target[tween.prop] = str;
+                    break;
+            }
+
+            //tween.target[tween.prop] = tween.from.values[0] + eased * (tween.to.values[0] - tween.from.values[0]);
 
         }
 
@@ -155,9 +171,11 @@ export class G extends Dispatcher {
 
             let delay = options.delay || 0;
 
-            let tw = new Tween(target.target, twType, prop, duration, delay, 0);
+            let tw = new Tween(target.tweenable, twType, prop, duration, delay, 0);
+
             let from = getVo(target.type, prop, target.getExistingValue(prop));
             let to = getVo(target.type, prop, val);
+
             tw.from = from;
             tw.to = to;
             arr.push(tw);

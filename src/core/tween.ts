@@ -17,6 +17,7 @@ export class Tween {
 
     constructor(target: any, type: TweenType, prop: any, duration: number, delay: number, start: number) {
         this.target = target;
+        this.type = type;
         this.prop = prop;
         this.duration = duration;
         this.delay = delay;

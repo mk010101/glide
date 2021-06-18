@@ -124,15 +124,85 @@ export function getTweenType(targetType, prop) {
         return "transform";
     else if (is.propFilter(prop))
         return "filter";
+    else if (is.propColor(prop))
+        return "color";
     else if (is.propDirect(prop))
         return "direct";
     return "css";
 }
+export function getValueType(val = null) {
+    let t = getObjType(val).match(regTypes)[0];
+    switch (t) {
+        case "Null":
+            return "null";
+        case "Number":
+            return "number";
+        case "String":
+            return "string";
+    }
+    return;
+}
+export function getDefaultUnit(prop) {
+    if (is.unitDegrees(prop))
+        return "deg";
+    else if (is.unitPercent(prop))
+        return "%";
+    else if (is.unitless(prop))
+        return "";
+    return "px";
+}
+export function getValueUnit(val) {
+    const increment = val.match(/-=|\+=|\*=|\/=/g);
+    if (increment)
+        increment[0] = increment[0].replace("=", "");
+    val = val.replace("-=", "");
+    const v = val.match(/[-.\d]+|[%\w]+/g);
+    if (v.length === 1)
+        v.push(null);
+    return {
+        value: parseFloat(v[0]),
+        unit: v.length === 1 ? "" : v[1],
+        increment: increment ? increment[0] : null
+    };
+}
+export function getValuesUnits(val) {
+    let vus = [];
+    let vtype = getValueType(val);
+    if (vtype === "null") {
+        return [{
+                value: 0,
+                unit: null,
+                increment: null
+            }];
+    }
+    else if (vtype === "number") {
+        return [{
+                value: val,
+                unit: null,
+                increment: null
+            }];
+    }
+    let arr = val.match(regVUs);
+    for (let i = 0; i < arr.length; i++) {
+        vus.push(getValueUnit(arr[i]));
+    }
+    return vus;
+}
 export function getVo(targetType, prop, val) {
     let vo = new Vo();
     vo.targetType = targetType;
+    vo.tweenType = getTweenType(targetType, prop);
     vo.prop = prop;
-    vo.values = [val];
+    switch (vo.tweenType) {
+        case "css":
+            let vus = getValuesUnits(val);
+            for (let i = 0; i < vus.length; i++) {
+                vo.values.push(vus[i].value);
+                vo.units.push(vus[i].unit);
+                vo.increments.push(vus[i].increment);
+            }
+            break;
+    }
     return vo;
 }
 export function parseCssTxt(txt) {
