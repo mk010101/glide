@@ -4,6 +4,7 @@ import {getTweenType, getVo, is, minMax} from "../util/util";
 import {Keyframe} from "./keyframe";
 import {Tween} from "./tween";
 import {Evt} from "./events";
+import {Value} from "../types";
 
 export class G extends Dispatcher {
 
@@ -142,7 +143,14 @@ export class G extends Dispatcher {
         for (let i = 0; i < keys.length; i++) {
 
             let prop:any = keys[i];
-            const val:any = params[prop];
+            let val:any = params[prop];
+
+            if (is.obj(val)) {
+                const o:Value = val;
+                duration = o.duration;
+                val = o.value;
+            }
+
             const twType = getTweenType(target.type, prop);
 
             let delay = options.delay || 0;

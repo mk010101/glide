@@ -431,7 +431,12 @@
             const keys = Object.keys(params);
             for (let i = 0; i < keys.length; i++) {
                 let prop = keys[i];
-                const val = params[prop];
+                let val = params[prop];
+                if (is.obj(val)) {
+                    const o = val;
+                    duration = o.duration;
+                    val = o.value;
+                }
                 const twType = getTweenType(target.type, prop);
                 let delay = options.delay || 0;
                 let tw = new Tween(target.target, twType, prop, duration, delay, 0);
