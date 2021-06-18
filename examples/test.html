@@ -174,13 +174,13 @@
                     //bg: "hsla(15deg, 100% 50%, .5)",
                     // bg: "#339922",
                     //borderColor: "rgba(153,215,255,0.8)"
-                }, {delay: 500, zrepeat: 2, zease: "stepped(5)", zstagger: 50})
+                }, {zdelay: 500, zrepeat: 2, zease: "stepped(5)", zstagger: 50})
             // .to(500, {left:"10%"}, {stagger:30})
             // .to(500, {top:50})
             // .to(500, {rotate:50})
                 .on('end', () => {
-                    console.log(a);
-                    // console.log(a.keyframes[0].tweens[0]);
+                    // console.log(a);
+                    console.log(a.keyframes[0].tweens[0]);
                     console.log("end", (performance.now() - t0));
                     // console.log(window.getComputedStyle(el).transform);
                 });

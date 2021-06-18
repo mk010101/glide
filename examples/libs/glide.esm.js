@@ -724,28 +724,33 @@ class G extends Dispatcher {
         return arr;
     }
     static _initTweens(kf) {
-        let transOldMap;
+        let transOldVos;
         let transChecked = false;
         for (let i = 0; i < kf.tweens.length; i++) {
             const tw = kf.tweens[i];
-            let vFrom = tw.fromVal ? tw.fromVal : tw.target.getExistingValue(tw.prop);
             let from;
             let to = getVo(tw.targetType, tw.prop, tw.toVal);
             if (tw.target.type === "dom") {
                 switch (tw.type) {
                     case "css":
-                        from = getVo(tw.targetType, tw.prop, vFrom);
+                        from = getVo(tw.targetType, tw.prop, tw.fromVal);
                         break;
                     case "transform":
                         if (!transChecked) {
-                            transOldMap = transStrToMap(tw.target.getExistingValue("transform"));
+                            transOldVos = transStrToMap(tw.target.getExistingValue("transform"));
                             transChecked = true;
                         }
-                        if (transOldMap) ;
-                        else {
-                            from = getVo("dom", tw.prop, null);
+                        if (tw.fromVal) {
+                            from = getVo("dom", tw.prop, tw.fromVal);
+                            if (transOldVos) {
+                                transOldVos.delete(tw.prop);
+                            }
                         }
-                        console.log(transOldMap);
+                        else {
+                            if (transOldVos && transOldVos.has(tw.prop)) {
+                                from = transOldVos.get(tw.prop);
+                            }
+                        }
                         break;
                 }
             }

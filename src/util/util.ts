@@ -144,6 +144,7 @@ export function getVo(targetType: TargetType, prop: any, val: any) {
         case "css":
         case "transform":
             let vus: ValueUnit[] = getValuesUnits(val);
+            //console.log(vus)
             for (let i = 0; i < vus.length; i++) {
                 vo.values.push(vus[i].value);
                 vo.units.push(vus[i].unit);

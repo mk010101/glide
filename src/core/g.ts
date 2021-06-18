@@ -1,6 +1,6 @@
 import Target from "./target";
 import Dispatcher from "./dispatcher";
-import {getTweenType, getVo, minMax, normalizeVos, transStrToMap} from "../util/util";
+import {getTweenType, getVo, minMax, normalizeVos, print, transStrToMap} from "../util/util";
 import {Keyframe} from "./keyframe";
 import {Tween} from "./tween";
 import {Evt} from "./events";
@@ -207,43 +207,42 @@ export class G extends Dispatcher {
 
     static _initTweens(kf: Keyframe) {
 
-        let transMap: Map<string, Vo>;
-        let transOldMap: Map<string, Vo>;
+        let transTweens: Map<string, Tween>;
+        let transOldVos: Map<string, Vo>;
         let transChecked = false;
 
         for (let i = 0; i < kf.tweens.length; i++) {
             const tw = kf.tweens[i];
 
-            let vFrom = tw.fromVal ? tw.fromVal : tw.target.getExistingValue(tw.prop);
-            let from:Vo;
-            let to:Vo = getVo(tw.targetType, tw.prop, tw.toVal);
-            //normalizeVos(from, to, tw.target.context);
-            //tw.from = from;
-            //tw.to = to;
+            let from: Vo;
+            let to: Vo = getVo(tw.targetType, tw.prop, tw.toVal);
 
             if (tw.target.type === "dom") {
 
                 switch (tw.type) {
 
                     case "css":
-                        from = getVo(tw.targetType, tw.prop, vFrom);
+                        from = getVo(tw.targetType, tw.prop, tw.fromVal);
                         break;
 
                     case "transform":
 
                         if (!transChecked) {
-                            transOldMap = transStrToMap(tw.target.getExistingValue("transform"));
-                            transMap = new Map<string, Vo>();
+                            transOldVos = transStrToMap(tw.target.getExistingValue("transform"));
+                            transTweens = new Map<string, Tween>();
                             transChecked = true;
                         }
 
-                        if (transOldMap) {
-
+                        if (tw.fromVal) {
+                            from = getVo("dom", tw.prop, tw.fromVal);
+                            if (transOldVos) {
+                                transOldVos.delete(tw.prop);
+                            }
                         } else {
-                            from = getVo("dom", tw.prop, null);
+                            if (transOldVos && transOldVos.has(tw.prop)) {
+                                from = transOldVos.get(tw.prop);
+                            }
                         }
-
-                        console.log(transOldMap)
                         break;
 
                 }
