@@ -71,7 +71,7 @@ const outputUmd = {
 gulp.task('esm', () => {
 
     return new Promise(async (resolve) => {
-        const bundle = await rollup.rollup({input: "./ts_out/glide.js"})
+        const bundle = await rollup.rollup({input: "./js_modules/glide.js"})
             .catch((err) => {
                 console.log(err)
             });
@@ -89,7 +89,7 @@ gulp.task('umd', () => {
 
     return new Promise(async (resolve) => {
 
-        const bundle = await rollup.rollup({input: "./ts_out/glide.js"})
+        const bundle = await rollup.rollup({input: "./js_modules/glide.js"})
             .catch((err) => {
                 console.log(err)
             });

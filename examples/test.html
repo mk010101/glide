@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>test</title>
+
+    <!--    <script type="module" src="libs/glide.esm.js"></script>-->
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html, body, .stage {
+            margin: 0;
+            overflow: hidden;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        .stage {
+            background-size: 50px 50px;
+            background-image: linear-gradient(to right, #d2dadd 1px, transparent 1px),
+            linear-gradient(to bottom, #d2dadd 1px, transparent 1px);
+            padding: 50px;
+            width: calc(100vw);
+            height: calc(100vh);
+        }
+
+        .svg {
+            display: none;
+        }
+
+        .el {
+            position: relative;
+            /*margin: 1px;*/
+            float: left;
+            width: 50px;
+            height: 50px;
+            padding: 2px;
+            background-color: #5c98cd;
+            border: 1px solid #ff0000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            ztransform: scale(1.5, 2);
+        }
+
+        .txt {
+            width: 200px;
+            height: 140px;
+            overflow: auto;
+            border: 1px solid #666666;
+            display: none;
+        }
+
+    </style>
+</head>
+<body>
+<svg width="100" height="100" class="svg">
+    <circle class="svg-circle" cx="50" cy="50" r="20" stroke="green" stroke-width="4" fill="#ffcc00"/>
+</svg>
+<div class="txt">Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the
+    industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it
+    to make a type specimen book. It has survived not only five centuries, but also the leap into electronic
+    typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets
+    containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including
+    versions of Lorem Ipsum.
+</div>
+<div class="stage"></div>
+
+<script type="module">
+
+    import glide from "./libs/glide.esm.js";
+    //import {is} from "../../ts_out/util/util.js";
+
+    window.onload = () => {
+
+        let stage = document.querySelector(".stage");
+
+        const num = 1;
+
+        let str = "";
+        for (let i = 0; i < num; i++) {
+            str += `<div class="el">${i+1}</div>`
+        }
+        str += "</div>";
+        stage.innerHTML = str;
+        const els = document.querySelectorAll(".el");
+        const el = els[0];
+
+        const strTransform = "rotate(20deg) translate(150%, 5rem) scale(1.2, 2)";
+        // const strTransform = "rotate(0deg)";
+        // const strTransform = "rotate(0deg)";
+        const strFilter = "blur(1px) brightness(0.6) drop-shadow(-2px -2px 4px #333333) hue-rotate(-20deg)";
+        const strMargins = "100px 10%";
+
+        const regTransformValues = /(\w+[-]*\w+)\(([^)]*)\)/gi;
+        const regCssValues = /[-\d.%]+[\w]*/gi;
+        const regNumbers = /-*[.\d#]+/gi;
+        const regFilters = /(([a-z].*?)\(.*?\))(?=\s([a-z].*?)\(.*?\)|\s*$)/gi;
+        const regUnits = /px|cm|mm|in|pt|pc|em|rem|vw|vh|vmin|vmax|%/gi;
+
+
+        // el.style.transform = strTransform;
+        // el.style.transform = "translate(50px, 50px) rotate(20deg)";
+        // el.style.transform = "rotate(30deg) translate(50px, 50px)";
+        // el.style.transform = "scale(2) translate(50px, 50px)";
+        // el.style.transform = "translate(50px, 50px) scale(2)    ";
+        // el.style.filter = strFilter;
+        // el.style.filter = "drop-shadow(-2px -2px 4px #333333)";
+        // el.style.filter = "drop-shadow(-2px -2px 4px rgba(10,10,10,.8))";
+        // el.style.margin = strMargins;
+        // el.style.backgroundColor = "hsla(70, 50%, 50%, 1)";
+        // el.style.borderColor = "hsla(25, 70%, 40%)";
+        // el.style.top = "20px";
+        // el.style.left = "20px";
+
+
+        // console.log(strFilter.match(regFilters));
+        // console.log(el.style.filter.match(regFilters));
+        //console.log(el.style.filter);
+        // console.log(el.style.margin);
+
+        // console.log(window.getComputedStyle(el).background);
+        // console.log(window.getComputedStyle(el).transform);
+
+
+        function run() {
+            let t0 = performance.now();
+            let a = glide.to(els, 500,
+                {
+                    // opacity: .5,
+                    // left: 50,
+                    // left: "9%",
+                    // left: "+=13%",
+                    // top: "10%",
+                    // margin: "10%, 12rem",
+                    // width: ["50%", 10],
+                    // width: "5%",
+                    // height: "10%",
+                    // "drop-shadow": "6px 6px 3px #330033",
+                    // dropShadow: "rgba(20,50,150, .6) 6px 6px 3px",
+                    // invert: 90,
+                    // blur: 3,
+                    // grayscale: 80,
+                    // hueRotate: 80,
+                    // saturate: 20,
+                    // sepia: 90,
+                    // translateX: "50",
+
+                    // x: "70px",
+                    // x: "+=70",
+                    // y: 50,
+                    // y: "+=20",
+                    // translateY: 50,
+                    // translate: "100, 50",
+                    // x: 120,
+                    //rotate: 45,
+                    // x: 120,
+                    // rotate: 45,
+                    // scaleX: 3,
+                    // scale: "2, 4",
+                    // matrix: "(1, 0, 0, 1, 30, 10)",
+                    // transformOrigin: "0 -100"
+                    // backgroundColor: "#ff6c41",
+                    //color: "rgba(153,215,255,0.8)",
+                    // background: "hsla(15deg, 100% 50%, .5)"
+                    //bg: "hsla(15deg, 100% 50%, .5)",
+                    // bg: "#339922",
+                    // backgroundColor: "hsla(15deg, 100% 50%, .5)",
+                    //borderColor: "rgba(153,215,255,0.8)"
+                }, {zdelay: 500, zrepeat: 2, zease: "stepped(5)", zstagger: 50})
+            // .to(500, {left:"10%"}, {stagger:30})
+            // .to(500, {top:50})
+                .on('end', () => {
+                    console.log(a);
+                    console.log("end", (performance.now() - t0));
+                    a.seek(0)
+                    // console.log(window.getComputedStyle(el).transform);
+                });
+
+            setTimeout(() => {
+                //a.seek(1300)
+            }, 300);
+        }
+
+        //run();
+
+
+
+        /* ==============================================++++=================++++++++==========+++++++++++=============
+            TESTS
+         =============================================================================================================*/
+
+
+
+        ///MATRIX: matrix(scaleX, skewY, skewX, scaleY, translateX, translateY)
+
+        function scroll() {
+            const txt = document.querySelector(".txt");
+            txt.scrollTop = 200;
+            glide.to(txt, 500, {scrollTop: 50}, {delay: 500});
+        }
+
+        // scroll()
+
+
+        function noNestedLoop() {
+            let arr1 = ["a", "b", "c"];
+            let arr2 = ["b", "c", "d", "f"];
+            let count = 0;
+            for (var i = 0, j = 0; i < arr1.length && j < arr2.length; j++, i = (j === arr2.length) ? i + 1 : i, j = (j === arr2.length) ? j = 0 : j) {
+                console.log(i, j);
+                count++;
+            }
+            console.log(count)
+        }
+
+
+        function toRad(deg) {
+            return deg * Math.PI / 180;
+        }
+
+
+        ///MATRIX: matrix(scaleX:0, skewY:1, skewX:2, scaleY:3, translateX:4, translateY:5)
+        /*
+            1 0 0
+            0 1 0
+            0 0 1
+
+            matrix(a,b,c,d,e,f)
+            a c e
+            b d f
+
+         */
+
+
+    }
+
+</script>
+
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,10 +1,11 @@
+import Context from "./core/context";
 
 
 class Glide {
 
     static items: Animation[] = [];
     static lastTick = 0;
-    static ease = ease;
+    //static ease = ease;
     static context: Context;
     static _computeStyle = true;
 
