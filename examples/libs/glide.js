@@ -422,21 +422,29 @@
     }
 
     class Tween {
-        constructor(target, type, prop, duration, delay, start) {
-            this.target = null;
+        constructor(target, twType, prop, fromVal, toVal, duration, delay, start) {
+            this.tweenable = null;
             this.type = null;
+            this.targetType = null;
             this.prop = "";
             this.duration = 0.0;
             this.delay = 0.0;
             this.start = 0.0;
             this.totalDuration = 0.0;
+            this.fromVal = null;
+            this.toVal = null;
             this.from = null;
             this.to = null;
             this.computed = null;
             this.ease = quadInOut;
+            this.initialized = false;
             this.target = target;
-            this.type = type;
+            this.tweenable = target.tweenable;
+            this.targetType = target.type;
+            this.type = twType;
             this.prop = prop;
+            this.fromVal = fromVal;
+            this.toVal = toVal;
             this.duration = duration;
             this.delay = delay;
             this.start = start;
@@ -492,6 +500,10 @@
             let tws = this.currentKf.tweens;
             for (let i = 0; i < tws.length; i++) {
                 const tween = tws[i];
+                if (!tween.initialized) {
+                    G._initTween(tween);
+                    break;
+                }
                 const twType = tween.type;
                 let elapsed = minMax(this.time - tween.start - tween.delay, 0, tween.duration) / tween.duration;
                 let eased = isNaN(elapsed) ? 1 : tween.ease(elapsed);
@@ -504,7 +516,7 @@
                             let val = from.values[j] + eased * (to.values[j] - tween.from.values[j]);
                             str += `${val}${to.units[j]} `;
                         }
-                        tween.target[tween.prop] = str;
+                        tween.tweenable[tween.prop] = str;
                         break;
                 }
             }
@@ -566,22 +578,35 @@
                 let prop = keys[i];
                 let val = params[prop];
                 let dur = duration;
-                if (is.obj(val)) {
+                let fromVal;
+                let toVal;
+                if (is.array(val)) {
+                    fromVal = val[0];
+                    toVal = val[1];
+                }
+                else if (is.obj(val)) {
                     const o = val;
                     dur = o.duration;
-                    val = o.value;
+                    toVal = o.value;
+                }
+                else {
+                    toVal = val;
                 }
                 const twType = getTweenType(target.type, prop);
                 let delay = options.delay || 0;
-                let tw = new Tween(target.tweenable, twType, prop, dur, delay, 0);
-                let from = getVo(target.type, prop, target.getExistingValue(prop));
-                let to = getVo(target.type, prop, val);
-                normalizeVos(from, to, target.context);
-                tw.from = from;
-                tw.to = to;
+                let tw = new Tween(target, twType, prop, fromVal, toVal, dur, delay, 0);
                 arr.push(tw);
             }
             return arr;
+        }
+        static _initTween(tw) {
+            let vFrom = tw.fromVal ? tw.fromVal : tw.target.getExistingValue(tw.prop);
+            let from = getVo(tw.targetType, tw.prop, vFrom);
+            let to = getVo(tw.targetType, tw.prop, tw.toVal);
+            normalizeVos(from, to, tw.target.context);
+            tw.from = from;
+            tw.to = to;
+            tw.initialized = true;
         }
     }
 

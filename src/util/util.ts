@@ -257,7 +257,12 @@ export function getVo(targetType: TargetType, prop:any, val:any) {
 
 }
 
-
+/**
+ * Normalizes From and To Vos.
+ * @param from {Vo}
+ * @param to {Vo}
+ * @param context {Context}
+ */
 export function normalizeVos(from: Vo, to: Vo, context: Context) {
 
     const prop = from.prop;

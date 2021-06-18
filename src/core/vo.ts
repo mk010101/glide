@@ -10,4 +10,6 @@ export class Vo {
     keep:boolean = false;
     keepStr:string = "";
 
+    normalizedValues:number[];
+    // normalizedUnits: string[] = [];
 }
