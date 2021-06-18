@@ -1,5 +1,5 @@
-import { is } from "./util";
-function toRgb(val) {
+import { is } from "./regex";
+export function toRgb(val) {
     if (is.hex(val)) {
         return hexToRGB(val);
     }
@@ -11,12 +11,12 @@ function toRgb(val) {
         return res.map((v) => parseFloat(v));
     }
 }
-function toRgbStr(val) {
+export function toRgbStr(val) {
     let res = toRgb(val);
     let str = res.length === 4 ? "rgba" : "rgb";
     return `${str}(${res.join(", ")})`;
 }
-function hexToRGB(hex) {
+export function hexToRGB(hex) {
     hex = hex.replace(/^#/, "");
     let bigint;
     return [(bigint = parseInt(hex, 16)) >> 16 & 255, bigint >> 8 & 255, bigint & 255];
@@ -123,7 +123,4 @@ function hslToRgb(hsl) {
     if (a)
         arr.push(a);
     return arr;
-}
-export function print(val) {
-    console.log(JSON.stringify(val, null, 4));
 }

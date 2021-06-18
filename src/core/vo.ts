@@ -6,8 +6,10 @@ export class Vo {
     prop:any = "";
     values: number[] = [];
     units: string[] = [];
-    increments: number[] = [];
+    increments: string[] = [];
+    strBegin:string = "";
     keep:boolean = false;
     keepStr:string = "";
-
+    diffVals:number[] = [];
+    // normalizedUnits: string[] = [];
 }

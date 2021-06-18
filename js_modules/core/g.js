@@ -1,9 +1,10 @@
 import Target from "./target";
 import Dispatcher from "./dispatcher";
-import { getTweenType, getVo, is, minMax } from "../util/util";
+import { getTweenType, getVo, minMax, normalizeVos } from "../util/util";
 import { Keyframe } from "./keyframe";
 import { Tween } from "./tween";
 import { Evt } from "./events";
+import { is } from "../util/regex";
 export class G extends Dispatcher {
     constructor(targets, duration, params, options = {}) {
         super();
@@ -45,9 +46,34 @@ export class G extends Dispatcher {
         let tws = this.currentKf.tweens;
         for (let i = 0; i < tws.length; i++) {
             const tween = tws[i];
+            if (!tween.initialized) {
+                G._initTween(tween);
+                continue;
+            }
+            const twType = tween.type;
             let elapsed = minMax(this.time - tween.start - tween.delay, 0, tween.duration) / tween.duration;
             let eased = isNaN(elapsed) ? 1 : tween.ease(elapsed);
-            tween.target[tween.prop] = tween.from.values[0] + eased * (tween.to.values[0] - tween.from.values[0]);
+            let from = tween.from;
+            let to = tween.to;
+            let tweenable = tween.tweenable;
+            let prop = tween.prop;
+            switch (twType) {
+                case "css":
+                    let str = "";
+                    for (let j = 0; j < from.values.length; j++) {
+                        let val = from.values[j] + eased * (to.values[j] - tween.from.values[j]);
+                        str += `${val}${to.units[j]} `;
+                    }
+                    tweenable[prop] = str;
+                    break;
+                case "color":
+                    let r = ~~(from.values[0] + eased * to.diffVals[0]);
+                    let g = ~~(from.values[1] + eased * to.diffVals[1]);
+                    let b = ~~(from.values[2] + eased * to.diffVals[2]);
+                    let a = (from.values.length === 4) ? ", " + (from.values[3] + eased * to.diffVals[3]) : "";
+                    tweenable[prop] = `${to.strBegin}(${r}, ${g}, ${b}${a})`;
+                    break;
+            }
         }
         this.dispatch(Evt.progress, null);
         if (this.currentTime >= this.currentKf.totalDuration) {
@@ -105,16 +131,36 @@ export class G extends Dispatcher {
         const keys = Object.keys(params);
         for (let i = 0; i < keys.length; i++) {
             let prop = keys[i];
-            const val = params[prop];
+            let val = params[prop];
+            let dur = duration;
+            let fromVal;
+            let toVal;
+            if (is.array(val)) {
+                fromVal = val[0];
+                toVal = val[1];
+            }
+            else if (is.obj(val)) {
+                const o = val;
+                dur = o.duration;
+                toVal = o.value;
+            }
+            else {
+                toVal = val;
+            }
             const twType = getTweenType(target.type, prop);
             let delay = options.delay || 0;
-            let tw = new Tween(target.target, twType, prop, duration, delay, 0);
-            let from = getVo(target.type, prop, target.getExistingValue(prop));
-            let to = getVo(target.type, prop, val);
-            tw.from = from;
-            tw.to = to;
+            let tw = new Tween(target, twType, prop, fromVal, toVal, dur, delay, 0);
             arr.push(tw);
         }
         return arr;
+    }
+    static _initTween(tw) {
+        let vFrom = tw.fromVal ? tw.fromVal : tw.target.getExistingValue(tw.prop);
+        let from = getVo(tw.targetType, tw.prop, vFrom);
+        let to = getVo(tw.targetType, tw.prop, tw.toVal);
+        normalizeVos(from, to, tw.target.context);
+        tw.from = from;
+        tw.to = to;
+        tw.initialized = true;
     }
 }

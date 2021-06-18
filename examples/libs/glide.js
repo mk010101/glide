@@ -63,24 +63,11 @@
         }
     }
 
-    class Vo {
-        constructor() {
-            this.targetType = "dom";
-            this.tweenType = "css";
-            this.prop = "";
-            this.values = [];
-            this.units = [];
-            this.increments = [];
-            this.keep = false;
-            this.keepStr = "";
-        }
-    }
-
+    const regVUs = /[-+=.\w%]+/g;
+    const regColorVal = /([rgbahsl]+\([,%a-z \d.-]+\))|#[0-9A-F]{6}/gi;
+    const regTypes = /Null|Number|String|Object|Array/g;
     function getObjType(val) {
         return Object.prototype.toString.call(val);
-    }
-    function minMax(val, min, max) {
-        return Math.min(Math.max(val, min), max);
     }
     const is = {
         dom(val) {
@@ -177,27 +164,9 @@
             return !is.unitless(val) && !is.unitDegrees(val);
         },
         valueOne(val) {
-            return (/scale|opacity/i.test(val));
+            return (/scale|opacity|color|fill/i.test(val));
         },
     };
-    function getTweenType(targetType, prop) {
-        if (is.obj(targetType))
-            return "obj";
-        else if (is.propTransform(prop))
-            return "transform";
-        else if (is.propFilter(prop))
-            return "filter";
-        else if (is.propDirect(prop))
-            return "direct";
-        return "css";
-    }
-    function getVo(targetType, prop, val) {
-        let vo = new Vo();
-        vo.targetType = targetType;
-        vo.prop = prop;
-        vo.values = [val];
-        return vo;
-    }
 
     class Target {
         constructor(target, context) {
@@ -210,7 +179,11 @@
             if (this.type === "dom") {
                 this.style = this.target.style;
                 this.cssTxt = this.style.cssText;
+                this.tweenable = this.style;
                 this.computedStyle = window.getComputedStyle(this.target);
+            }
+            else {
+                this.tweenable = this.target;
             }
         }
         getExistingValue(prop) {
@@ -279,6 +252,250 @@
         }
     }
 
+    class Vo {
+        constructor() {
+            this.targetType = "dom";
+            this.tweenType = "css";
+            this.prop = "";
+            this.values = [];
+            this.units = [];
+            this.increments = [];
+            this.strBegin = "";
+            this.keep = false;
+            this.keepStr = "";
+            this.diffVals = [];
+        }
+    }
+
+    function toRgb(val) {
+        if (is.hex(val)) {
+            return hexToRGB(val);
+        }
+        else if (is.hsl(val)) {
+            return hslToRgb(val);
+        }
+        else if (is.rgb(val)) {
+            let res = val.match(/[-.\d]+/g);
+            return res.map((v) => parseFloat(v));
+        }
+    }
+    function toRgbStr(val) {
+        let res = toRgb(val);
+        let str = res.length === 4 ? "rgba" : "rgb";
+        return `${str}(${res.join(", ")})`;
+    }
+    function hexToRGB(hex) {
+        hex = hex.replace(/^#/, "");
+        let bigint;
+        return [(bigint = parseInt(hex, 16)) >> 16 & 255, bigint >> 8 & 255, bigint & 255];
+    }
+    function hslToRgb(hsl) {
+        let [sh, ss, sl, sa] = hsl.match(/[-.\d]+/g);
+        let h = parseFloat(sh);
+        let s = parseFloat(ss);
+        let l = parseFloat(sl);
+        let a;
+        if (sa)
+            a = parseFloat(sa);
+        s /= 100;
+        l /= 100;
+        let C = (1 - Math.abs(2 * l - 1)) * s;
+        let hue = h / 60;
+        let X = C * (1 - Math.abs(hue % 2 - 1));
+        let r = 0;
+        let g = 0;
+        let b = 0;
+        if (hue >= 0 && hue < 1) {
+            r = C;
+            g = X;
+        }
+        else if (hue >= 1 && hue < 2) {
+            r = X;
+            g = C;
+        }
+        else if (hue >= 2 && hue < 3) {
+            g = C;
+            b = X;
+        }
+        else if (hue >= 3 && hue < 4) {
+            g = X;
+            b = C;
+        }
+        else if (hue >= 4 && hue < 5) {
+            r = X;
+            b = C;
+        }
+        else {
+            r = C;
+            b = X;
+        }
+        let m = l - C / 2;
+        r += m;
+        g += m;
+        b += m;
+        r *= 255.0;
+        g *= 255.0;
+        b *= 255.0;
+        let arr = [Math.round(r), Math.round(g), Math.round(b)];
+        if (a)
+            arr.push(a);
+        return arr;
+    }
+
+    function minMax(val, min, max) {
+        return Math.min(Math.max(val, min), max);
+    }
+    function getTweenType(targetType, prop) {
+        if (is.obj(targetType))
+            return "obj";
+        else if (is.propTransform(prop))
+            return "transform";
+        else if (is.propFilter(prop))
+            return "filter";
+        else if (is.propColor(prop))
+            return "color";
+        else if (is.propDirect(prop))
+            return "direct";
+        return "css";
+    }
+    function getValueType(val = null) {
+        let t = getObjType(val).match(regTypes)[0];
+        switch (t) {
+            case "Null":
+                return "null";
+            case "Number":
+                return "number";
+            case "String":
+                return "string";
+        }
+        return;
+    }
+    function getDefaultUnit(prop) {
+        if (is.unitDegrees(prop))
+            return "deg";
+        else if (is.unitPercent(prop))
+            return "%";
+        else if (is.unitless(prop))
+            return "";
+        return "px";
+    }
+    function getValueUnit(val) {
+        const increment = val.match(/-=|\+=|\*=|\/=/g);
+        if (increment)
+            increment[0] = increment[0].replace("=", "");
+        val = val.replace("-=", "");
+        const v = val.match(/[-.\d]+|[%\w]+/g);
+        if (v.length === 1)
+            v.push(null);
+        return {
+            value: parseFloat(v[0]),
+            unit: v.length === 1 ? "" : v[1],
+            increment: increment ? increment[0] : null
+        };
+    }
+    function getValuesUnits(val) {
+        let vus = [];
+        let vtype = getValueType(val);
+        if (vtype === "null") {
+            return [{
+                    value: 0,
+                    unit: null,
+                    increment: null
+                }];
+        }
+        else if (vtype === "number") {
+            return [{
+                    value: val,
+                    unit: null,
+                    increment: null
+                }];
+        }
+        let arr = val.match(regVUs);
+        for (let i = 0; i < arr.length; i++) {
+            vus.push(getValueUnit(arr[i]));
+        }
+        return vus;
+    }
+    function getNumbers(val) {
+        let nums = val.match(/[-.\d]+/g);
+        return nums.map((v) => parseFloat(v));
+    }
+    function getVo(targetType, prop, val) {
+        let vo = new Vo();
+        vo.targetType = targetType;
+        vo.tweenType = getTweenType(targetType, prop);
+        vo.prop = prop;
+        switch (vo.tweenType) {
+            case "css":
+                let vus = getValuesUnits(val);
+                for (let i = 0; i < vus.length; i++) {
+                    vo.values.push(vus[i].value);
+                    vo.units.push(vus[i].unit);
+                    vo.increments.push(vus[i].increment);
+                }
+                break;
+            case "color":
+                let colorMatch = val.match(regColorVal);
+                let color;
+                if (colorMatch) {
+                    color = toRgbStr(colorMatch[0]);
+                    val = val.replace(colorMatch[0], color);
+                }
+                vo.values = getNumbers(val);
+                for (let i = 0; i < vo.values.length; i++) {
+                    vo.units.push("");
+                }
+                vo.strBegin = vo.values.length === 4 ? "rgba" : "rgb";
+                break;
+        }
+        return vo;
+    }
+    function normalizeVos(from, to, context) {
+        const prop = from.prop;
+        if (prop === "drop-shadow") {
+            if (from.values.length > to.values.length)
+                to.values.push(1);
+            else if (from.values.length < to.values.length)
+                from.values.push(1);
+        }
+        if (to.units.length > from.units.length) {
+            let diff = to.units.length - from.units.length;
+            for (let i = 0; i < diff; i++) {
+                from.units.push(null);
+                let v = is.valueOne(to.prop) ? 1 : 0;
+                from.values.push(v);
+            }
+        }
+        for (let i = 0; i < from.units.length; i++) {
+            let uFrom = from.units[i];
+            let uTo = to.units[i];
+            let incr = to.increments[i];
+            if (!uFrom)
+                uFrom = from.units[i] = getDefaultUnit(from.prop);
+            if (!uTo)
+                uTo = to.units[i] = uFrom;
+            if (uFrom && uFrom !== uTo) {
+                if (is.propTransform(from.prop) && (uFrom === "%" && uTo !== "%" || uFrom !== "%" && uTo === "%")) ;
+                else {
+                    from.values[i] = Context.convertUnits(from.values[i], uFrom, uTo, context.units);
+                }
+            }
+            if (incr === "-") {
+                to.values[i] = from.values[i] - to.values[i];
+            }
+            else if (incr === "+") {
+                to.values[i] += from.values[i];
+            }
+            else if (incr === "*") {
+                to.values[i] *= from.values[i];
+            }
+            else if (incr === "/") {
+                to.values[i] /= from.values[i];
+            }
+            to.diffVals.push(to.values[i] - from.values[i]);
+        }
+    }
+
     class Keyframe {
         constructor() {
             this.duration = 0;
@@ -302,20 +519,29 @@
     }
 
     class Tween {
-        constructor(target, type, prop, duration, delay, start) {
-            this.target = null;
+        constructor(target, twType, prop, fromVal, toVal, duration, delay, start) {
+            this.tweenable = null;
             this.type = null;
+            this.targetType = null;
             this.prop = "";
             this.duration = 0.0;
             this.delay = 0.0;
             this.start = 0.0;
             this.totalDuration = 0.0;
+            this.fromVal = null;
+            this.toVal = null;
             this.from = null;
             this.to = null;
             this.computed = null;
             this.ease = quadInOut;
+            this.initialized = false;
             this.target = target;
+            this.tweenable = target.tweenable;
+            this.targetType = target.type;
+            this.type = twType;
             this.prop = prop;
+            this.fromVal = fromVal;
+            this.toVal = toVal;
             this.duration = duration;
             this.delay = delay;
             this.start = start;
@@ -371,9 +597,34 @@
             let tws = this.currentKf.tweens;
             for (let i = 0; i < tws.length; i++) {
                 const tween = tws[i];
+                if (!tween.initialized) {
+                    G._initTween(tween);
+                    continue;
+                }
+                const twType = tween.type;
                 let elapsed = minMax(this.time - tween.start - tween.delay, 0, tween.duration) / tween.duration;
                 let eased = isNaN(elapsed) ? 1 : tween.ease(elapsed);
-                tween.target[tween.prop] = tween.from.values[0] + eased * (tween.to.values[0] - tween.from.values[0]);
+                let from = tween.from;
+                let to = tween.to;
+                let tweenable = tween.tweenable;
+                let prop = tween.prop;
+                switch (twType) {
+                    case "css":
+                        let str = "";
+                        for (let j = 0; j < from.values.length; j++) {
+                            let val = from.values[j] + eased * (to.values[j] - tween.from.values[j]);
+                            str += `${val}${to.units[j]} `;
+                        }
+                        tweenable[prop] = str;
+                        break;
+                    case "color":
+                        let r = ~~(from.values[0] + eased * to.diffVals[0]);
+                        let g = ~~(from.values[1] + eased * to.diffVals[1]);
+                        let b = ~~(from.values[2] + eased * to.diffVals[2]);
+                        let a = (from.values.length === 4) ? ", " + (from.values[3] + eased * to.diffVals[3]) : "";
+                        tweenable[prop] = `${to.strBegin}(${r}, ${g}, ${b}${a})`;
+                        break;
+                }
             }
             this.dispatch(Evt.progress, null);
             if (this.currentTime >= this.currentKf.totalDuration) {
@@ -431,17 +682,37 @@
             const keys = Object.keys(params);
             for (let i = 0; i < keys.length; i++) {
                 let prop = keys[i];
-                const val = params[prop];
+                let val = params[prop];
+                let dur = duration;
+                let fromVal;
+                let toVal;
+                if (is.array(val)) {
+                    fromVal = val[0];
+                    toVal = val[1];
+                }
+                else if (is.obj(val)) {
+                    const o = val;
+                    dur = o.duration;
+                    toVal = o.value;
+                }
+                else {
+                    toVal = val;
+                }
                 const twType = getTweenType(target.type, prop);
                 let delay = options.delay || 0;
-                let tw = new Tween(target.target, twType, prop, duration, delay, 0);
-                let from = getVo(target.type, prop, target.getExistingValue(prop));
-                let to = getVo(target.type, prop, val);
-                tw.from = from;
-                tw.to = to;
+                let tw = new Tween(target, twType, prop, fromVal, toVal, dur, delay, 0);
                 arr.push(tw);
             }
             return arr;
+        }
+        static _initTween(tw) {
+            let vFrom = tw.fromVal ? tw.fromVal : tw.target.getExistingValue(tw.prop);
+            let from = getVo(tw.targetType, tw.prop, vFrom);
+            let to = getVo(tw.targetType, tw.prop, tw.toVal);
+            normalizeVos(from, to, tw.target.context);
+            tw.from = from;
+            tw.to = to;
+            tw.initialized = true;
         }
     }
 

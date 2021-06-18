@@ -1,4 +1,4 @@
-import { is } from "../util/util";
+import { is } from "../util/regex";
 export default class Target {
     constructor(target, context) {
         this.target = target;
@@ -10,7 +10,11 @@ export default class Target {
         if (this.type === "dom") {
             this.style = this.target.style;
             this.cssTxt = this.style.cssText;
+            this.tweenable = this.style;
             this.computedStyle = window.getComputedStyle(this.target);
+        }
+        else {
+            this.tweenable = this.target;
         }
     }
     getExistingValue(prop) {
