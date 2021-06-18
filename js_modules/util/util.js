@@ -1,3 +1,4 @@
+import { Vo } from "../core/vo";
 export const regValues = /[-%\w]+[-\d.]*/gi;
 export const regVUs = /[-+=.\w%]+/g;
 export const regStrValues = /(([a-z].*?)\(.*?\))(?=\s([a-z].*?)\(.*?\)|\s*$)/gi;
@@ -126,4 +127,13 @@ export function getTweenType(targetType, prop) {
     else if (is.propDirect(prop))
         return "direct";
     return "css";
+}
+export function getVo(targetType, prop, val) {
+    let vo = new Vo();
+    vo.targetType = targetType;
+    vo.prop = prop;
+    vo.values = [val];
+    return vo;
+}
+export function parseCssTxt(txt) {
 }

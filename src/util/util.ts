@@ -1,4 +1,5 @@
-import {TweenType} from "../types";
+import {TargetType, TweenType} from "../types";
+import {Vo} from "../core/vo";
 
 export const regValues = /[-%\w]+[-\d.]*/gi;
 export const regVUs = /[-+=.\w%]+/g;
@@ -126,7 +127,12 @@ export const is = {
     },
 };
 
-
+/**
+ * Returns {Tween} type.
+ * @param targetType
+ * @param prop
+ * @return {TweenType}
+ */
 export function getTweenType(targetType:any, prop:any):TweenType {
 
     if (is.obj(targetType))
@@ -139,6 +145,28 @@ export function getTweenType(targetType:any, prop:any):TweenType {
         return "direct";
 
     return "css";
+}
+
+/**
+ * Creates {Vo} object
+ * @param targetType
+ * @param prop
+ * @param val
+ */
+export function getVo(targetType: TargetType, prop:any, val:any) {
+
+    let vo = new Vo();
+    vo.targetType = targetType;
+    //vo.tweenType
+    vo.prop = prop;
+    vo.values = [val];
+
+    return vo;
+
+}
+
+export function parseCssTxt(txt:string) {
+
 }
 
 

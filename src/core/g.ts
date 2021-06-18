@@ -1,41 +1,114 @@
 import Target from "./target";
 import Dispatcher from "./dispatcher";
-import {getTweenType, is} from "../util/util";
+import {getTweenType, getVo, is} from "../util/util";
 import {Keyframe} from "./keyframe";
 import {Tween} from "./tween";
+import {Evt} from "./events";
 
 export class G extends Dispatcher {
 
     status = 1;
     targets: Target[] = [];
     keyframes: Keyframe[] = [];
+    currentKf:Keyframe;
+    paused = false;
+    seeking = false;
+    dir = 1;
+    time = 0.0;
+    duration = 0.0;
+    totalDuration = 0.0;
+    currentTime = 0.0;
+    playedTimes = 0;
+    loop = true;
+    repeat = 1;
+
+    num:number = 0;
 
     constructor(targets: any, duration: number, params: any, options: any = {}) {
         super();
 
-        this.targets = G._getTargets(targets, options);
+        this.repeat = (options.repeat !== (void 0) && options.repeat > 0) ? options.repeat + 1 : 1;
 
+        this.targets = G._getTargets(targets, options);
         this.to(duration, params, options);
 
     }
 
 
     to(duration: number, params: any, options: any = {}) {
+
         let kf = new Keyframe();
 
         for (let i = 0; i < this.targets.length; i++) {
-
-            const tweens = G.getTweens(this.targets[i], duration, params, options);
+            const tweens = G._getTweens(this.targets[i], duration, params, options);
+            kf.push(...tweens);
         }
 
+        this.totalDuration += kf.totalDuration * this.repeat;
+
         this.keyframes.push(kf);
+
+        if (!this.currentKf){
+            this.currentKf = kf;
+        }
         return this;
     }
 
 
-    update(delta: number) {
+    update(t: number) {
+
+        if ((this.paused && !this.seeking) || this.status === 0) return;
+
+
+        this.time += t * this.dir;
+        this.currentTime += t;
+        let tws = this.currentKf.tweens;
+        for (let i = 0; i < tws.length; i++) {
+
+
+
+        }
+
+
+        this.dispatch(Evt.progress, 0);
+
+        if (this.currentTime >= this.currentKf.totalDuration) {
+
+            if (this.dir > 0 && this.keyframes.length > this.num + 1) {
+                this.num++;
+                this.time = 0;
+                this.currentKf = this.keyframes[this.num];
+            } else if (this.dir < 0 && this.num > 0) {
+                this.num--;
+                this.currentKf = this.keyframes[this.num];
+                this.time = this.currentKf.totalDuration;
+            } else {
+                this.playedTimes++;
+                if (this.playedTimes < this.repeat) {
+                    if (this.loop) {
+                        this.dir *= -1;
+                    } else {
+                        this.reset();
+                        this.currentKf = this.keyframes[0];
+                    }
+                } else {
+                    this.status = 0;
+                    this.dispatch(Evt.end, null);
+                }
+            }
+
+            this.currentTime = 0;
+
+        }
 
     }
+
+    reset() {
+
+    }
+
+
+
 
     static _getTargets(targets: any, options: any): Target[] {
         if (typeof targets === "string") {
@@ -56,18 +129,25 @@ export class G extends Dispatcher {
         return t;
     }
 
-    static getTweens(target:Target, duration:number, params:any, options:any) {
-
+    static _getTweens(target:Target, duration:number, params:any, options:any):Tween[] {
+        let arr:Tween[] = [];
         const keys = Object.keys(params);
         for (let i = 0; i < keys.length; i++) {
+
             let prop:any = keys[i];
             const val:any = params[prop];
             const twType = getTweenType(target.type, prop);
 
-            let tw = new Tween(target.target, twType, prop, duration);
-            console.log(tw)
+            let delay = options.delay || 0;
 
+            let tw = new Tween(target.target, twType, prop, duration, delay, 0);
+            let from = getVo(target.type, prop, target.getExistingValue(prop));
+            let to = getVo(target.type, prop, val);
+            tw.from = from;
+            tw.to = to;
+            arr.push(tw);
         }
+        return arr;
 
     }
 

@@ -8,7 +8,8 @@ export default class Target {
     init() {
         this.type = is.dom(this.target) ? "dom" : "obj";
         if (this.type === "dom") {
-            this.inlineStyle = this.target.style;
+            this.style = this.target.style;
+            this.cssTxt = this.style.cssText;
             this.computedStyle = window.getComputedStyle(this.target);
         }
     }
@@ -23,8 +24,8 @@ export default class Target {
             else if (is.propFilter(prop))
                 prop = "filter";
         }
-        if (this.inlineStyle) {
-            res = this.inlineStyle[prop];
+        if (this.style) {
+            res = this.style[prop];
         }
         if ((!res || res === "none" || res === "") && this.computedStyle) {
             res = this.computedStyle[prop];
@@ -36,7 +37,7 @@ export default class Target {
     }
     setValue(prop, val) {
         if (this.type === "dom") {
-            this.inlineStyle[prop] = val;
+            this.style[prop] = val;
         }
         else {
             this.target[prop] = val;

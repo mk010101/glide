@@ -7,15 +7,21 @@ export class Tween {
     type: TweenType = null;
     prop: any = "";
     duration: number = 0.0;
-    from:Vo = null;
-    to:Vo = null;
-    computed:Vo = null;
-    ease:Function = quadInOut;
+    delay = 0.0;
+    start = 0.0;
+    totalDuration = 0.0;
+    from: Vo = null;
+    to: Vo = null;
+    computed: Vo = null;
+    ease: Function = quadInOut;
 
-    constructor(target:any, type:TweenType, prop:any, duration:number) {
+    constructor(target: any, type: TweenType, prop: any, duration: number, delay: number, start: number) {
         this.target = target;
         this.prop = prop;
         this.duration = duration;
+        this.delay = delay;
+        this.start = start;
+        this.totalDuration = duration + delay; /// needs changing.
     }
 
 

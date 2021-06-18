@@ -103,7 +103,7 @@
         const regUnits = /px|cm|mm|in|pt|pc|em|rem|vw|vh|vmin|vmax|%/gi;
 
 
-        // el.style.transform = strTransform;
+        el.style.transform = strTransform;
         // el.style.transform = "translate(50px, 50px) rotate(20deg)";
         // el.style.transform = "rotate(30deg) translate(50px, 50px)";
         // el.style.transform = "scale(2) translate(50px, 50px)";
@@ -112,10 +112,10 @@
         // el.style.filter = "drop-shadow(-2px -2px 4px #333333)";
         // el.style.filter = "drop-shadow(-2px -2px 4px rgba(10,10,10,.8))";
         // el.style.margin = strMargins;
-        // el.style.backgroundColor = "hsla(70, 50%, 50%, 1)";
+        el.style.backgroundColor = "hsla(70, 50%, 50%, 1)";
         // el.style.borderColor = "hsla(25, 70%, 40%)";
-        // el.style.top = "20px";
-        // el.style.left = "20px";
+        el.style.top = "20px";
+        el.style.left = "20px";
 
 
         // console.log(strFilter.match(regFilters));
@@ -200,7 +200,14 @@
             y:5
         };
 
-        glide.to(obj, 500, {x:20, y:-.5});
+        // let oo = Object.assign(el.style,{transform:"scale(1,1)"});
+        // console.log(el.style.cssText);
+
+
+        const g = glide.to(obj, 500, {x:20, y:-.5}, {delay:500, repeat:2})
+            .on("end", ()=> {
+                console.log(g)
+            });
 
 
         ///MATRIX: matrix(scaleX, skewY, skewX, scaleY, translateX, translateY)
