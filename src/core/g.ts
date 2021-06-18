@@ -1,6 +1,6 @@
 import Target from "./target";
 import Dispatcher from "./dispatcher";
-import {getTweenType, getVo, minMax, normalizeVos} from "../util/util";
+import {getTweenType, getVo, minMax, normalizeVos, transStrToMap} from "../util/util";
 import {Keyframe} from "./keyframe";
 import {Tween} from "./tween";
 import {Evt} from "./events";
@@ -62,6 +62,10 @@ export class G extends Dispatcher {
 
         if ((this.paused && !this.seeking) || this.status === 0) return;
 
+        if (!this.currentKf.initialized) {
+            G._initTweens(this.currentKf);
+            this.currentKf.initialized = true;
+        }
 
         this.time += t * this.dir;
         this.currentTime += t;
@@ -71,10 +75,6 @@ export class G extends Dispatcher {
         for (let i = 0; i < tws.length; i++) {
 
             const tween = tws[i];
-            if (!tween.initialized) {
-                G._initTween(tween);
-                continue;
-            }
             const twType = tween.type;
 
             let elapsed = minMax(this.time - tween.start - tween.delay, 0, tween.duration) / tween.duration;
@@ -170,6 +170,8 @@ export class G extends Dispatcher {
     static _getTweens(target: Target, duration: number, params: any, options: any): Tween[] {
         let arr: Tween[] = [];
         const keys = Object.keys(params);
+
+
         for (let i = 0; i < keys.length; i++) {
 
             let prop: any = keys[i];
@@ -178,6 +180,8 @@ export class G extends Dispatcher {
 
             let fromVal: any;
             let toVal: any;
+
+            const twType = getTweenType(target.type, prop);
 
             if (is.array(val)) {
                 fromVal = val[0];
@@ -190,7 +194,6 @@ export class G extends Dispatcher {
                 toVal = val;
             }
 
-            const twType = getTweenType(target.type, prop);
 
             let delay = options.delay || 0;
             let tw = new Tween(target, twType, prop, fromVal, toVal, dur, delay, 0);
@@ -202,16 +205,68 @@ export class G extends Dispatcher {
 
     }
 
-    static _initTween(tw: Tween) {
+    static _initTweens(kf: Keyframe) {
+
+        let transMap: Map<string, Vo>;
+        let transOldMap: Map<string, Vo>;
+        let transChecked = false;
+
+        for (let i = 0; i < kf.tweens.length; i++) {
+            const tw = kf.tweens[i];
+
+            let vFrom = tw.fromVal ? tw.fromVal : tw.target.getExistingValue(tw.prop);
+            let from:Vo;
+            let to:Vo = getVo(tw.targetType, tw.prop, tw.toVal);
+            //normalizeVos(from, to, tw.target.context);
+            //tw.from = from;
+            //tw.to = to;
+
+            if (tw.target.type === "dom") {
+
+                switch (tw.type) {
+
+                    case "css":
+                        from = getVo(tw.targetType, tw.prop, vFrom);
+                        break;
+
+                    case "transform":
+
+                        if (!transChecked) {
+                            transOldMap = transStrToMap(tw.target.getExistingValue("transform"));
+                            transMap = new Map<string, Vo>();
+                            transChecked = true;
+                        }
+
+                        if (transOldMap) {
+
+                        } else {
+                            from = getVo("dom", tw.prop, null);
+                        }
+
+                        console.log(transOldMap)
+                        break;
+
+                }
+
+
+            }
+
+            tw.from = from;
+            tw.to = to;
+            normalizeVos(from, to, tw.target.context);
+
+        }
+
+        /*
+
 
         let vFrom = tw.fromVal ? tw.fromVal : tw.target.getExistingValue(tw.prop);
-
         let from = getVo(tw.targetType, tw.prop, vFrom);
         let to = getVo(tw.targetType, tw.prop, tw.toVal);
         normalizeVos(from, to, tw.target.context);
         tw.from = from;
         tw.to = to;
-        tw.initialized = true;
+         */
     }
 
 

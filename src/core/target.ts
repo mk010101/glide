@@ -8,7 +8,7 @@ export default class Target {
     type: TargetType;
     tweenable:any;
     style: CSSStyleDeclaration;
-    cssTxt: string;
+    // cssTxt: string;
     computedStyle: CSSStyleDeclaration;
     context: Context;
 
@@ -24,7 +24,7 @@ export default class Target {
         this.type = is.dom(this.target)? "dom" : "obj";
         if (this.type === "dom") {
             this.style = this.target.style;
-            this.cssTxt = this.style.cssText;
+            // this.cssTxt = this.style.cssText;
             this.tweenable = this.style;
             this.computedStyle = window.getComputedStyle(this.target);
         } else {

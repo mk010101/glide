@@ -7,7 +7,7 @@ export class Vo {
         this.units = [];
         this.increments = [];
         this.strBegin = "";
-        this.keep = false;
+        this.keepOriginal = false;
         this.keepStr = "";
         this.diffVals = [];
     }

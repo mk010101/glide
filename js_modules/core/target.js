@@ -9,7 +9,6 @@ export default class Target {
         this.type = is.dom(this.target) ? "dom" : "obj";
         if (this.type === "dom") {
             this.style = this.target.style;
-            this.cssTxt = this.style.cssText;
             this.tweenable = this.style;
             this.computedStyle = window.getComputedStyle(this.target);
         }

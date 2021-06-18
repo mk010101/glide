@@ -1,4 +1,4 @@
-import { getObjType, is, regColorVal, regTypes, regVUs } from "./regex";
+import { getObjType, is, regColorVal, regProp, regStrValues, regTypes, regVUs } from "./regex";
 import { Vo } from "../core/vo";
 import { toRgbStr } from "./color";
 import Context from "../core/context";
@@ -95,6 +95,7 @@ export function getVo(targetType, prop, val) {
     vo.prop = prop;
     switch (vo.tweenType) {
         case "css":
+        case "transform":
             let vus = getValuesUnits(val);
             for (let i = 0; i < vus.length; i++) {
                 vo.values.push(vus[i].value);
@@ -117,6 +118,11 @@ export function getVo(targetType, prop, val) {
             break;
     }
     return vo;
+}
+function getVoFromStr(str) {
+    let prop = str.match(regProp)[0];
+    str = str.replace(prop, "");
+    return getVo("dom", prop, str);
 }
 export function normalizeVos(from, to, context) {
     const prop = from.prop;
@@ -164,7 +170,21 @@ export function normalizeVos(from, to, context) {
         to.diffVals.push(to.values[i] - from.values[i]);
     }
 }
-export function parseCssTxt(txt) {
+export function transStrToMap(str) {
+    let res = new Map();
+    if (!str || str === "" || str === "none")
+        return null;
+    let arr = str.match(regStrValues);
+    if (!arr)
+        return null;
+    for (let i = 0; i < arr.length; i++) {
+        let part = arr[i];
+        let vo = getVoFromStr(part);
+        vo.keepOriginal = true;
+        vo.keepStr = part;
+        res.set(vo.prop, vo);
+    }
+    return res;
 }
 export function print(val) {
     console.log(JSON.stringify(val, null, 4));

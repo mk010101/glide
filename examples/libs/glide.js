@@ -64,7 +64,9 @@
     }
 
     const regVUs = /[-+=.\w%]+/g;
+    const regStrValues = /(([a-z].*?)\(.*?\))(?=\s([a-z].*?)\(.*?\)|\s*$)/gi;
     const regColorVal = /([rgbahsl]+\([,%a-z \d.-]+\))|#[0-9A-F]{6}/gi;
+    const regProp = /^[-\w]+[^( ]/gi;
     const regTypes = /Null|Number|String|Object|Array/g;
     function getObjType(val) {
         return Object.prototype.toString.call(val);
@@ -178,7 +180,6 @@
             this.type = is.dom(this.target) ? "dom" : "obj";
             if (this.type === "dom") {
                 this.style = this.target.style;
-                this.cssTxt = this.style.cssText;
                 this.tweenable = this.style;
                 this.computedStyle = window.getComputedStyle(this.target);
             }
@@ -261,7 +262,7 @@
             this.units = [];
             this.increments = [];
             this.strBegin = "";
-            this.keep = false;
+            this.keepOriginal = false;
             this.keepStr = "";
             this.diffVals = [];
         }
@@ -427,6 +428,7 @@
         vo.prop = prop;
         switch (vo.tweenType) {
             case "css":
+            case "transform":
                 let vus = getValuesUnits(val);
                 for (let i = 0; i < vus.length; i++) {
                     vo.values.push(vus[i].value);
@@ -449,6 +451,11 @@
                 break;
         }
         return vo;
+    }
+    function getVoFromStr(str) {
+        let prop = str.match(regProp)[0];
+        str = str.replace(prop, "");
+        return getVo("dom", prop, str);
     }
     function normalizeVos(from, to, context) {
         const prop = from.prop;
@@ -495,12 +502,29 @@
             to.diffVals.push(to.values[i] - from.values[i]);
         }
     }
+    function transStrToMap(str) {
+        let res = new Map();
+        if (!str || str === "" || str === "none")
+            return null;
+        let arr = str.match(regStrValues);
+        if (!arr)
+            return null;
+        for (let i = 0; i < arr.length; i++) {
+            let part = arr[i];
+            let vo = getVoFromStr(part);
+            vo.keepOriginal = true;
+            vo.keepStr = part;
+            res.set(vo.prop, vo);
+        }
+        return res;
+    }
 
     class Keyframe {
         constructor() {
             this.duration = 0;
             this.totalDuration = 0;
             this.tweens = [];
+            this.initialized = false;
         }
         push(...t) {
             for (let i = 0; i < t.length; i++) {
@@ -592,15 +616,15 @@
         update(t) {
             if ((this.paused && !this.seeking) || this.status === 0)
                 return;
+            if (!this.currentKf.initialized) {
+                G._initTweens(this.currentKf);
+                this.currentKf.initialized = true;
+            }
             this.time += t * this.dir;
             this.currentTime += t;
             let tws = this.currentKf.tweens;
             for (let i = 0; i < tws.length; i++) {
                 const tween = tws[i];
-                if (!tween.initialized) {
-                    G._initTween(tween);
-                    continue;
-                }
                 const twType = tween.type;
                 let elapsed = minMax(this.time - tween.start - tween.delay, 0, tween.duration) / tween.duration;
                 let eased = isNaN(elapsed) ? 1 : tween.ease(elapsed);
@@ -686,6 +710,7 @@
                 let dur = duration;
                 let fromVal;
                 let toVal;
+                const twType = getTweenType(target.type, prop);
                 if (is.array(val)) {
                     fromVal = val[0];
                     toVal = val[1];
@@ -698,21 +723,42 @@
                 else {
                     toVal = val;
                 }
-                const twType = getTweenType(target.type, prop);
                 let delay = options.delay || 0;
                 let tw = new Tween(target, twType, prop, fromVal, toVal, dur, delay, 0);
                 arr.push(tw);
             }
             return arr;
         }
-        static _initTween(tw) {
-            let vFrom = tw.fromVal ? tw.fromVal : tw.target.getExistingValue(tw.prop);
-            let from = getVo(tw.targetType, tw.prop, vFrom);
-            let to = getVo(tw.targetType, tw.prop, tw.toVal);
-            normalizeVos(from, to, tw.target.context);
-            tw.from = from;
-            tw.to = to;
-            tw.initialized = true;
+        static _initTweens(kf) {
+            let transOldMap;
+            let transChecked = false;
+            for (let i = 0; i < kf.tweens.length; i++) {
+                const tw = kf.tweens[i];
+                let vFrom = tw.fromVal ? tw.fromVal : tw.target.getExistingValue(tw.prop);
+                let from;
+                let to = getVo(tw.targetType, tw.prop, tw.toVal);
+                if (tw.target.type === "dom") {
+                    switch (tw.type) {
+                        case "css":
+                            from = getVo(tw.targetType, tw.prop, vFrom);
+                            break;
+                        case "transform":
+                            if (!transChecked) {
+                                transOldMap = transStrToMap(tw.target.getExistingValue("transform"));
+                                transChecked = true;
+                            }
+                            if (transOldMap) ;
+                            else {
+                                from = getVo("dom", tw.prop, null);
+                            }
+                            console.log(transOldMap);
+                            break;
+                    }
+                }
+                tw.from = from;
+                tw.to = to;
+                normalizeVos(from, to, tw.target.context);
+            }
         }
     }
 
