@@ -443,7 +443,7 @@ class G extends Dispatcher {
                     let str = "";
                     for (let j = 0; j < from.values.length; j++) {
                         let val = from.values[j] + eased * (to.values[j] - tween.from.values[j]);
-                        str += `${val}${to.units[j]}`;
+                        str += `${val}${to.units[j]} `;
                     }
                     tween.target[tween.prop] = str;
                     break;
@@ -506,14 +506,15 @@ class G extends Dispatcher {
         for (let i = 0; i < keys.length; i++) {
             let prop = keys[i];
             let val = params[prop];
+            let dur = duration;
             if (is.obj(val)) {
                 const o = val;
-                duration = o.duration;
+                dur = o.duration;
                 val = o.value;
             }
             const twType = getTweenType(target.type, prop);
             let delay = options.delay || 0;
-            let tw = new Tween(target.tweenable, twType, prop, duration, delay, 0);
+            let tw = new Tween(target.tweenable, twType, prop, dur, delay, 0);
             let from = getVo(target.type, prop, target.getExistingValue(prop));
             let to = getVo(target.type, prop, val);
             tw.from = from;

@@ -103,7 +103,7 @@
         const regUnits = /px|cm|mm|in|pt|pc|em|rem|vw|vh|vmin|vmax|%/gi;
 
 
-        el.style.transform = strTransform;
+        // el.style.transform = strTransform;
         // el.style.transform = "translate(50px, 50px) rotate(20deg)";
         // el.style.transform = "rotate(30deg) translate(50px, 50px)";
         // el.style.transform = "scale(2) translate(50px, 50px)";
@@ -136,7 +136,8 @@
                     // left: 50,
                     // left: "9%",
                     // left: "+=13%",
-                    // top: "10%",
+                    // top: "50%",
+                    top: {value:"50%", duration:600},
                     marginLeft: "12rem",
                     // margin: "10%, 12rem",
                     // width: ["50%", 10],
@@ -177,7 +178,8 @@
             // .to(500, {left:"10%"}, {stagger:30})
             // .to(500, {top:50})
                 .on('end', () => {
-                    console.log(a.keyframes[0].tweens[0]);
+                    console.log(a);
+                    // console.log(a.keyframes[0].tweens[0]);
                     console.log("end", (performance.now() - t0));
                     // console.log(window.getComputedStyle(el).transform);
                 });
