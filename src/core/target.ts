@@ -1,10 +1,11 @@
 import Context from "./context";
 import {is} from "../util/util";
+import {TargetType} from "../types";
 
 export default class Target {
 
     target: any;
-    type: "dom" | "object";
+    type: TargetType;
     inlineStyle: CSSStyleDeclaration;
     computedStyle: CSSStyleDeclaration;
     context: Context;
@@ -18,7 +19,7 @@ export default class Target {
     }
 
     init() {
-        this.type = is.dom(this.target)? "dom" : "object";
+        this.type = is.dom(this.target)? "dom" : "obj";
         if (this.type === "dom") {
             this.inlineStyle = this.target.style;
             this.computedStyle = window.getComputedStyle(this.target);
@@ -27,7 +28,7 @@ export default class Target {
 
     getExistingValue(prop: any): any {
         let res: any;
-        if (this.type === "object" || is.propDirect(prop)) {
+        if (this.type === "obj" || is.propDirect(prop)) {
             return this.target[prop];
         } else {
             if (is.propTransform(prop))

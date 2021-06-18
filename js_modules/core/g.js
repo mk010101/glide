@@ -1,13 +1,23 @@
 import Target from "./target";
 import Dispatcher from "./dispatcher";
-import { is } from "../util/util";
+import { getTweenType, is } from "../util/util";
+import { Keyframe } from "./keyframe";
+import { Tween } from "./tween";
 export class G extends Dispatcher {
-    constructor(targets, duration, params, option = {}) {
+    constructor(targets, duration, params, options = {}) {
         super();
         this.status = 1;
         this.targets = [];
+        this.keyframes = [];
+        this.targets = G._getTargets(targets, options);
+        this.to(duration, params, options);
     }
-    to(duration, params, option) {
+    to(duration, params, options = {}) {
+        let kf = new Keyframe();
+        for (let i = 0; i < this.targets.length; i++) {
+            const tweens = G.getTweens(this.targets[i], duration, params, options);
+        }
+        this.keyframes.push(kf);
         return this;
     }
     update(delta) {
@@ -29,5 +39,15 @@ export class G extends Dispatcher {
             throw (new TypeError("Target type is not valid."));
         }
         return t;
+    }
+    static getTweens(target, duration, params, options) {
+        const keys = Object.keys(params);
+        for (let i = 0; i < keys.length; i++) {
+            let prop = keys[i];
+            const val = params[prop];
+            const twType = getTweenType(target.type, prop);
+            let tw = new Tween(target.target, twType, prop, duration);
+            console.log(tw);
+        }
     }
 }

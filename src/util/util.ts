@@ -1,3 +1,5 @@
+import {TweenType} from "../types";
+
 export const regValues = /[-%\w]+[-\d.]*/gi;
 export const regVUs = /[-+=.\w%]+/g;
 export const regStrValues = /(([a-z].*?)\(.*?\))(?=\s([a-z].*?)\(.*?\)|\s*$)/gi;
@@ -123,3 +125,25 @@ export const is = {
         return (/scale|opacity/i.test(val));
     },
 };
+
+
+export function getTweenType(targetType:any, prop:any):TweenType {
+
+    if (is.obj(targetType))
+        return "obj";
+    else if (is.propTransform(prop))
+        return "transform";
+    else if (is.propFilter(prop))
+        return "filter";
+    else if (is.propDirect(prop))
+        return "direct";
+
+    return "css";
+}
+
+
+
+
+
+
+

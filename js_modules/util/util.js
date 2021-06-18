@@ -116,3 +116,14 @@ export const is = {
         return (/scale|opacity/i.test(val));
     },
 };
+export function getTweenType(targetType, prop) {
+    if (is.obj(targetType))
+        return "obj";
+    else if (is.propTransform(prop))
+        return "transform";
+    else if (is.propFilter(prop))
+        return "filter";
+    else if (is.propDirect(prop))
+        return "direct";
+    return "css";
+}

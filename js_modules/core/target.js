@@ -6,7 +6,7 @@ export default class Target {
         this.init();
     }
     init() {
-        this.type = is.dom(this.target) ? "dom" : "object";
+        this.type = is.dom(this.target) ? "dom" : "obj";
         if (this.type === "dom") {
             this.inlineStyle = this.target.style;
             this.computedStyle = window.getComputedStyle(this.target);
@@ -14,7 +14,7 @@ export default class Target {
     }
     getExistingValue(prop) {
         let res;
-        if (this.type === "object" || is.propDirect(prop)) {
+        if (this.type === "obj" || is.propDirect(prop)) {
             return this.target[prop];
         }
         else {

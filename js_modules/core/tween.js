@@ -1,6 +1,6 @@
 import { quadInOut } from "../util/ease";
 export class Tween {
-    constructor() {
+    constructor(target, type, prop, duration) {
         this.target = null;
         this.type = null;
         this.prop = "";
@@ -9,5 +9,8 @@ export class Tween {
         this.to = null;
         this.computed = null;
         this.ease = quadInOut;
+        this.target = target;
+        this.prop = prop;
+        this.duration = duration;
     }
 }

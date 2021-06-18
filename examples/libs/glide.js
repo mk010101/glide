@@ -164,6 +164,17 @@
             return (/scale|opacity/i.test(val));
         },
     };
+    function getTweenType(targetType, prop) {
+        if (is.obj(targetType))
+            return "obj";
+        else if (is.propTransform(prop))
+            return "transform";
+        else if (is.propFilter(prop))
+            return "filter";
+        else if (is.propDirect(prop))
+            return "direct";
+        return "css";
+    }
 
     class Target {
         constructor(target, context) {
@@ -172,7 +183,7 @@
             this.init();
         }
         init() {
-            this.type = is.dom(this.target) ? "dom" : "object";
+            this.type = is.dom(this.target) ? "dom" : "obj";
             if (this.type === "dom") {
                 this.inlineStyle = this.target.style;
                 this.computedStyle = window.getComputedStyle(this.target);
@@ -180,7 +191,7 @@
         }
         getExistingValue(prop) {
             let res;
-            if (this.type === "object" || is.propDirect(prop)) {
+            if (this.type === "obj" || is.propDirect(prop)) {
                 return this.target[prop];
             }
             else {
@@ -244,13 +255,51 @@
         }
     }
 
+    class Keyframe {
+        constructor() {
+            this.duration = 0;
+            this.totalDuration = 0;
+        }
+    }
+
+    function quadInOut(t = 0.0) {
+        if (t < 0.5)
+            return 2.0 * t * t;
+        else
+            return -1.0 + (4.0 - 2.0 * t) * t;
+    }
+
+    class Tween {
+        constructor(target, type, prop, duration) {
+            this.target = null;
+            this.type = null;
+            this.prop = "";
+            this.duration = 0.0;
+            this.from = null;
+            this.to = null;
+            this.computed = null;
+            this.ease = quadInOut;
+            this.target = target;
+            this.prop = prop;
+            this.duration = duration;
+        }
+    }
+
     class G extends Dispatcher {
-        constructor(targets, duration, params, option = {}) {
+        constructor(targets, duration, params, options = {}) {
             super();
             this.status = 1;
             this.targets = [];
+            this.keyframes = [];
+            this.targets = G._getTargets(targets, options);
+            this.to(duration, params, options);
         }
-        to(duration, params, option) {
+        to(duration, params, options = {}) {
+            let kf = new Keyframe();
+            for (let i = 0; i < this.targets.length; i++) {
+                G.getTweens(this.targets[i], duration, params, options);
+            }
+            this.keyframes.push(kf);
             return this;
         }
         update(delta) {
@@ -272,6 +321,16 @@
                 throw (new TypeError("Target type is not valid."));
             }
             return t;
+        }
+        static getTweens(target, duration, params, options) {
+            const keys = Object.keys(params);
+            for (let i = 0; i < keys.length; i++) {
+                let prop = keys[i];
+                params[prop];
+                const twType = getTweenType(target.type, prop);
+                let tw = new Tween(target.target, twType, prop, duration);
+                console.log(tw);
+            }
         }
     }
 

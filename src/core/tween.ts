@@ -12,4 +12,11 @@ export class Tween {
     computed:Vo = null;
     ease:Function = quadInOut;
 
+    constructor(target:any, type:TweenType, prop:any, duration:number) {
+        this.target = target;
+        this.prop = prop;
+        this.duration = duration;
+    }
+
+
 }
