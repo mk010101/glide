@@ -1,4 +1,5 @@
 import { Vo } from "../core/vo";
+import Context from "../core/context";
 export const regValues = /[-%\w]+[-\d.]*/gi;
 export const regVUs = /[-+=.\w%]+/g;
 export const regStrValues = /(([a-z].*?)\(.*?\))(?=\s([a-z].*?)\(.*?\)|\s*$)/gi;
@@ -204,6 +205,51 @@ export function getVo(targetType, prop, val) {
             break;
     }
     return vo;
+}
+export function normalizeVos(from, to, context) {
+    const prop = from.prop;
+    if (prop === "drop-shadow") {
+        if (from.values.length > to.values.length)
+            to.values.push(1);
+        else if (from.values.length < to.values.length)
+            from.values.push(1);
+    }
+    if (to.units.length > from.units.length) {
+        let diff = to.units.length - from.units.length;
+        for (let i = 0; i < diff; i++) {
+            from.units.push(null);
+            let v = is.valueOne(to.prop) ? 1 : 0;
+            from.values.push(v);
+        }
+    }
+    for (let i = 0; i < from.units.length; i++) {
+        let uFrom = from.units[i];
+        let uTo = to.units[i];
+        let incr = to.increments[i];
+        if (!uFrom)
+            uFrom = from.units[i] = getDefaultUnit(from.prop);
+        if (!uTo)
+            uTo = to.units[i] = uFrom;
+        if (uFrom && uFrom !== uTo) {
+            if (is.propTransform(from.prop) && (uFrom === "%" && uTo !== "%" || uFrom !== "%" && uTo === "%")) {
+            }
+            else {
+                from.values[i] = Context.convertUnits(from.values[i], uFrom, uTo, context.units);
+            }
+        }
+        if (incr === "-") {
+            to.values[i] = from.values[i] - to.values[i];
+        }
+        else if (incr === "+") {
+            to.values[i] += from.values[i];
+        }
+        else if (incr === "*") {
+            to.values[i] *= from.values[i];
+        }
+        else if (incr === "/") {
+            to.values[i] /= from.values[i];
+        }
+    }
 }
 export function parseCssTxt(txt) {
 }

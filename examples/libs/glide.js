@@ -207,6 +207,15 @@
         }
         return;
     }
+    function getDefaultUnit(prop) {
+        if (is.unitDegrees(prop))
+            return "deg";
+        else if (is.unitPercent(prop))
+            return "%";
+        else if (is.unitless(prop))
+            return "";
+        return "px";
+    }
     function getValueUnit(val) {
         const increment = val.match(/-=|\+=|\*=|\/=/g);
         if (increment)
@@ -260,6 +269,50 @@
                 break;
         }
         return vo;
+    }
+    function normalizeVos(from, to, context) {
+        const prop = from.prop;
+        if (prop === "drop-shadow") {
+            if (from.values.length > to.values.length)
+                to.values.push(1);
+            else if (from.values.length < to.values.length)
+                from.values.push(1);
+        }
+        if (to.units.length > from.units.length) {
+            let diff = to.units.length - from.units.length;
+            for (let i = 0; i < diff; i++) {
+                from.units.push(null);
+                let v = is.valueOne(to.prop) ? 1 : 0;
+                from.values.push(v);
+            }
+        }
+        for (let i = 0; i < from.units.length; i++) {
+            let uFrom = from.units[i];
+            let uTo = to.units[i];
+            let incr = to.increments[i];
+            if (!uFrom)
+                uFrom = from.units[i] = getDefaultUnit(from.prop);
+            if (!uTo)
+                uTo = to.units[i] = uFrom;
+            if (uFrom && uFrom !== uTo) {
+                if (is.propTransform(from.prop) && (uFrom === "%" && uTo !== "%" || uFrom !== "%" && uTo === "%")) ;
+                else {
+                    from.values[i] = Context.convertUnits(from.values[i], uFrom, uTo, context.units);
+                }
+            }
+            if (incr === "-") {
+                to.values[i] = from.values[i] - to.values[i];
+            }
+            else if (incr === "+") {
+                to.values[i] += from.values[i];
+            }
+            else if (incr === "*") {
+                to.values[i] *= from.values[i];
+            }
+            else if (incr === "/") {
+                to.values[i] /= from.values[i];
+            }
+        }
     }
 
     class Target {
@@ -523,6 +576,7 @@
                 let tw = new Tween(target.tweenable, twType, prop, dur, delay, 0);
                 let from = getVo(target.type, prop, target.getExistingValue(prop));
                 let to = getVo(target.type, prop, val);
+                normalizeVos(from, to, target.context);
                 tw.from = from;
                 tw.to = to;
                 arr.push(tw);

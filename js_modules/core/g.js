@@ -1,6 +1,6 @@
 import Target from "./target";
 import Dispatcher from "./dispatcher";
-import { getTweenType, getVo, is, minMax } from "../util/util";
+import { getTweenType, getVo, is, minMax, normalizeVos } from "../util/util";
 import { Keyframe } from "./keyframe";
 import { Tween } from "./tween";
 import { Evt } from "./events";
@@ -129,6 +129,7 @@ export class G extends Dispatcher {
             let tw = new Tween(target.tweenable, twType, prop, dur, delay, 0);
             let from = getVo(target.type, prop, target.getExistingValue(prop));
             let to = getVo(target.type, prop, val);
+            normalizeVos(from, to, target.context);
             tw.from = from;
             tw.to = to;
             arr.push(tw);

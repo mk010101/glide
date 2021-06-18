@@ -1,5 +1,6 @@
 import {TargetType, TweenType, ValueType, ValueUnit} from "../types";
 import {Vo} from "../core/vo";
+import Context from "../core/context";
 
 export const regValues = /[-%\w]+[-\d.]*/gi;
 export const regVUs = /[-+=.\w%]+/g;
@@ -255,6 +256,62 @@ export function getVo(targetType: TargetType, prop:any, val:any) {
     return vo;
 
 }
+
+
+export function normalizeVos(from: Vo, to: Vo, context: Context) {
+
+    const prop = from.prop;
+    if (prop === "drop-shadow") {
+        if (from.values.length > to.values.length)
+            to.values.push(1);
+        else if (from.values.length < to.values.length)
+            from.values.push(1);
+    }
+
+    if (to.units.length > from.units.length) {
+        let diff = to.units.length - from.units.length;
+        for (let i = 0; i < diff; i++) {
+            from.units.push(null);
+            let v = is.valueOne(to.prop)? 1 : 0;
+            from.values.push(v)
+        }
+    }
+    // console.log(from.units, to.units);
+    // console.log(from.values, to.values);
+
+    for (let i = 0; i < from.units.length; i++) {
+        let uFrom = from.units[i];
+        let uTo = to.units[i];
+        let incr = to.increments[i];
+        if (!uFrom) uFrom = from.units[i] = getDefaultUnit(from.prop);
+        if (!uTo) uTo = to.units[i] = uFrom;
+        if (uFrom && uFrom !== uTo) {
+            //TODO: Add logic to deal with translate(XYZ) percentages!
+            if (is.propTransform(from.prop) && (uFrom === "%" && uTo !== "%" || uFrom !== "%" && uTo === "%")) {
+                //console.log("% conversion!")
+            } else {
+                from.values[i] = Context.convertUnits(from.values[i], uFrom, uTo, context.units);
+            }
+        }
+
+        // console.log(incr)
+        if (incr === "-") {
+            to.values[i] = from.values[i] - to.values[i];
+        } else if (incr === "+") {
+            to.values[i] += from.values[i];
+        } else if (incr === "*") {
+            to.values[i] *= from.values[i];
+        }else if (incr === "/") {
+            to.values[i] /= from.values[i];
+        }
+
+        //to.diffVals.push(to.values[i]-from.values[i]);
+
+    }
+    // console.log(from.units, to.units);
+    // console.log(from.values, to.values);
+}
+
 
 export function parseCssTxt(txt:string) {
 
