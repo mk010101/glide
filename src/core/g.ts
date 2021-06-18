@@ -1,6 +1,6 @@
 import Target from "./target";
 import Dispatcher from "./dispatcher";
-import {getTweenType, getVo, is} from "../util/util";
+import {getTweenType, getVo, is, minMax} from "../util/util";
 import {Keyframe} from "./keyframe";
 import {Tween} from "./tween";
 import {Evt} from "./events";
@@ -15,7 +15,7 @@ export class G extends Dispatcher {
     seeking = false;
     dir = 1;
     time = 0.0;
-    duration = 0.0;
+    // duration = 0.0;
     totalDuration = 0.0;
     currentTime = 0.0;
     playedTimes = 0;
@@ -63,14 +63,21 @@ export class G extends Dispatcher {
         this.time += t * this.dir;
         this.currentTime += t;
         let tws = this.currentKf.tweens;
+
+
         for (let i = 0; i < tws.length; i++) {
 
+            const tween = tws[i];
 
+            let elapsed = minMax(this.time - tween.start - tween.delay, 0, tween.duration) / tween.duration;
+            let eased = isNaN(elapsed) ? 1 : tween.ease(elapsed);
+
+            tween.target[tween.prop] = tween.from.values[0] + eased * (tween.to.values[0] - tween.from.values[0]);
 
         }
 
 
-        this.dispatch(Evt.progress, 0);
+        this.dispatch(Evt.progress, null);
 
         if (this.currentTime >= this.currentKf.totalDuration) {
 

@@ -73,6 +73,9 @@ class Vo {
 function getObjType(val) {
     return Object.prototype.toString.call(val);
 }
+function minMax(val, min, max) {
+    return Math.min(Math.max(val, min), max);
+}
 const is = {
     dom(val) {
         return val.nodeType;
@@ -331,7 +334,6 @@ class G extends Dispatcher {
         this.seeking = false;
         this.dir = 1;
         this.time = 0.0;
-        this.duration = 0.0;
         this.totalDuration = 0.0;
         this.currentTime = 0.0;
         this.playedTimes = 0;
@@ -362,8 +364,12 @@ class G extends Dispatcher {
         this.currentTime += t;
         let tws = this.currentKf.tweens;
         for (let i = 0; i < tws.length; i++) {
+            const tween = tws[i];
+            let elapsed = minMax(this.time - tween.start - tween.delay, 0, tween.duration) / tween.duration;
+            let eased = isNaN(elapsed) ? 1 : tween.ease(elapsed);
+            tween.target[tween.prop] = tween.from.values[0] + eased * (tween.to.values[0] - tween.from.values[0]);
         }
-        this.dispatch(Evt.progress, 0);
+        this.dispatch(Evt.progress, null);
         if (this.currentTime >= this.currentKf.totalDuration) {
             if (this.dir > 0 && this.keyframes.length > this.num + 1) {
                 this.num++;
