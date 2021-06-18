@@ -1,0 +1,23 @@
+{
+
+  "files": [
+    "src/glide.ts"
+  ],
+
+  "include": ["./src/**/*"],
+
+  "compilerOptions": {
+    "target": "es6",
+    "sourceMap": true,
+    //"outDir": "./ts_out/zzz",
+    "module": "es6",
+    "moduleResolution": "node",
+    "noImplicitAny": true,
+    "removeComments": true,
+    "lib": [ "es2015", "dom"]
+  },
+  "exclude": [
+    "node_modules"
+  ]
+  //"include": ["./ts/**/*"]
+}
