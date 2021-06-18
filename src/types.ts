@@ -1,0 +1,1 @@
+export type TweenType = "transform" | "filter" | "css" | "direct" | "obj";

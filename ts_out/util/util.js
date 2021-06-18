@@ -4,122 +4,115 @@ export const regStrValues = /(([a-z].*?)\(.*?\))(?=\s([a-z].*?)\(.*?\)|\s*$)/gi;
 export const regColorVal = /([rgbahsl]+\([,%a-z \d.-]+\))|#[0-9A-F]{6}/gi;
 const regProp = /^[-\w]+[^( ]/gi;
 const regTypes = /Null|Number|String|Object|Array/g;
-
-
-
-function getObjType(val: any): string {
+function getObjType(val) {
     return Object.prototype.toString.call(val);
 }
-
-
-export function minMax(val: number, min: number, max: number): number {
+export function minMax(val, min, max) {
     return Math.min(Math.max(val, min), max);
 }
-
-export function getTargetType(val: any): "dom" | "object" {
+export function getTargetType(val) {
     if (is.dom(val)) {
         return "dom";
-    } else if (is.obj(val)) {
+    }
+    else if (is.obj(val)) {
         return "object";
     }
 }
-
 export const is = {
-    dom(val: any) {
-        return val.nodeType
+    dom(val) {
+        return val.nodeType;
     },
-    html(val: any) {
+    html(val) {
         return is.dom(val) && !is.svg(val);
     },
-    svg(val: any) {
+    svg(val) {
         return val instanceof SVGElement;
     },
-    input(val: any) {
+    input(val) {
         return val instanceof HTMLInputElement;
     },
-    tweenable(val: any) {
+    tweenable(val) {
         return is.dom(val) || is.obj(val);
     },
-    obj: function (val: any) {
+    obj: function (val) {
         return getObjType(val).indexOf("Object") > -1;
     },
-    array(val: any) {
+    array(val) {
         return Array.isArray(val);
     },
-    list: function (val: any) {
-        return is.array(val) || getObjType(val).indexOf("NodeList") > -1
+    list: function (val) {
+        return is.array(val) || getObjType(val).indexOf("NodeList") > -1;
     },
-    string(val: any) {
+    string(val) {
         return typeof val === 'string';
     },
-    func(val: any) {
+    func(val) {
         return typeof val === 'function';
     },
-    number(val: any) {
+    number(val) {
         return getObjType(val).indexOf("Number") > -1;
     },
-    hex(val: any) {
+    hex(val) {
         return /#[0-9A-F]{6}/i.test(val);
     },
-    rgba(val: any) {
+    rgba(val) {
         return /rgb[^a]*/.test(val);
     },
-    rgb(val: any) {
+    rgb(val) {
         return /rgb/.test(val);
     },
-    hsla(val: any) {
+    hsla(val) {
         return /hsla/.test(val);
     },
-    hsl(val: any) {
+    hsl(val) {
         return /hsl/.test(val);
     },
-    valueColor(val: any) {
+    valueColor(val) {
         return (is.hex(val) || is.rgb(val) || is.hsl(val));
     },
-    propColor(val: any) {
+    propColor(val) {
         return /background-color|backgroundColor|color|fill|bg/i.test(val);
     },
-    propDropShadow(val: any) {
+    propDropShadow(val) {
         return /drop-shadow/i.test(val);
     },
-    propNumeric(val: any) {
+    propNumeric(val) {
         return /opacity|scroll/i.test(val);
     },
-    propDirect(val: any) {
+    propDirect(val) {
         return /scrollTop/i.test(val);
     },
-    propRotation(val: any) {
+    propRotation(val) {
         return /rotate|skew/i.test(val);
     },
-    mixed(val: any) {
+    mixed(val) {
         return /gradient/i.test(val);
     },
-    propTransform(val: any) {
+    propTransform(val) {
         return (/translate|^rotate|^scale|skew|matrix|x[(xyz]+|y[(xyz]+/i.test(val));
     },
-    propMatrix(val: any) {
+    propMatrix(val) {
         return (/matrix[3d]*/i.test(val));
     },
-    propFilter(val: any) {
-        // return (/filter/i.test(val));
+    propFilter(val) {
         return (/filter|blur|brightness|contrast|drop-shadow|dropShadow|grayscale|hue-rotate|hueRotate|invert|opacity\(|saturate|sepia/i.test(val));
     },
-    unitless(val: any) {
+    unitless(val) {
         return (/scale|matrix|opacity|color|background/i.test(val));
     },
-    unitDegrees(val: any) {
+    unitDegrees(val) {
         return (/rotate|skew/i.test(val));
     },
-    valDual(val: any) {
+    valDual(val) {
         return (/translate\(|scale\(|skew\(/i.test(val));
     },
-    unitPercent(val: any) {
+    unitPercent(val) {
         return (/invert|contrast|grayscale|saturate|sepia/i.test(val));
     },
-    unitPx(val: any) {
+    unitPx(val) {
         return !is.unitless(val) && !is.unitDegrees(val);
     },
-    valueOne(val: any) {
+    valueOne(val) {
         return (/scale|opacity/i.test(val));
     },
 };

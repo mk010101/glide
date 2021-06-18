@@ -39,7 +39,7 @@ gulp.task('default', gulp.parallel(['bSync', 'watch']));
 gulp.task('ts', function () {
     return tsProject.src()
         .pipe(tsProject())
-        .js.pipe(gulp.dest('ts_out'));
+        .js.pipe(gulp.dest('js_modules'));
 });
 
 /* =====================================================================================

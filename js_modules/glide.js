@@ -1,55 +1,36 @@
 import Context from "./core/context";
-import {G} from "./core/g";
-
-
+import { G } from "./core/g";
 class Glide {
-
-    static items: G[] = [];
-    static lastTick = 0;
-    //static ease = ease;
-    static context: Context;
-    static _computeStyle = true;
-
-
-    static to(targets: any, duration: number, params: any, options: any = {}) {
-
-        if (!Glide.context && document) Glide.setContext(document.body);
+    static to(targets, duration, params, options = {}) {
+        if (!Glide.context && document)
+            Glide.setContext(document.body);
         options.context = options.context ? new Context(options.context) : Glide.context;
-        options.computeStyle = options.computeStyle !== (void 0)? options.computeStyle : Glide._computeStyle;
+        options.computeStyle = options.computeStyle !== (void 0) ? options.computeStyle : Glide._computeStyle;
         let a = new G(targets, duration, params, options);
         Glide.items.push(a);
         return a;
     }
-
-
-    static tick(t: number) {
+    static tick(t) {
         let delta = t - Glide.lastTick;
         for (let i = Glide.items.length - 1; i >= 0; i--) {
             let item = Glide.items[i];
             if (item.status === 1) {
                 item.update(delta);
-            } else if (item.status === 0) {
+            }
+            else if (item.status === 0) {
                 Glide.items.splice(i, 1);
             }
         }
         Glide.lastTick = t;
         requestAnimationFrame(Glide.tick);
     }
-
-    /**
-     * Sets context for unit conversions.
-     * @param parent element or string
-     */
-    static setContext(parent: any) {
+    static setContext(parent) {
         Glide.context = new Context(parent);
     }
-
-
 }
-
+Glide.items = [];
+Glide.lastTick = 0;
+Glide._computeStyle = true;
 Glide.tick(performance.now());
-
 const glide = Glide;
 export default glide;
-
-

@@ -1,42 +1,31 @@
-/**
- * Converts strings to rgb(a) array.
- * @param val
- */
-import {is} from "./util";
-
-function toRgb(val: string): number[] {
+import { is } from "./util";
+function toRgb(val) {
     if (is.hex(val)) {
         return hexToRGB(val);
-    } else if (is.hsl(val)) {
+    }
+    else if (is.hsl(val)) {
         return hslToRgb(val);
-    } else if (is.rgb(val)) {
+    }
+    else if (is.rgb(val)) {
         let res = val.match(/[-.\d]+/g);
-        return res.map((v: string) => parseFloat(v));
+        return res.map((v) => parseFloat(v));
     }
 }
-
-function toRgbStr(val: string) {
+function toRgbStr(val) {
     let res = toRgb(val);
     let str = res.length === 4 ? "rgba" : "rgb";
     return `${str}(${res.join(", ")})`;
 }
-
-
-function hexToRGB(hex: string): number[] {
+function hexToRGB(hex) {
     hex = hex.replace(/^#/, "");
     let bigint;
     return [(bigint = parseInt(hex, 16)) >> 16 & 255, bigint >> 8 & 255, bigint & 255];
 }
-
-
-function hexToHsl(hex: string) {
+function hexToHsl(hex) {
     let rgb = hexToRGB(hex);
     return rgbToHsl(rgb[0], rgb[1], rgb[2]);
 }
-
-
-function rgbToHsl(r: number, g: number, b: number): number[] {
-
+function rgbToHsl(r, g, b) {
     let min, max, i, l, s, maxcolor, h, rgb = [];
     rgb[0] = r / 255;
     rgb[1] = g / 255;
@@ -72,28 +61,25 @@ function rgbToHsl(r: number, g: number, b: number): number[] {
     l = (min + max) / 2;
     if (min == max) {
         s = 0;
-    } else {
+    }
+    else {
         if (l < 0.5) {
             s = (max - min) / (max + min);
-        } else {
+        }
+        else {
             s = (max - min) / (2 - max - min);
         }
     }
     return [h, s * 100, l * 100];
-
 }
-
-
-function hslToRgb(hsl: string): number[] {
-
+function hslToRgb(hsl) {
     let [sh, ss, sl, sa] = hsl.match(/[-.\d]+/g);
-
     let h = parseFloat(sh);
     let s = parseFloat(ss);
     let l = parseFloat(sl);
-    let a: number;
-    if (sa) a = parseFloat(sa);
-
+    let a;
+    if (sa)
+        a = parseFloat(sa);
     s /= 100;
     l /= 100;
     let C = (1 - Math.abs(2 * l - 1)) * s;
@@ -105,19 +91,24 @@ function hslToRgb(hsl: string): number[] {
     if (hue >= 0 && hue < 1) {
         r = C;
         g = X;
-    } else if (hue >= 1 && hue < 2) {
+    }
+    else if (hue >= 1 && hue < 2) {
         r = X;
         g = C;
-    } else if (hue >= 2 && hue < 3) {
+    }
+    else if (hue >= 2 && hue < 3) {
         g = C;
         b = X;
-    } else if (hue >= 3 && hue < 4) {
+    }
+    else if (hue >= 3 && hue < 4) {
         g = X;
         b = C;
-    } else if (hue >= 4 && hue < 5) {
+    }
+    else if (hue >= 4 && hue < 5) {
         r = X;
         b = C;
-    } else {
+    }
+    else {
         r = C;
         b = X;
     }
@@ -129,11 +120,10 @@ function hslToRgb(hsl: string): number[] {
     g *= 255.0;
     b *= 255.0;
     let arr = [Math.round(r), Math.round(g), Math.round(b)];
-    if (a) arr.push(a);
+    if (a)
+        arr.push(a);
     return arr;
 }
-
-export function print(val: any) {
+export function print(val) {
     console.log(JSON.stringify(val, null, 4));
 }
-
