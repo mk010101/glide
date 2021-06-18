@@ -2,9 +2,9 @@
  * Converts strings to rgb(a) array.
  * @param val
  */
-import {is} from "./util";
+import {is} from "./regex";
 
-function toRgb(val: string): number[] {
+export function toRgb(val: string): number[] {
     if (is.hex(val)) {
         return hexToRGB(val);
     } else if (is.hsl(val)) {
@@ -15,14 +15,14 @@ function toRgb(val: string): number[] {
     }
 }
 
-function toRgbStr(val: string) {
+export function toRgbStr(val: string) {
     let res = toRgb(val);
     let str = res.length === 4 ? "rgba" : "rgb";
     return `${str}(${res.join(", ")})`;
 }
 
 
-function hexToRGB(hex: string): number[] {
+export function hexToRGB(hex: string): number[] {
     hex = hex.replace(/^#/, "");
     let bigint;
     return [(bigint = parseInt(hex, 16)) >> 16 & 255, bigint >> 8 & 255, bigint & 255];
@@ -133,7 +133,5 @@ function hslToRgb(hsl: string): number[] {
     return arr;
 }
 
-export function print(val: any) {
-    console.log(JSON.stringify(val, null, 4));
-}
+
 

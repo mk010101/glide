@@ -1,11 +1,12 @@
 import Target from "./target";
 import Dispatcher from "./dispatcher";
-import {getTweenType, getVo, is, minMax, normalizeVos} from "../util/util";
+import {getTweenType, getVo, minMax, normalizeVos} from "../util/util";
 import {Keyframe} from "./keyframe";
 import {Tween} from "./tween";
 import {Evt} from "./events";
 import {Value} from "../types";
 import {Vo} from "./vo";
+import {is} from "../util/regex";
 
 export class G extends Dispatcher {
 
@@ -72,7 +73,7 @@ export class G extends Dispatcher {
             const tween = tws[i];
             if (!tween.initialized) {
                 G._initTween(tween);
-                break;
+                continue;
             }
             const twType = tween.type;
 
@@ -82,6 +83,7 @@ export class G extends Dispatcher {
             let to: Vo = tween.to;
 
             switch (twType) {
+
                 case "css":
                     let str = "";
 
@@ -90,6 +92,10 @@ export class G extends Dispatcher {
                         str += `${val}${to.units[j]} `;
                     }
                     tween.tweenable[tween.prop] = str;
+                    break;
+
+                case "color":
+
                     break;
             }
 

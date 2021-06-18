@@ -1,5 +1,5 @@
 import Context from "./context";
-import {is} from "../util/util";
+import {is} from "../util/regex";
 import {TargetType} from "../types";
 
 export default class Target {

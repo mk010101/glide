@@ -1,4 +1,4 @@
-import { is } from "../util/util";
+import { is } from "../util/regex";
 export default class Target {
     constructor(target, context) {
         this.target = target;

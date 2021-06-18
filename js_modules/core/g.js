@@ -1,9 +1,10 @@
 import Target from "./target";
 import Dispatcher from "./dispatcher";
-import { getTweenType, getVo, is, minMax, normalizeVos } from "../util/util";
+import { getTweenType, getVo, minMax, normalizeVos } from "../util/util";
 import { Keyframe } from "./keyframe";
 import { Tween } from "./tween";
 import { Evt } from "./events";
+import { is } from "../util/regex";
 export class G extends Dispatcher {
     constructor(targets, duration, params, options = {}) {
         super();
@@ -47,7 +48,7 @@ export class G extends Dispatcher {
             const tween = tws[i];
             if (!tween.initialized) {
                 G._initTween(tween);
-                break;
+                continue;
             }
             const twType = tween.type;
             let elapsed = minMax(this.time - tween.start - tween.delay, 0, tween.duration) / tween.duration;
@@ -62,6 +63,8 @@ export class G extends Dispatcher {
                         str += `${val}${to.units[j]} `;
                     }
                     tween.tweenable[tween.prop] = str;
+                    break;
+                case "color":
                     break;
             }
         }
