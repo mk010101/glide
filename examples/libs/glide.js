@@ -164,7 +164,7 @@
             return !is.unitless(val) && !is.unitDegrees(val);
         },
         valueOne(val) {
-            return (/scale|opacity/i.test(val));
+            return (/scale|opacity|color|fill/i.test(val));
         },
     };
 
@@ -260,8 +260,10 @@
             this.values = [];
             this.units = [];
             this.increments = [];
+            this.strBegin = "";
             this.keep = false;
             this.keepStr = "";
+            this.diffVals = [];
         }
     }
 
@@ -443,6 +445,7 @@
                 for (let i = 0; i < vo.values.length; i++) {
                     vo.units.push("");
                 }
+                vo.strBegin = vo.values.length === 4 ? "rgba" : "rgb";
                 break;
         }
         return vo;
@@ -489,6 +492,7 @@
             else if (incr === "/") {
                 to.values[i] /= from.values[i];
             }
+            to.diffVals.push(to.values[i] - from.values[i]);
         }
     }
 
@@ -602,6 +606,8 @@
                 let eased = isNaN(elapsed) ? 1 : tween.ease(elapsed);
                 let from = tween.from;
                 let to = tween.to;
+                let tweenable = tween.tweenable;
+                let prop = tween.prop;
                 switch (twType) {
                     case "css":
                         let str = "";
@@ -609,7 +615,14 @@
                             let val = from.values[j] + eased * (to.values[j] - tween.from.values[j]);
                             str += `${val}${to.units[j]} `;
                         }
-                        tween.tweenable[tween.prop] = str;
+                        tweenable[prop] = str;
+                        break;
+                    case "color":
+                        let r = ~~(from.values[0] + eased * to.diffVals[0]);
+                        let g = ~~(from.values[1] + eased * to.diffVals[1]);
+                        let b = ~~(from.values[2] + eased * to.diffVals[2]);
+                        let a = (from.values.length === 4) ? ", " + (from.values[3] + eased * to.diffVals[3]) : "";
+                        tweenable[prop] = `${to.strBegin}(${r}, ${g}, ${b}${a})`;
                         break;
                 }
             }

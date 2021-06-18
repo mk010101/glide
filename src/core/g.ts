@@ -81,6 +81,8 @@ export class G extends Dispatcher {
             let eased = isNaN(elapsed) ? 1 : tween.ease(elapsed);
             let from: Vo = tween.from;
             let to: Vo = tween.to;
+            let tweenable = tween.tweenable;
+            let prop = tween.prop;
 
             switch (twType) {
 
@@ -91,11 +93,15 @@ export class G extends Dispatcher {
                         let val = from.values[j] + eased * (to.values[j] - tween.from.values[j]);
                         str += `${val}${to.units[j]} `;
                     }
-                    tween.tweenable[tween.prop] = str;
+                    tweenable[prop] = str;
                     break;
 
                 case "color":
-
+                    let r = ~~(from.values[0] + eased * to.diffVals[0]);
+                    let g = ~~(from.values[1] + eased * to.diffVals[1]);
+                    let b = ~~(from.values[2] + eased * to.diffVals[2]);
+                    let a = (from.values.length === 4) ? ", " + (from.values[3] + eased * to.diffVals[3]) : "";
+                    tweenable[prop] = `${to.strBegin}(${r}, ${g}, ${b}${a})`;
                     break;
             }
 

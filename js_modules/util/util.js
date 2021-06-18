@@ -113,6 +113,7 @@ export function getVo(targetType, prop, val) {
             for (let i = 0; i < vo.values.length; i++) {
                 vo.units.push("");
             }
+            vo.strBegin = vo.values.length === 4 ? "rgba" : "rgb";
             break;
     }
     return vo;
@@ -160,6 +161,7 @@ export function normalizeVos(from, to, context) {
         else if (incr === "/") {
             to.values[i] /= from.values[i];
         }
+        to.diffVals.push(to.values[i] - from.values[i]);
     }
 }
 export function parseCssTxt(txt) {

@@ -161,6 +161,7 @@ export function getVo(targetType: TargetType, prop: any, val: any) {
             for (let i = 0; i < vo.values.length; i++) {
                 vo.units.push("");
             }
+            vo.strBegin = vo.values.length === 4? "rgba" : "rgb";
             break;
 
     }
@@ -190,7 +191,7 @@ export function normalizeVos(from: Vo, to: Vo, context: Context) {
         for (let i = 0; i < diff; i++) {
             from.units.push(null);
             let v = is.valueOne(to.prop) ? 1 : 0;
-            from.values.push(v)
+            from.values.push(v);
         }
     }
     // console.log(from.units, to.units);
@@ -222,7 +223,7 @@ export function normalizeVos(from: Vo, to: Vo, context: Context) {
             to.values[i] /= from.values[i];
         }
 
-        //to.diffVals.push(to.values[i]-from.values[i]);
+        to.diffVals.push(to.values[i]-from.values[i]);
 
     }
     // console.log(from.units, to.units);

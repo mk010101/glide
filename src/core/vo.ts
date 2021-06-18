@@ -7,9 +7,9 @@ export class Vo {
     values: number[] = [];
     units: string[] = [];
     increments: string[] = [];
+    strBegin:string = "";
     keep:boolean = false;
     keepStr:string = "";
-
-    normalizedValues:number[];
+    diffVals:number[] = [];
     // normalizedUnits: string[] = [];
 }

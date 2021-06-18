@@ -107,6 +107,6 @@ export const is = {
         return !is.unitless(val) && !is.unitDegrees(val);
     },
     valueOne(val: any) {
-        return (/scale|opacity/i.test(val));
+        return (/scale|opacity|color|fill/i.test(val));
     },
 };
