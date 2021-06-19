@@ -7,8 +7,10 @@ export class Keyframe {
     }
     push(...t) {
         for (let i = 0; i < t.length; i++) {
-            if (this.totalDuration < t[i].totalDuration)
-                this.totalDuration = t[i].totalDuration;
+            let tw = t[i];
+            if (this.totalDuration < tw.totalDuration) {
+                this.totalDuration = tw.totalDuration;
+            }
             this.tweens.push(t[i]);
         }
     }

@@ -197,6 +197,7 @@ export class G extends Dispatcher {
 
             let delay = options.delay || 0;
             let tw = new Tween(target, twType, prop, fromVal, toVal, dur, delay, 0);
+            tw.pos = i;
             arr.push(tw);
 
 
@@ -208,7 +209,7 @@ export class G extends Dispatcher {
     static _initTweens(kf: Keyframe) {
 
         let transTweens: Map<string, Tween>;
-        let transOldVos: Map<string, Vo>;
+        let transOldTweens: Map<string, Tween>;
         let transChecked = false;
 
         for (let i = 0; i < kf.tweens.length; i++) {
@@ -222,27 +223,31 @@ export class G extends Dispatcher {
                 switch (tw.type) {
 
                     case "css":
-                        from = getVo(tw.targetType, tw.prop, tw.fromVal);
+                    case "color":
+                        from = getVo(tw.targetType, tw.prop, tw.target.getExistingValue(tw.prop));
                         break;
 
                     case "transform":
 
                         if (!transChecked) {
-                            transOldVos = transStrToMap(tw.target.getExistingValue("transform"));
+                            transOldTweens = transStrToMap(tw.target.getExistingValue("transform"));
                             transTweens = new Map<string, Tween>();
                             transChecked = true;
                         }
 
                         if (tw.fromVal) {
                             from = getVo("dom", tw.prop, tw.fromVal);
-                            if (transOldVos) {
-                                transOldVos.delete(tw.prop);
+                            if (transOldTweens) {
+                                //transOldTweens.delete(tw.prop);
                             }
                         } else {
-                            if (transOldVos && transOldVos.has(tw.prop)) {
-                                from = transOldVos.get(tw.prop);
+                            if (transOldTweens && transOldTweens.has(tw.prop)) {
+                                from = transOldTweens.get(tw.prop).from;
+                            } else {
+                                from = from = getVo("dom", tw.prop, tw.fromVal);
                             }
                         }
+                        transTweens.set(tw.prop, tw);
                         break;
 
                 }
@@ -253,19 +258,16 @@ export class G extends Dispatcher {
             tw.from = from;
             tw.to = to;
             normalizeVos(from, to, tw.target.context);
+            console.log(transOldTweens, transTweens)
+
+            if (transOldTweens) {
+                // transTweens.forEach((v, k)=> {
+                //
+                // })
+            }
 
         }
 
-        /*
-
-
-        let vFrom = tw.fromVal ? tw.fromVal : tw.target.getExistingValue(tw.prop);
-        let from = getVo(tw.targetType, tw.prop, vFrom);
-        let to = getVo(tw.targetType, tw.prop, tw.toVal);
-        normalizeVos(from, to, tw.target.context);
-        tw.from = from;
-        tw.to = to;
-         */
     }
 
 

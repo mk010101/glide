@@ -2,6 +2,7 @@ import { getObjType, is, regColorVal, regProp, regStrValues, regTypes, regVUs } 
 import { Vo } from "../core/vo";
 import { toRgbStr } from "./color";
 import Context from "../core/context";
+import { Tween } from "../core/tween";
 export function minMax(val, min, max) {
     return Math.min(Math.max(val, min), max);
 }
@@ -182,7 +183,9 @@ export function transStrToMap(str) {
         let vo = getVoFromStr(part);
         vo.keepOriginal = true;
         vo.keepStr = part;
-        res.set(vo.prop, vo);
+        let tw = new Tween(null, "transform", vo.prop, null, null, 0, 0, 0);
+        tw.from = vo;
+        res.set(vo.prop, tw);
     }
     return res;
 }

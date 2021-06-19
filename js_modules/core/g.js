@@ -150,13 +150,14 @@ export class G extends Dispatcher {
             }
             let delay = options.delay || 0;
             let tw = new Tween(target, twType, prop, fromVal, toVal, dur, delay, 0);
+            tw.pos = i;
             arr.push(tw);
         }
         return arr;
     }
     static _initTweens(kf) {
         let transTweens;
-        let transOldVos;
+        let transOldTweens;
         let transChecked = false;
         for (let i = 0; i < kf.tweens.length; i++) {
             const tw = kf.tweens[i];
@@ -165,31 +166,38 @@ export class G extends Dispatcher {
             if (tw.target.type === "dom") {
                 switch (tw.type) {
                     case "css":
-                        from = getVo(tw.targetType, tw.prop, tw.fromVal);
+                    case "color":
+                        from = getVo(tw.targetType, tw.prop, tw.target.getExistingValue(tw.prop));
                         break;
                     case "transform":
                         if (!transChecked) {
-                            transOldVos = transStrToMap(tw.target.getExistingValue("transform"));
+                            transOldTweens = transStrToMap(tw.target.getExistingValue("transform"));
                             transTweens = new Map();
                             transChecked = true;
                         }
                         if (tw.fromVal) {
                             from = getVo("dom", tw.prop, tw.fromVal);
-                            if (transOldVos) {
-                                transOldVos.delete(tw.prop);
+                            if (transOldTweens) {
                             }
                         }
                         else {
-                            if (transOldVos && transOldVos.has(tw.prop)) {
-                                from = transOldVos.get(tw.prop);
+                            if (transOldTweens && transOldTweens.has(tw.prop)) {
+                                from = transOldTweens.get(tw.prop).from;
+                            }
+                            else {
+                                from = from = getVo("dom", tw.prop, tw.fromVal);
                             }
                         }
+                        transTweens.set(tw.prop, tw);
                         break;
                 }
             }
             tw.from = from;
             tw.to = to;
             normalizeVos(from, to, tw.target.context);
+            console.log(transOldTweens, transTweens);
+            if (transOldTweens) {
+            }
         }
     }
 }

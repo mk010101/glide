@@ -20,6 +20,7 @@ export class Tween {
     computed: Vo = null;
     ease: Function = quadInOut;
     initialized = false;
+    pos = 0;
 
     constructor(target: Target,
                 twType: TweenType,
@@ -31,8 +32,8 @@ export class Tween {
                 start: number) {
 
         this.target = target;
-        this.tweenable = target.tweenable;
-        this.targetType = target.type;
+        this.tweenable = target?.tweenable;
+        this.targetType = target?.type;
         this.type = twType;
         this.prop = prop;
         this.fromVal = fromVal;

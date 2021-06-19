@@ -16,9 +16,10 @@ export class Tween {
         this.computed = null;
         this.ease = quadInOut;
         this.initialized = false;
+        this.pos = 0;
         this.target = target;
-        this.tweenable = target.tweenable;
-        this.targetType = target.type;
+        this.tweenable = target === null || target === void 0 ? void 0 : target.tweenable;
+        this.targetType = target === null || target === void 0 ? void 0 : target.type;
         this.type = twType;
         this.prop = prop;
         this.fromVal = fromVal;

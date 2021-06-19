@@ -337,6 +337,45 @@ function hslToRgb(hsl) {
     return arr;
 }
 
+function quadInOut(t = 0.0) {
+    if (t < 0.5)
+        return 2.0 * t * t;
+    else
+        return -1.0 + (4.0 - 2.0 * t) * t;
+}
+
+class Tween {
+    constructor(target, twType, prop, fromVal, toVal, duration, delay, start) {
+        this.tweenable = null;
+        this.type = null;
+        this.targetType = null;
+        this.prop = "";
+        this.duration = 0.0;
+        this.delay = 0.0;
+        this.start = 0.0;
+        this.totalDuration = 0.0;
+        this.fromVal = null;
+        this.toVal = null;
+        this.from = null;
+        this.to = null;
+        this.computed = null;
+        this.ease = quadInOut;
+        this.initialized = false;
+        this.pos = 0;
+        this.target = target;
+        this.tweenable = target === null || target === void 0 ? void 0 : target.tweenable;
+        this.targetType = target === null || target === void 0 ? void 0 : target.type;
+        this.type = twType;
+        this.prop = prop;
+        this.fromVal = fromVal;
+        this.toVal = toVal;
+        this.duration = duration;
+        this.delay = delay;
+        this.start = start;
+        this.totalDuration = duration + delay;
+    }
+}
+
 function minMax(val, min, max) {
     return Math.min(Math.max(val, min), max);
 }
@@ -508,7 +547,9 @@ function transStrToMap(str) {
         let vo = getVoFromStr(part);
         vo.keepOriginal = true;
         vo.keepStr = part;
-        res.set(vo.prop, vo);
+        let tw = new Tween(null, "transform", vo.prop, null, null, 0, 0, 0);
+        tw.from = vo;
+        res.set(vo.prop, tw);
     }
     return res;
 }
@@ -522,48 +563,12 @@ class Keyframe {
     }
     push(...t) {
         for (let i = 0; i < t.length; i++) {
-            if (this.totalDuration < t[i].totalDuration)
-                this.totalDuration = t[i].totalDuration;
+            let tw = t[i];
+            if (this.totalDuration < tw.totalDuration) {
+                this.totalDuration = tw.totalDuration;
+            }
             this.tweens.push(t[i]);
         }
-    }
-}
-
-function quadInOut(t = 0.0) {
-    if (t < 0.5)
-        return 2.0 * t * t;
-    else
-        return -1.0 + (4.0 - 2.0 * t) * t;
-}
-
-class Tween {
-    constructor(target, twType, prop, fromVal, toVal, duration, delay, start) {
-        this.tweenable = null;
-        this.type = null;
-        this.targetType = null;
-        this.prop = "";
-        this.duration = 0.0;
-        this.delay = 0.0;
-        this.start = 0.0;
-        this.totalDuration = 0.0;
-        this.fromVal = null;
-        this.toVal = null;
-        this.from = null;
-        this.to = null;
-        this.computed = null;
-        this.ease = quadInOut;
-        this.initialized = false;
-        this.target = target;
-        this.tweenable = target.tweenable;
-        this.targetType = target.type;
-        this.type = twType;
-        this.prop = prop;
-        this.fromVal = fromVal;
-        this.toVal = toVal;
-        this.duration = duration;
-        this.delay = delay;
-        this.start = start;
-        this.totalDuration = duration + delay;
     }
 }
 
@@ -719,12 +724,14 @@ class G extends Dispatcher {
             }
             let delay = options.delay || 0;
             let tw = new Tween(target, twType, prop, fromVal, toVal, dur, delay, 0);
+            tw.pos = i;
             arr.push(tw);
         }
         return arr;
     }
     static _initTweens(kf) {
-        let transOldVos;
+        let transTweens;
+        let transOldTweens;
         let transChecked = false;
         for (let i = 0; i < kf.tweens.length; i++) {
             const tw = kf.tweens[i];
@@ -733,30 +740,34 @@ class G extends Dispatcher {
             if (tw.target.type === "dom") {
                 switch (tw.type) {
                     case "css":
-                        from = getVo(tw.targetType, tw.prop, tw.fromVal);
+                    case "color":
+                        from = getVo(tw.targetType, tw.prop, tw.target.getExistingValue(tw.prop));
                         break;
                     case "transform":
                         if (!transChecked) {
-                            transOldVos = transStrToMap(tw.target.getExistingValue("transform"));
+                            transOldTweens = transStrToMap(tw.target.getExistingValue("transform"));
+                            transTweens = new Map();
                             transChecked = true;
                         }
                         if (tw.fromVal) {
                             from = getVo("dom", tw.prop, tw.fromVal);
-                            if (transOldVos) {
-                                transOldVos.delete(tw.prop);
-                            }
                         }
                         else {
-                            if (transOldVos && transOldVos.has(tw.prop)) {
-                                from = transOldVos.get(tw.prop);
+                            if (transOldTweens && transOldTweens.has(tw.prop)) {
+                                from = transOldTweens.get(tw.prop).from;
+                            }
+                            else {
+                                from = from = getVo("dom", tw.prop, tw.fromVal);
                             }
                         }
+                        transTweens.set(tw.prop, tw);
                         break;
                 }
             }
             tw.from = from;
             tw.to = to;
             normalizeVos(from, to, tw.target.context);
+            console.log(transOldTweens, transTweens);
         }
     }
 }
