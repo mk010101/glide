@@ -7,6 +7,9 @@ import {Evt} from "./events";
 import {TweenGroup, Value} from "../types";
 import {Vo} from "./vo";
 import {is} from "../util/regex";
+import * as $Ease from "../util/ease";
+
+const Ease: { [key: string]: any } = $Ease;
 
 export class G extends Dispatcher {
 
@@ -192,7 +195,7 @@ export class G extends Dispatcher {
     }
 
     static _getTweens(target: Target, duration: number, params: any, options: any): any {
-        // let arr: Tween[] = [];
+
         const keys = Object.keys(params);
 
         let tg: TweenGroup = {
@@ -226,7 +229,23 @@ export class G extends Dispatcher {
 
             let delay = options.delay || 0;
             let tw = new Tween(target, twType, prop, fromVal, toVal, dur, delay, 0);
-            // tw.pos = i;
+
+            let ease: any;
+            let optEase = options.ease;
+            if (optEase) {
+                if (is.string(optEase)) {
+                    let res = optEase.match(/[\w]+|[-\d.]+/g);
+                    if (res && res.length === 1) {
+                        ease = Ease[optEase];
+                    } else if (res && res.length === 2) {
+                        let e = Ease[res[0]];
+                        if (is.func(e)) ease = Ease[res[0]](parseFloat(res[1]));
+                    }
+                } else ease = optEase;
+            }
+
+            tw.ease = ease || Ease.quadInOut;
+
             tg.tweens.push(tw);
 
 

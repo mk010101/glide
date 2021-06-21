@@ -343,12 +343,198 @@
         return arr;
     }
 
+    function powerInOut(pow) {
+        return function (t) {
+            if ((t *= 2) < 1)
+                return 0.5 * Math.pow(t, pow);
+            return 1 - 0.5 * Math.abs(Math.pow(2 - t, pow));
+        };
+    }
+    function powerIn(pow) {
+        return function (t) {
+            return Math.pow(t, pow);
+        };
+    }
+    function powerOut(pow) {
+        return function (t) {
+            return 1 - Math.pow(1 - t, pow);
+        };
+    }
+    function getBackIn(s = 1.70158) {
+        return function (t = 0.0) {
+            return t * t * ((s + 1) * t - s);
+        };
+    }
+    function getBackOut(s = 1.70158) {
+        return function (t = 0.0) {
+            return (t = t - 1) * t * ((s + 1) * t + s) + 1;
+        };
+    }
+    function getBackInOut(s = 1.70158) {
+        return function (t = 0.0) {
+            if ((t *= 2) < 1)
+                return 0.5 * (t * t * ((s + 1) * t - s));
+            return 0.5 * ((t -= 2) * t * ((s + 1) * t + s) + 2);
+        };
+    }
+    function getElasticIn(period = 0.3, amplitude = 1.70158) {
+        return function (t) {
+            let a = 1;
+            if (t === 0)
+                return 0;
+            if (t === 1)
+                return 1;
+            if (!period)
+                period = 0.3;
+            amplitude = period / (2 * Math.PI) * Math.asin(1 / a);
+            return -(a * Math.pow(2, 10 * (t -= 1)) * Math.sin((t - amplitude) * (2 * Math.PI) / period));
+        };
+    }
+    function getElasticOut(period = 0.3, amplitude = 1.70158) {
+        return function (t) {
+            let a = 1;
+            if (t === 0)
+                return 0;
+            if (t === 1)
+                return 1;
+            amplitude = period / (2 * Math.PI) * Math.asin(1 / a);
+            return a * Math.pow(2, -10 * t) * Math.sin((t - amplitude) * (2 * Math.PI) / period) + 1;
+        };
+    }
+    function getElasticInOut(period = 0.45, amplitude = 1.70158) {
+        return function (t) {
+            let a = 1;
+            if (t === 0)
+                return 0;
+            if ((t /= 1 / 2) === 2)
+                return 1;
+            amplitude = period / (2 * Math.PI) * Math.asin(1 / a);
+            if (t < 1)
+                return -.5 * (a * Math.pow(2, 10 * (t -= 1)) * Math.sin((t - amplitude) * (2 * Math.PI) / period));
+            return a * Math.pow(2, -10 * (t -= 1)) * Math.sin((t - amplitude) * (2 * Math.PI) / period) * 0.5 + 1;
+        };
+    }
+    function linear(t = 0.0) {
+        return t;
+    }
+    function quadIn(t = 0.0) {
+        return t * t;
+    }
+    function quadOut(t = 0.0) {
+        return t * (2 - t);
+    }
     function quadInOut(t = 0.0) {
         if (t < 0.5)
             return 2.0 * t * t;
         else
             return -1.0 + (4.0 - 2.0 * t) * t;
     }
+    const cubicIn = powerIn(3);
+    const cubicOut = powerOut(3);
+    const cubicInOut = powerInOut(3);
+    const backIn = getBackIn();
+    const backOut = getBackOut();
+    const backInOut = getBackInOut();
+    const elasticIn = getElasticIn();
+    const elasticOut = getElasticOut();
+    const elasticInOut = getElasticInOut();
+    function circleIn(t = 0.0) {
+        return -1 * (Math.sqrt(1 - t * t) - 1);
+    }
+    function circleOut(t = 0.0) {
+        return Math.sqrt(1 - (t = t - 1) * t);
+    }
+    function circleInOut(t = 0.0) {
+        if ((t /= 1 / 2) < 1)
+            return -1 / 2 * (Math.sqrt(1 - t * t) - 1);
+        return 1 / 2 * (Math.sqrt(1 - (t -= 2) * t) + 1);
+    }
+    function expoIn(t = 0.0) {
+        return (t === 0) ? 0 : Math.pow(2, 10 * (t - 1));
+    }
+    function expoOut(t = 0.0) {
+        return (t === 1) ? 1 : (-Math.pow(2, -10 * t) + 1);
+    }
+    function expoInOut(t = 0.0) {
+        if (t === 0)
+            return 0;
+        if (t === 1)
+            return 1;
+        if ((t /= 1 / 2) < 1)
+            return 1 / 2 * Math.pow(2, 10 * (t - 1));
+        return 1 / 2 * (-Math.pow(2, -10 * --t) + 2);
+    }
+    function bounceIn(t) {
+        return 1 - bounceOut(1 - t);
+    }
+    function bounceOut(t) {
+        if (t < 1 / 2.75) {
+            return (7.5625 * t * t);
+        }
+        else if (t < 2 / 2.75) {
+            return (7.5625 * (t -= 1.5 / 2.75) * t + 0.75);
+        }
+        else if (t < 2.5 / 2.75) {
+            return (7.5625 * (t -= 2.25 / 2.75) * t + 0.9375);
+        }
+        else {
+            return (7.5625 * (t -= 2.625 / 2.75) * t + 0.984375);
+        }
+    }
+    function bounceInOut(t) {
+        if (t < 0.5)
+            return bounceIn(t * 2) * .5;
+        return bounceOut(t * 2 - 1) * 0.5 + 0.5;
+    }
+    function stepped(steps = 5) {
+        return function (t) {
+            if (t <= 0) {
+                return 0;
+            }
+            else if (t >= 1) {
+                return 1;
+            }
+            else {
+                return ((steps * t) | 0) * (1 / steps);
+            }
+        };
+    }
+
+    var ease = /*#__PURE__*/Object.freeze({
+        __proto__: null,
+        powerInOut: powerInOut,
+        powerIn: powerIn,
+        powerOut: powerOut,
+        getBackIn: getBackIn,
+        getBackOut: getBackOut,
+        getBackInOut: getBackInOut,
+        getElasticIn: getElasticIn,
+        getElasticOut: getElasticOut,
+        getElasticInOut: getElasticInOut,
+        linear: linear,
+        quadIn: quadIn,
+        quadOut: quadOut,
+        quadInOut: quadInOut,
+        cubicIn: cubicIn,
+        cubicOut: cubicOut,
+        cubicInOut: cubicInOut,
+        backIn: backIn,
+        backOut: backOut,
+        backInOut: backInOut,
+        elasticIn: elasticIn,
+        elasticOut: elasticOut,
+        elasticInOut: elasticInOut,
+        circleIn: circleIn,
+        circleOut: circleOut,
+        circleInOut: circleInOut,
+        expoIn: expoIn,
+        expoOut: expoOut,
+        expoInOut: expoInOut,
+        bounceIn: bounceIn,
+        bounceOut: bounceOut,
+        bounceInOut: bounceInOut,
+        stepped: stepped
+    });
 
     class Tween {
         constructor(target, twType, prop, fromVal, toVal, duration, delay, start) {
@@ -584,6 +770,7 @@
         end: end,
     };
 
+    const Ease = ease;
     class G extends Dispatcher {
         constructor(targets, duration, params, options = {}) {
             super();
@@ -753,6 +940,24 @@
                 }
                 let delay = options.delay || 0;
                 let tw = new Tween(target, twType, prop, fromVal, toVal, dur, delay, 0);
+                let ease;
+                let optEase = options.ease;
+                if (optEase) {
+                    if (is.string(optEase)) {
+                        let res = optEase.match(/[\w]+|[-\d.]+/g);
+                        if (res && res.length === 1) {
+                            ease = Ease[optEase];
+                        }
+                        else if (res && res.length === 2) {
+                            let e = Ease[res[0]];
+                            if (is.func(e))
+                                ease = Ease[res[0]](parseFloat(res[1]));
+                        }
+                    }
+                    else
+                        ease = optEase;
+                }
+                tw.ease = ease || Ease.quadInOut;
                 tg.tweens.push(tw);
             }
             return tg;
@@ -847,6 +1052,7 @@
     }
     Glide.items = [];
     Glide.lastTick = 0;
+    Glide.ease = ease;
     Glide._computeStyle = true;
     Glide.tick(performance.now());
     const glide = Glide;
