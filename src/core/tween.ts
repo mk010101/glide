@@ -20,7 +20,7 @@ export class Tween {
     computed: Vo = null;
     ease: Function = quadInOut;
     initialized = false;
-    pos = 0;
+    // pos = 0;
 
     constructor(target: Target,
                 twType: TweenType,

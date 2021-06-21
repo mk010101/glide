@@ -4,7 +4,7 @@ import {getTweenType, getVo, minMax, normalizeVos, print, transStrToMap} from ".
 import {Keyframe} from "./keyframe";
 import {Tween} from "./tween";
 import {Evt} from "./events";
-import {Value} from "../types";
+import {TweenGroup, Value} from "../types";
 import {Vo} from "./vo";
 import {is} from "../util/regex";
 
@@ -43,8 +43,8 @@ export class G extends Dispatcher {
         let kf = new Keyframe();
 
         for (let i = 0; i < this.targets.length; i++) {
-            const tweens = G._getTweens(this.targets[i], duration, params, options);
-            kf.push(...tweens);
+            const tg = G._getTweens(this.targets[i], duration, params, options);
+            kf.push(tg);
         }
 
         this.totalDuration += kf.totalDuration * this.repeat;
@@ -69,43 +69,67 @@ export class G extends Dispatcher {
 
         this.time += t * this.dir;
         this.currentTime += t;
-        let tws = this.currentKf.tweens;
 
+        const tweens = this.currentKf.tweens;
 
-        for (let i = 0; i < tws.length; i++) {
+        for (let i = 0; i < tweens.length; i++) {
 
-            const tween = tws[i];
-            const twType = tween.type;
+            const tg = tweens[i];
+            const tweenable = tg.tweenable;
+            const type = tg.type;
 
-            let elapsed = minMax(this.time - tween.start - tween.delay, 0, tween.duration) / tween.duration;
-            let eased = isNaN(elapsed) ? 1 : tween.ease(elapsed);
-            let from: Vo = tween.from;
-            let to: Vo = tween.to;
-            let tweenable = tween.tweenable;
-            let prop = tween.prop;
+            let transformsStr = "";
 
-            switch (twType) {
+            for (let j = 0; j < tg.tweens.length; j++) {
+                const tween = tg.tweens[j];
+                const twType = tween.type;
 
-                case "css":
-                    let str = "";
+                let elapsed = minMax(this.time - tween.start - tween.delay, 0, tween.duration) / tween.duration;
+                let eased = isNaN(elapsed) ? 1 : tween.ease(elapsed);
+                let from: Vo = tween.from;
+                let to: Vo = tween.to;
+                let tweenable = tween.tweenable;
+                let prop = tween.prop;
+                //console.log(tween)
 
-                    for (let j = 0; j < from.values.length; j++) {
-                        let val = from.values[j] + eased * (to.values[j] - tween.from.values[j]);
-                        str += `${val}${to.units[j]} `;
-                    }
-                    tweenable[prop] = str;
-                    break;
+                switch (twType) {
 
-                case "color":
-                    let r = ~~(from.values[0] + eased * to.diffVals[0]);
-                    let g = ~~(from.values[1] + eased * to.diffVals[1]);
-                    let b = ~~(from.values[2] + eased * to.diffVals[2]);
-                    let a = (from.values.length === 4) ? ", " + (from.values[3] + eased * to.diffVals[3]) : "";
-                    tweenable[prop] = `${to.strBegin}(${r}, ${g}, ${b}${a})`;
-                    break;
+                    case "css":
+                        let str = "";
+
+                        for (let j = 0; j < from.values.length; j++) {
+                            let val = from.values[j] + eased * (to.values[j] - tween.from.values[j]);
+                            str += `${val}${to.units[j]} `;
+                        }
+                        tweenable[prop] = str;
+                        break;
+
+                    case "color":
+                        let r = ~~(from.values[0] + eased * to.diffVals[0]);
+                        let g = ~~(from.values[1] + eased * to.diffVals[1]);
+                        let b = ~~(from.values[2] + eased * to.diffVals[2]);
+                        let a = (from.values.length === 4) ? ", " + (from.values[3] + eased * to.diffVals[3]) : "";
+                        tweenable[prop] = `${to.strBegin}(${r}, ${g}, ${b}${a})`;
+                        break;
+
+                    case "transform":
+                        if (from.keepOriginal) {
+                            transformsStr += from.keepStr + " ";
+                        } else {
+                            for (let j = 0; j < from.values.length; j++) {
+                                let val = from.values[j] + eased * (to.values[j] - tween.from.values[j]);
+                                transformsStr += `${to.prop}(${val}${to.units[j]}) `;
+                            }
+                        }
+                        break;
+                }
+
             }
 
-            //tween.target[tween.prop] = tween.from.values[0] + eased * (tween.to.values[0] - tween.from.values[0]);
+            if (transformsStr){
+                tweenable.transform = transformsStr;
+            }
+
 
         }
 
@@ -167,10 +191,15 @@ export class G extends Dispatcher {
         return t;
     }
 
-    static _getTweens(target: Target, duration: number, params: any, options: any): Tween[] {
-        let arr: Tween[] = [];
+    static _getTweens(target: Target, duration: number, params: any, options: any): any {
+        // let arr: Tween[] = [];
         const keys = Object.keys(params);
 
+        let tg: TweenGroup = {
+            type: target.type,
+            tweenable: target.tweenable,
+            tweens: []
+        };
 
         for (let i = 0; i < keys.length; i++) {
 
@@ -197,22 +226,108 @@ export class G extends Dispatcher {
 
             let delay = options.delay || 0;
             let tw = new Tween(target, twType, prop, fromVal, toVal, dur, delay, 0);
-            tw.pos = i;
-            arr.push(tw);
+            // tw.pos = i;
+            tg.tweens.push(tw);
 
 
         }
-        return arr;
+        return tg;
 
     }
 
+    /*
+        {
+            tweenable: Tweenable
+            tweens: []
+        }
+     */
     static _initTweens(kf: Keyframe) {
 
-        let transTweens: Map<string, Tween>;
-        let transOldTweens: Map<string, Tween>;
-        let transChecked = false;
+
 
         for (let i = 0; i < kf.tweens.length; i++) {
+
+            const tg = kf.tweens[i];
+            let transTweens: Map<string, Tween>;
+            let transOldTweens: Map<string, Tween>;
+            let transChecked = false;
+
+            for (let j = 0; j < tg.tweens.length; j++) {
+                const tw = tg.tweens[j];
+
+                let from: Vo;
+                let to: Vo = getVo(tw.targetType, tw.prop, tw.toVal);
+
+                if (tw.target.type === "dom") {
+
+                    switch (tw.type) {
+
+                        case "css":
+                        case "color":
+                            from = getVo(tw.targetType, tw.prop, tw.target.getExistingValue(tw.prop));
+                            break;
+
+                        case "transform":
+
+                            let to = getVo("dom", tw.prop, tw.toVal);
+
+                            if (!transChecked) {
+                                transOldTweens = transStrToMap(tw.target.getExistingValue("transform"));
+                                transTweens = new Map<string, Tween>();
+                                transChecked = true;
+                            }
+
+                            if (tw.fromVal) {
+                                from = getVo("dom", tw.prop, tw.fromVal);
+                            } else {
+                                if (transOldTweens && transOldTweens.has(tw.prop)) {
+                                    from = transOldTweens.get(tw.prop).from;
+                                    from.keepOriginal = false;
+                                } else {
+                                    from = from = getVo("dom", tw.prop, tw.fromVal);
+                                }
+                            }
+                            transTweens.set(tw.prop, tw);
+                            // tg.tweens.splice(j, 1);
+                            break;
+
+                    }
+                }
+
+                tw.from = from;
+                tw.to = to;
+                normalizeVos(from, to, tw.target.context);
+
+            }
+
+            if (transOldTweens) {
+                transTweens.forEach((v, k) => {
+                    transOldTweens.set(k, v);
+                });
+
+                for (let j = tg.tweens.length-1; j >= 0; j--) {
+                    if (tg.tweens[j].type === "transform") {
+                        tg.tweens.splice(j, 1);
+                    }
+                }
+
+                transOldTweens.forEach((v) => {
+                    tg.tweens.push(v)
+                   // kf.tweens.splice(v.pos, 1);
+                });
+
+
+                // console.log(tg.tweens)
+
+            }
+
+        }
+
+
+        /*
+        for (let i = 0; i < kf.tweens.length; i++) {
+
+
             const tw = kf.tweens[i];
 
             let from: Vo;
@@ -228,45 +343,62 @@ export class G extends Dispatcher {
                         break;
 
                     case "transform":
-
-                        if (!transChecked) {
-                            transOldTweens = transStrToMap(tw.target.getExistingValue("transform"));
-                            transTweens = new Map<string, Tween>();
-                            transChecked = true;
-                        }
-
-                        if (tw.fromVal) {
-                            from = getVo("dom", tw.prop, tw.fromVal);
-                            if (transOldTweens) {
-                                //transOldTweens.delete(tw.prop);
-                            }
-                        } else {
-                            if (transOldTweens && transOldTweens.has(tw.prop)) {
-                                from = transOldTweens.get(tw.prop).from;
-                            } else {
-                                from = from = getVo("dom", tw.prop, tw.fromVal);
-                            }
-                        }
-                        transTweens.set(tw.prop, tw);
                         break;
 
                 }
-
-
             }
 
             tw.from = from;
             tw.to = to;
             normalizeVos(from, to, tw.target.context);
-            console.log(transOldTweens, transTweens)
-
-            if (transOldTweens) {
-                // transTweens.forEach((v, k)=> {
-                //
-                // })
-            }
 
         }
+        if (kf.transforms) {
+            for (let i = 0; i < kf.transforms.length; i++) {
+
+                let tw = kf.transforms[i];
+                let from: any;
+                let to = getVo("dom", tw.prop, tw.toVal);
+
+                if (!transChecked) {
+                    transOldTweens = transStrToMap(tw.target.getExistingValue("transform"));
+                    transTweens = new Map<string, Tween>();
+                    transChecked = true;
+                }
+
+                if (tw.fromVal) {
+                    from = getVo("dom", tw.prop, tw.fromVal);
+                } else {
+                    if (transOldTweens && transOldTweens.has(tw.prop)) {
+                        from = transOldTweens.get(tw.prop).from;
+                        from.keepOriginal = false;
+                    } else {
+                        from = from = getVo("dom", tw.prop, tw.fromVal);
+                    }
+                }
+                transTweens.set(tw.prop, tw);
+
+            }
+
+            // scale(.8, .7) translateX(50px) rotate(20deg);
+            if (transOldTweens) {
+                transTweens.forEach((v, k) => {
+                    transOldTweens.set(k, v);
+                });
+
+                transOldTweens.forEach((v) => {
+                    kf.tweens.splice(v.pos, 1);
+                });
+
+                transOldTweens.forEach((v) => {
+                    kf.tweens.push(v);
+                });
+
+            }
+            console.log(kf.tweens)
+
+        }
+        */
 
     }
 

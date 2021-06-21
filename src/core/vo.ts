@@ -11,5 +11,5 @@ export class Vo {
     keepOriginal:boolean = false;
     keepStr:string = "";
     diffVals:number[] = [];
-    // normalizedUnits: string[] = [];
 }
+

@@ -2,16 +2,16 @@ export class Keyframe {
     constructor() {
         this.duration = 0;
         this.totalDuration = 0;
-        this.tweens = [];
         this.initialized = false;
+        this.tweens = [];
     }
-    push(...t) {
-        for (let i = 0; i < t.length; i++) {
-            let tw = t[i];
+    push(tg) {
+        for (let i = 0; i < tg.tweens.length; i++) {
+            let tw = tg.tweens[i];
             if (this.totalDuration < tw.totalDuration) {
                 this.totalDuration = tw.totalDuration;
             }
-            this.tweens.push(t[i]);
         }
+        this.tweens.push(tg);
     }
 }
