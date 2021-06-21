@@ -21,9 +21,9 @@ export class Tween {
         this.targetType = target === null || target === void 0 ? void 0 : target.type;
         this.type = twType;
         this.prop = prop;
+        this.duration = duration;
         this.fromVal = fromVal;
         this.toVal = toVal;
-        this.duration = duration;
         this.delay = delay;
         this.start = start;
         this.totalDuration = duration + delay;

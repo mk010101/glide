@@ -1,6 +1,6 @@
 import Target from "./target";
 import Dispatcher from "./dispatcher";
-import { getTweenType, getVo, minMax, normalizeVos, transStrToMap } from "../util/util";
+import { getPropType, getTweenType, getVo, minMax, normalizeVos, strToMap } from "../util/util";
 import { Keyframe } from "./keyframe";
 import { Tween } from "./tween";
 import { Evt } from "./events";
@@ -55,6 +55,7 @@ export class G extends Dispatcher {
             const tweenable = tg.tweenable;
             const type = tg.type;
             let transformsStr = "";
+            let filtersStr = "";
             for (let j = 0; j < tg.tweens.length; j++) {
                 const tween = tg.tweens[j];
                 const twType = tween.type;
@@ -91,10 +92,34 @@ export class G extends Dispatcher {
                             }
                         }
                         break;
+                    case "filter":
+                        if (prop === "drop-shadow" && !from.keepOriginal) {
+                            let x = from.values[0] + eased * to.diffVals[0];
+                            let y = from.values[1] + eased * to.diffVals[1];
+                            let brad = from.values[2] + eased * to.diffVals[2];
+                            let r = ~~(from.values[3] + eased * to.diffVals[3]);
+                            let g = ~~(from.values[4] + eased * to.diffVals[4]);
+                            let b = ~~(from.values[5] + eased * to.diffVals[5]);
+                            let a = (from.values.length === 7) ? ", " + (from.values[6] + eased * (to.values[6] - from.values[6])) : "";
+                            let pref = (from.values.length === 7) ? "rgba" : "rgb";
+                            filtersStr += `drop-shadow(${x}${to.units[0]} ${y}${to.units[1]} ${brad}${to.units[2]} `;
+                            filtersStr += `${pref}(${r}, ${g}, ${b}${a}))`;
+                        }
+                        else if (from.keepOriginal) {
+                            filtersStr += from.keepStr + " ";
+                        }
+                        else {
+                            let v = from.values[0] + eased * to.diffVals[0];
+                            filtersStr += `${to.prop}(${v}${to.units[0]}) `;
+                        }
+                        break;
                 }
             }
             if (transformsStr) {
                 tweenable.transform = transformsStr;
+            }
+            if (filtersStr) {
+                tweenable.filter = filtersStr;
             }
         }
         this.dispatch(Evt.progress, null);
@@ -161,6 +186,18 @@ export class G extends Dispatcher {
             let dur = duration;
             let fromVal;
             let toVal;
+            if (target.type === "dom") {
+                if (prop === "bg")
+                    prop = "backgroundColor";
+                else if (prop === "x")
+                    prop = "translateX";
+                else if (prop === "y")
+                    prop = "translateY";
+                else if (prop === "hueRotate")
+                    prop = "hue-rotate";
+                else if (prop === "dropShadow")
+                    prop = "drop-shadow";
+            }
             const twType = getTweenType(target.type, prop);
             if (is.array(val)) {
                 fromVal = val[0];
@@ -194,6 +231,7 @@ export class G extends Dispatcher {
                     ease = optEase;
             }
             tw.ease = ease || Ease.quadInOut;
+            tw.propType = getPropType(prop);
             tg.tweens.push(tw);
         }
         return tg;
@@ -204,6 +242,11 @@ export class G extends Dispatcher {
             let transTweens;
             let transOldTweens;
             let transChecked = false;
+            let filterTweens;
+            let filterOldTweens;
+            let filterChecked = false;
+            let oldTweens;
+            let newTweens;
             for (let j = 0; j < tg.tweens.length; j++) {
                 const tw = tg.tweens[j];
                 let from;
@@ -215,25 +258,34 @@ export class G extends Dispatcher {
                             from = getVo(tw.targetType, tw.prop, tw.target.getExistingValue(tw.prop));
                             break;
                         case "transform":
-                            let to = getVo("dom", tw.prop, tw.toVal);
-                            if (!transChecked) {
-                                transOldTweens = transStrToMap(tw.target.getExistingValue("transform"));
+                        case "filter":
+                            if (tw.type === "transform" && !transChecked) {
+                                transOldTweens = strToMap(tw.target.getExistingValue("transform"));
                                 transTweens = new Map();
                                 transChecked = true;
+                                oldTweens = transOldTweens;
+                                newTweens = transTweens;
+                            }
+                            else if (!filterChecked) {
+                                filterOldTweens = strToMap(tw.target.getExistingValue("filter"));
+                                filterTweens = new Map();
+                                filterChecked = true;
+                                oldTweens = filterOldTweens;
+                                newTweens = filterTweens;
                             }
                             if (tw.fromVal) {
                                 from = getVo("dom", tw.prop, tw.fromVal);
                             }
                             else {
-                                if (transOldTweens && transOldTweens.has(tw.prop)) {
-                                    from = transOldTweens.get(tw.prop).from;
+                                if (oldTweens && oldTweens.has(tw.prop)) {
+                                    from = oldTweens.get(tw.prop).from;
                                     from.keepOriginal = false;
                                 }
                                 else {
                                     from = from = getVo("dom", tw.prop, tw.fromVal);
                                 }
                             }
-                            transTweens.set(tw.prop, tw);
+                            newTweens.set(tw.prop, tw);
                             break;
                     }
                 }

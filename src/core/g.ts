@@ -1,6 +1,6 @@
 import Target from "./target";
 import Dispatcher from "./dispatcher";
-import {getTweenType, getVo, minMax, normalizeVos, print, transStrToMap} from "../util/util";
+import {getPropType, getTweenType, getVo, minMax, normalizeVos, print, strToMap} from "../util/util";
 import {Keyframe} from "./keyframe";
 import {Tween} from "./tween";
 import {Evt} from "./events";
@@ -82,6 +82,7 @@ export class G extends Dispatcher {
             const type = tg.type;
 
             let transformsStr = "";
+            let filtersStr = "";
 
             for (let j = 0; j < tg.tweens.length; j++) {
                 const tween = tg.tweens[j];
@@ -93,7 +94,6 @@ export class G extends Dispatcher {
                 let to: Vo = tween.to;
                 let tweenable = tween.tweenable;
                 let prop = tween.prop;
-                //console.log(tween)
 
                 switch (twType) {
 
@@ -125,12 +125,36 @@ export class G extends Dispatcher {
                             }
                         }
                         break;
+
+                    case "filter":
+                        if (prop === "drop-shadow" && !from.keepOriginal) {
+                            let x = from.values[0] + eased * to.diffVals[0];
+                            let y = from.values[1] + eased * to.diffVals[1];
+                            let brad = from.values[2] + eased * to.diffVals[2];
+                            let r = ~~(from.values[3] + eased * to.diffVals[3]);
+                            let g = ~~(from.values[4] + eased * to.diffVals[4]);
+                            let b = ~~(from.values[5] + eased * to.diffVals[5]);
+                            let a = (from.values.length === 7) ? ", " + (from.values[6] + eased * (to.values[6] - from.values[6])): "";
+                            let pref = (from.values.length === 7) ? "rgba" : "rgb";
+                            filtersStr += `drop-shadow(${x}${to.units[0]} ${y}${to.units[1]} ${brad}${to.units[2]} `;
+                            filtersStr += `${pref}(${r}, ${g}, ${b}${a}))`;
+                        } else if (from.keepOriginal) {
+                            filtersStr += from.keepStr + " ";
+                        } else {
+                            let v = from.values[0] + eased * to.diffVals[0];
+                            filtersStr += `${to.prop}(${v}${to.units[0]}) `;
+                        }
+                        break;
                 }
 
             }
 
-            if (transformsStr){
+            if (transformsStr) {
                 tweenable.transform = transformsStr;
+            }
+
+            if (filtersStr) {
+                tweenable.filter = filtersStr;
             }
 
 
@@ -213,6 +237,19 @@ export class G extends Dispatcher {
             let fromVal: any;
             let toVal: any;
 
+            if (target.type === "dom") {
+                if (prop === "bg")
+                    prop = "backgroundColor";
+                else if (prop === "x")
+                    prop = "translateX";
+                else if (prop === "y")
+                    prop = "translateY";
+                else if (prop === "hueRotate")
+                    prop = "hue-rotate";
+                else if (prop === "dropShadow")
+                    prop = "drop-shadow";
+            }
+
             const twType = getTweenType(target.type, prop);
 
             if (is.array(val)) {
@@ -245,7 +282,7 @@ export class G extends Dispatcher {
             }
 
             tw.ease = ease || Ease.quadInOut;
-
+            tw.propType = getPropType(prop);
             tg.tweens.push(tw);
 
 
@@ -254,22 +291,23 @@ export class G extends Dispatcher {
 
     }
 
-    /*
-        {
-            tweenable: Tweenable
-            tweens: []
-        }
-     */
+
     static _initTweens(kf: Keyframe) {
-
-
 
         for (let i = 0; i < kf.tweens.length; i++) {
 
             const tg = kf.tweens[i];
+
             let transTweens: Map<string, Tween>;
             let transOldTweens: Map<string, Tween>;
             let transChecked = false;
+
+            let filterTweens: Map<string, Tween>;
+            let filterOldTweens: Map<string, Tween>;
+            let filterChecked = false;
+
+            let oldTweens: Map<string, Tween>;
+            let newTweens: Map<string, Tween>;
 
             for (let j = 0; j < tg.tweens.length; j++) {
                 const tw = tg.tweens[j];
@@ -287,28 +325,36 @@ export class G extends Dispatcher {
                             break;
 
                         case "transform":
+                        case "filter":
 
-                            let to = getVo("dom", tw.prop, tw.toVal);
-
-                            if (!transChecked) {
-                                transOldTweens = transStrToMap(tw.target.getExistingValue("transform"));
+                            // let to = getVo("dom", tw.prop, tw.toVal);
+                            if (tw.type === "transform" && !transChecked) {
+                                transOldTweens = strToMap(tw.target.getExistingValue("transform"));
                                 transTweens = new Map<string, Tween>();
                                 transChecked = true;
+                                oldTweens = transOldTweens;
+                                newTweens = transTweens;
+                            } else if (!filterChecked) {
+                                filterOldTweens = strToMap(tw.target.getExistingValue("filter"));
+                                filterTweens = new Map<string, Tween>();
+                                filterChecked = true;
+                                oldTweens = filterOldTweens;
+                                newTweens = filterTweens;
                             }
 
                             if (tw.fromVal) {
                                 from = getVo("dom", tw.prop, tw.fromVal);
                             } else {
-                                if (transOldTweens && transOldTweens.has(tw.prop)) {
-                                    from = transOldTweens.get(tw.prop).from;
+                                if (oldTweens && oldTweens.has(tw.prop)) {
+                                    from = oldTweens.get(tw.prop).from;
                                     from.keepOriginal = false;
                                 } else {
                                     from = from = getVo("dom", tw.prop, tw.fromVal);
                                 }
                             }
-                            transTweens.set(tw.prop, tw);
-                            // tg.tweens.splice(j, 1);
+                            newTweens.set(tw.prop, tw);
                             break;
+
 
                     }
                 }
@@ -324,7 +370,7 @@ export class G extends Dispatcher {
                     transOldTweens.set(k, v);
                 });
 
-                for (let j = tg.tweens.length-1; j >= 0; j--) {
+                for (let j = tg.tweens.length - 1; j >= 0; j--) {
                     if (tg.tweens[j].type === "transform") {
                         tg.tweens.splice(j, 1);
                     }
@@ -332,92 +378,11 @@ export class G extends Dispatcher {
 
                 transOldTweens.forEach((v) => {
                     tg.tweens.push(v)
-                   // kf.tweens.splice(v.pos, 1);
                 });
-
-
-                // console.log(tg.tweens)
 
             }
 
         }
-
-
-        /*
-        for (let i = 0; i < kf.tweens.length; i++) {
-
-
-            const tw = kf.tweens[i];
-
-            let from: Vo;
-            let to: Vo = getVo(tw.targetType, tw.prop, tw.toVal);
-
-            if (tw.target.type === "dom") {
-
-                switch (tw.type) {
-
-                    case "css":
-                    case "color":
-                        from = getVo(tw.targetType, tw.prop, tw.target.getExistingValue(tw.prop));
-                        break;
-
-                    case "transform":
-                        break;
-
-                }
-            }
-
-            tw.from = from;
-            tw.to = to;
-            normalizeVos(from, to, tw.target.context);
-
-        }
-        if (kf.transforms) {
-            for (let i = 0; i < kf.transforms.length; i++) {
-
-                let tw = kf.transforms[i];
-                let from: any;
-                let to = getVo("dom", tw.prop, tw.toVal);
-
-                if (!transChecked) {
-                    transOldTweens = transStrToMap(tw.target.getExistingValue("transform"));
-                    transTweens = new Map<string, Tween>();
-                    transChecked = true;
-                }
-
-                if (tw.fromVal) {
-                    from = getVo("dom", tw.prop, tw.fromVal);
-                } else {
-                    if (transOldTweens && transOldTweens.has(tw.prop)) {
-                        from = transOldTweens.get(tw.prop).from;
-                        from.keepOriginal = false;
-                    } else {
-                        from = from = getVo("dom", tw.prop, tw.fromVal);
-                    }
-                }
-                transTweens.set(tw.prop, tw);
-
-            }
-
-            // scale(.8, .7) translateX(50px) rotate(20deg);
-            if (transOldTweens) {
-                transTweens.forEach((v, k) => {
-                    transOldTweens.set(k, v);
-                });
-
-                transOldTweens.forEach((v) => {
-                    kf.tweens.splice(v.pos, 1);
-                });
-
-                transOldTweens.forEach((v) => {
-                    kf.tweens.push(v);
-                });
-
-            }
-            console.log(kf.tweens)
-
-        }
-        */
 
     }
 

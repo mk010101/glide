@@ -3,6 +3,7 @@ import {Tween} from "./core/tween";
 export type TargetType = "dom" | "obj";
 export type TweenType = "transform" | "filter" | "color" | "css" | "direct" | "obj";
 export type ValueType = "null" | "number" | "string";
+export type PropType = "dropShadow" | "color" | "matrix" | "other";
 
 export type Value = {
     duration: number;
