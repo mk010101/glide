@@ -1,7 +1,7 @@
-import {TargetType, TweenType, ValueType, ValueUnit} from "../types";
+import {PropType, TargetType, TweenType, ValueType, ValueUnit} from "../types";
 import {getObjType, is, regColorVal, regProp, regStrValues, regTypes, regValues, regVUs} from "./regex";
 import {Vo} from "../core/vo";
-import {toRgbStr} from "./color";
+import {toRgb, toRgbStr} from "./color";
 import Context from "../core/context";
 import {Tween} from "../core/tween";
 
@@ -53,6 +53,21 @@ export function getValueType(val: any = null): ValueType {
             return "string";
     }
     return;
+}
+
+
+export function getPropType(prop: string): PropType {
+
+    if (is.propDropShadow(prop))
+        return "dropShadow";
+    else if (is.propColor(prop))
+        return "color";
+    else if (is.propMatrix(prop))
+        return "matrix";
+
+
+    return "other";
+
 }
 
 /**
@@ -139,19 +154,20 @@ export function getVo(targetType: TargetType, prop: any, val: any) {
     vo.targetType = targetType;
     vo.tweenType = getTweenType(targetType, prop);
     vo.prop = prop;
+    let propType = getPropType(prop);
 
-    switch (vo.tweenType) {
+    switch (propType) {
 
-        case "css":
-        case "transform":
-            let vus: ValueUnit[] = getValuesUnits(val);
-            //console.log(vus)
-            for (let i = 0; i < vus.length; i++) {
-                vo.values.push(vus[i].value);
-                vo.units.push(vus[i].unit);
-                vo.increments.push(vus[i].increment);
-            }
-            break;
+        // case "css":
+        // case "transform":
+        //     let vus: ValueUnit[] = getValuesUnits(val);
+        //     //console.log(vus)
+        //     for (let i = 0; i < vus.length; i++) {
+        //         vo.values.push(vus[i].value);
+        //         vo.units.push(vus[i].unit);
+        //         vo.increments.push(vus[i].increment);
+        //     }
+        //     break;
 
         case "color":
             let colorMatch = val.match(regColorVal);
@@ -164,9 +180,44 @@ export function getVo(targetType: TargetType, prop: any, val: any) {
             for (let i = 0; i < vo.values.length; i++) {
                 vo.units.push("");
             }
-            vo.strBegin = vo.values.length === 4? "rgba" : "rgb";
+            vo.strBegin = vo.values.length === 4 ? "rgba" : "rgb";
             break;
 
+        case "dropShadow":
+
+            if (!val) val = "0px 0px 0px #cccccc";
+            let rgb = val.match(regColorVal)[0];
+            val = val.replace(rgb, "");
+            let pa: ValueUnit[] = getValuesUnits(val);
+            for (let i = 0; i < pa.length; i++) {
+                vo.values.push(pa[i].value);
+                vo.units.push(pa[i].unit);
+                vo.increments.push(pa[i].increment);
+            }
+            let rgbs = toRgb(rgb);
+            /// First 3 items are offset-x, offset-y and blur-radius. The other 3 or 4 - rgb(a) values.
+            vo.values = vo.values.concat(...rgbs);
+            // console.log(vo.values)
+            break;
+
+        case "matrix":
+            if (!val) {
+                vo.values = [1, 0, 0, 1, 0, 0];
+                vo.units = ["", "", "", "", "", ""];
+            } else {
+                vo.values = getNumbers(val);
+                vo.units = ["", "", "", "", "", ""];
+            }
+            break;
+
+        case "other":
+            let vus: ValueUnit[] = getValuesUnits(val);
+            //console.log(vus)
+            for (let i = 0; i < vus.length; i++) {
+                vo.values.push(vus[i].value);
+                vo.units.push(vus[i].unit);
+                vo.increments.push(vus[i].increment);
+            }
 
 
     }
@@ -175,10 +226,10 @@ export function getVo(targetType: TargetType, prop: any, val: any) {
 
 }
 
-function getVoFromStr(str:string):Vo {
+function getVoFromStr(str: string): Vo {
     let prop = str.match(regProp)[0];
     str = str.replace(prop, "");
-    return  getVo("dom", prop, str);
+    return getVo("dom", prop, str);
 }
 
 /**
@@ -234,7 +285,7 @@ export function normalizeVos(from: Vo, to: Vo, context: Context) {
             to.values[i] /= from.values[i];
         }
 
-        to.diffVals.push(to.values[i]-from.values[i]);
+        to.diffVals.push(to.values[i] - from.values[i]);
 
     }
     // console.log(from.units, to.units);
@@ -242,11 +293,9 @@ export function normalizeVos(from: Vo, to: Vo, context: Context) {
 }
 
 
+export function strToMap(str: string): Map<string, Tween> {
 
-
-export function transStrToMap(str: string): Map<string, Tween> {
-
-    let res:Map<string, Tween> = new Map();
+    let res: Map<string, Tween> = new Map();
 
     if (!str || str === "" || str === "none") return null;
 
@@ -254,7 +303,6 @@ export function transStrToMap(str: string): Map<string, Tween> {
     if (!arr) return null;
 
     for (let i = 0; i < arr.length; i++) {
-
 
 
         let part = arr[i];
@@ -266,11 +314,8 @@ export function transStrToMap(str: string): Map<string, Tween> {
         res.set(vo.prop, tw);
 
     }
-    // console.log(res)
     return res;
 }
-
-
 
 
 export function print(val: any) {

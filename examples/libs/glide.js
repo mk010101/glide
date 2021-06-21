@@ -343,12 +343,198 @@
         return arr;
     }
 
+    function powerInOut(pow) {
+        return function (t) {
+            if ((t *= 2) < 1)
+                return 0.5 * Math.pow(t, pow);
+            return 1 - 0.5 * Math.abs(Math.pow(2 - t, pow));
+        };
+    }
+    function powerIn(pow) {
+        return function (t) {
+            return Math.pow(t, pow);
+        };
+    }
+    function powerOut(pow) {
+        return function (t) {
+            return 1 - Math.pow(1 - t, pow);
+        };
+    }
+    function getBackIn(s = 1.70158) {
+        return function (t = 0.0) {
+            return t * t * ((s + 1) * t - s);
+        };
+    }
+    function getBackOut(s = 1.70158) {
+        return function (t = 0.0) {
+            return (t = t - 1) * t * ((s + 1) * t + s) + 1;
+        };
+    }
+    function getBackInOut(s = 1.70158) {
+        return function (t = 0.0) {
+            if ((t *= 2) < 1)
+                return 0.5 * (t * t * ((s + 1) * t - s));
+            return 0.5 * ((t -= 2) * t * ((s + 1) * t + s) + 2);
+        };
+    }
+    function getElasticIn(period = 0.3, amplitude = 1.70158) {
+        return function (t) {
+            let a = 1;
+            if (t === 0)
+                return 0;
+            if (t === 1)
+                return 1;
+            if (!period)
+                period = 0.3;
+            amplitude = period / (2 * Math.PI) * Math.asin(1 / a);
+            return -(a * Math.pow(2, 10 * (t -= 1)) * Math.sin((t - amplitude) * (2 * Math.PI) / period));
+        };
+    }
+    function getElasticOut(period = 0.3, amplitude = 1.70158) {
+        return function (t) {
+            let a = 1;
+            if (t === 0)
+                return 0;
+            if (t === 1)
+                return 1;
+            amplitude = period / (2 * Math.PI) * Math.asin(1 / a);
+            return a * Math.pow(2, -10 * t) * Math.sin((t - amplitude) * (2 * Math.PI) / period) + 1;
+        };
+    }
+    function getElasticInOut(period = 0.45, amplitude = 1.70158) {
+        return function (t) {
+            let a = 1;
+            if (t === 0)
+                return 0;
+            if ((t /= 1 / 2) === 2)
+                return 1;
+            amplitude = period / (2 * Math.PI) * Math.asin(1 / a);
+            if (t < 1)
+                return -.5 * (a * Math.pow(2, 10 * (t -= 1)) * Math.sin((t - amplitude) * (2 * Math.PI) / period));
+            return a * Math.pow(2, -10 * (t -= 1)) * Math.sin((t - amplitude) * (2 * Math.PI) / period) * 0.5 + 1;
+        };
+    }
+    function linear(t = 0.0) {
+        return t;
+    }
+    function quadIn(t = 0.0) {
+        return t * t;
+    }
+    function quadOut(t = 0.0) {
+        return t * (2 - t);
+    }
     function quadInOut(t = 0.0) {
         if (t < 0.5)
             return 2.0 * t * t;
         else
             return -1.0 + (4.0 - 2.0 * t) * t;
     }
+    const cubicIn = powerIn(3);
+    const cubicOut = powerOut(3);
+    const cubicInOut = powerInOut(3);
+    const backIn = getBackIn();
+    const backOut = getBackOut();
+    const backInOut = getBackInOut();
+    const elasticIn = getElasticIn();
+    const elasticOut = getElasticOut();
+    const elasticInOut = getElasticInOut();
+    function circleIn(t = 0.0) {
+        return -1 * (Math.sqrt(1 - t * t) - 1);
+    }
+    function circleOut(t = 0.0) {
+        return Math.sqrt(1 - (t = t - 1) * t);
+    }
+    function circleInOut(t = 0.0) {
+        if ((t /= 1 / 2) < 1)
+            return -1 / 2 * (Math.sqrt(1 - t * t) - 1);
+        return 1 / 2 * (Math.sqrt(1 - (t -= 2) * t) + 1);
+    }
+    function expoIn(t = 0.0) {
+        return (t === 0) ? 0 : Math.pow(2, 10 * (t - 1));
+    }
+    function expoOut(t = 0.0) {
+        return (t === 1) ? 1 : (-Math.pow(2, -10 * t) + 1);
+    }
+    function expoInOut(t = 0.0) {
+        if (t === 0)
+            return 0;
+        if (t === 1)
+            return 1;
+        if ((t /= 1 / 2) < 1)
+            return 1 / 2 * Math.pow(2, 10 * (t - 1));
+        return 1 / 2 * (-Math.pow(2, -10 * --t) + 2);
+    }
+    function bounceIn(t) {
+        return 1 - bounceOut(1 - t);
+    }
+    function bounceOut(t) {
+        if (t < 1 / 2.75) {
+            return (7.5625 * t * t);
+        }
+        else if (t < 2 / 2.75) {
+            return (7.5625 * (t -= 1.5 / 2.75) * t + 0.75);
+        }
+        else if (t < 2.5 / 2.75) {
+            return (7.5625 * (t -= 2.25 / 2.75) * t + 0.9375);
+        }
+        else {
+            return (7.5625 * (t -= 2.625 / 2.75) * t + 0.984375);
+        }
+    }
+    function bounceInOut(t) {
+        if (t < 0.5)
+            return bounceIn(t * 2) * .5;
+        return bounceOut(t * 2 - 1) * 0.5 + 0.5;
+    }
+    function stepped(steps = 5) {
+        return function (t) {
+            if (t <= 0) {
+                return 0;
+            }
+            else if (t >= 1) {
+                return 1;
+            }
+            else {
+                return ((steps * t) | 0) * (1 / steps);
+            }
+        };
+    }
+
+    var ease = /*#__PURE__*/Object.freeze({
+        __proto__: null,
+        powerInOut: powerInOut,
+        powerIn: powerIn,
+        powerOut: powerOut,
+        getBackIn: getBackIn,
+        getBackOut: getBackOut,
+        getBackInOut: getBackInOut,
+        getElasticIn: getElasticIn,
+        getElasticOut: getElasticOut,
+        getElasticInOut: getElasticInOut,
+        linear: linear,
+        quadIn: quadIn,
+        quadOut: quadOut,
+        quadInOut: quadInOut,
+        cubicIn: cubicIn,
+        cubicOut: cubicOut,
+        cubicInOut: cubicInOut,
+        backIn: backIn,
+        backOut: backOut,
+        backInOut: backInOut,
+        elasticIn: elasticIn,
+        elasticOut: elasticOut,
+        elasticInOut: elasticInOut,
+        circleIn: circleIn,
+        circleOut: circleOut,
+        circleInOut: circleInOut,
+        expoIn: expoIn,
+        expoOut: expoOut,
+        expoInOut: expoInOut,
+        bounceIn: bounceIn,
+        bounceOut: bounceOut,
+        bounceInOut: bounceInOut,
+        stepped: stepped
+    });
 
     class Tween {
         constructor(target, twType, prop, fromVal, toVal, duration, delay, start) {
@@ -372,9 +558,9 @@
             this.targetType = target === null || target === void 0 ? void 0 : target.type;
             this.type = twType;
             this.prop = prop;
+            this.duration = duration;
             this.fromVal = fromVal;
             this.toVal = toVal;
-            this.duration = duration;
             this.delay = delay;
             this.start = start;
             this.totalDuration = duration + delay;
@@ -408,6 +594,15 @@
                 return "string";
         }
         return;
+    }
+    function getPropType(prop) {
+        if (is.propDropShadow(prop))
+            return "dropShadow";
+        else if (is.propColor(prop))
+            return "color";
+        else if (is.propMatrix(prop))
+            return "matrix";
+        return "other";
     }
     function getDefaultUnit(prop) {
         if (is.unitDegrees(prop))
@@ -464,16 +659,8 @@
         vo.targetType = targetType;
         vo.tweenType = getTweenType(targetType, prop);
         vo.prop = prop;
-        switch (vo.tweenType) {
-            case "css":
-            case "transform":
-                let vus = getValuesUnits(val);
-                for (let i = 0; i < vus.length; i++) {
-                    vo.values.push(vus[i].value);
-                    vo.units.push(vus[i].unit);
-                    vo.increments.push(vus[i].increment);
-                }
-                break;
+        let propType = getPropType(prop);
+        switch (propType) {
             case "color":
                 let colorMatch = val.match(regColorVal);
                 let color;
@@ -487,6 +674,37 @@
                 }
                 vo.strBegin = vo.values.length === 4 ? "rgba" : "rgb";
                 break;
+            case "dropShadow":
+                if (!val)
+                    val = "0px 0px 0px #cccccc";
+                let rgb = val.match(regColorVal)[0];
+                val = val.replace(rgb, "");
+                let pa = getValuesUnits(val);
+                for (let i = 0; i < pa.length; i++) {
+                    vo.values.push(pa[i].value);
+                    vo.units.push(pa[i].unit);
+                    vo.increments.push(pa[i].increment);
+                }
+                let rgbs = toRgb(rgb);
+                vo.values = vo.values.concat(...rgbs);
+                break;
+            case "matrix":
+                if (!val) {
+                    vo.values = [1, 0, 0, 1, 0, 0];
+                    vo.units = ["", "", "", "", "", ""];
+                }
+                else {
+                    vo.values = getNumbers(val);
+                    vo.units = ["", "", "", "", "", ""];
+                }
+                break;
+            case "other":
+                let vus = getValuesUnits(val);
+                for (let i = 0; i < vus.length; i++) {
+                    vo.values.push(vus[i].value);
+                    vo.units.push(vus[i].unit);
+                    vo.increments.push(vus[i].increment);
+                }
         }
         return vo;
     }
@@ -540,7 +758,7 @@
             to.diffVals.push(to.values[i] - from.values[i]);
         }
     }
-    function transStrToMap(str) {
+    function strToMap(str) {
         let res = new Map();
         if (!str || str === "" || str === "none")
             return null;
@@ -584,6 +802,7 @@
         end: end,
     };
 
+    const Ease = ease;
     class G extends Dispatcher {
         constructor(targets, duration, params, options = {}) {
             super();
@@ -632,6 +851,7 @@
                 const tweenable = tg.tweenable;
                 tg.type;
                 let transformsStr = "";
+                let filtersStr = "";
                 for (let j = 0; j < tg.tweens.length; j++) {
                     const tween = tg.tweens[j];
                     const twType = tween.type;
@@ -668,10 +888,34 @@
                                 }
                             }
                             break;
+                        case "filter":
+                            if (prop === "drop-shadow" && !from.keepOriginal) {
+                                let x = from.values[0] + eased * to.diffVals[0];
+                                let y = from.values[1] + eased * to.diffVals[1];
+                                let brad = from.values[2] + eased * to.diffVals[2];
+                                let r = ~~(from.values[3] + eased * to.diffVals[3]);
+                                let g = ~~(from.values[4] + eased * to.diffVals[4]);
+                                let b = ~~(from.values[5] + eased * to.diffVals[5]);
+                                let a = (from.values.length === 7) ? ", " + (from.values[6] + eased * (to.values[6] - from.values[6])) : "";
+                                let pref = (from.values.length === 7) ? "rgba" : "rgb";
+                                filtersStr += `drop-shadow(${x}${to.units[0]} ${y}${to.units[1]} ${brad}${to.units[2]} `;
+                                filtersStr += `${pref}(${r}, ${g}, ${b}${a}))`;
+                            }
+                            else if (from.keepOriginal) {
+                                filtersStr += from.keepStr + " ";
+                            }
+                            else {
+                                let v = from.values[0] + eased * to.diffVals[0];
+                                filtersStr += `${to.prop}(${v}${to.units[0]}) `;
+                            }
+                            break;
                     }
                 }
                 if (transformsStr) {
                     tweenable.transform = transformsStr;
+                }
+                if (filtersStr) {
+                    tweenable.filter = filtersStr;
                 }
             }
             this.dispatch(Evt.progress, null);
@@ -738,6 +982,18 @@
                 let dur = duration;
                 let fromVal;
                 let toVal;
+                if (target.type === "dom") {
+                    if (prop === "bg")
+                        prop = "backgroundColor";
+                    else if (prop === "x")
+                        prop = "translateX";
+                    else if (prop === "y")
+                        prop = "translateY";
+                    else if (prop === "hueRotate")
+                        prop = "hue-rotate";
+                    else if (prop === "dropShadow")
+                        prop = "drop-shadow";
+                }
                 const twType = getTweenType(target.type, prop);
                 if (is.array(val)) {
                     fromVal = val[0];
@@ -753,6 +1009,25 @@
                 }
                 let delay = options.delay || 0;
                 let tw = new Tween(target, twType, prop, fromVal, toVal, dur, delay, 0);
+                let ease;
+                let optEase = options.ease;
+                if (optEase) {
+                    if (is.string(optEase)) {
+                        let res = optEase.match(/[\w]+|[-\d.]+/g);
+                        if (res && res.length === 1) {
+                            ease = Ease[optEase];
+                        }
+                        else if (res && res.length === 2) {
+                            let e = Ease[res[0]];
+                            if (is.func(e))
+                                ease = Ease[res[0]](parseFloat(res[1]));
+                        }
+                    }
+                    else
+                        ease = optEase;
+                }
+                tw.ease = ease || Ease.quadInOut;
+                tw.propType = getPropType(prop);
                 tg.tweens.push(tw);
             }
             return tg;
@@ -763,6 +1038,11 @@
                 let transTweens;
                 let transOldTweens;
                 let transChecked = false;
+                let filterTweens;
+                let filterOldTweens;
+                let filterChecked = false;
+                let oldTweens;
+                let newTweens;
                 for (let j = 0; j < tg.tweens.length; j++) {
                     const tw = tg.tweens[j];
                     let from;
@@ -774,25 +1054,34 @@
                                 from = getVo(tw.targetType, tw.prop, tw.target.getExistingValue(tw.prop));
                                 break;
                             case "transform":
-                                getVo("dom", tw.prop, tw.toVal);
-                                if (!transChecked) {
-                                    transOldTweens = transStrToMap(tw.target.getExistingValue("transform"));
+                            case "filter":
+                                if (tw.type === "transform" && !transChecked) {
+                                    transOldTweens = strToMap(tw.target.getExistingValue("transform"));
                                     transTweens = new Map();
                                     transChecked = true;
+                                    oldTweens = transOldTweens;
+                                    newTweens = transTweens;
+                                }
+                                else if (!filterChecked) {
+                                    filterOldTweens = strToMap(tw.target.getExistingValue("filter"));
+                                    filterTweens = new Map();
+                                    filterChecked = true;
+                                    oldTweens = filterOldTweens;
+                                    newTweens = filterTweens;
                                 }
                                 if (tw.fromVal) {
                                     from = getVo("dom", tw.prop, tw.fromVal);
                                 }
                                 else {
-                                    if (transOldTweens && transOldTweens.has(tw.prop)) {
-                                        from = transOldTweens.get(tw.prop).from;
+                                    if (oldTweens && oldTweens.has(tw.prop)) {
+                                        from = oldTweens.get(tw.prop).from;
                                         from.keepOriginal = false;
                                     }
                                     else {
                                         from = from = getVo("dom", tw.prop, tw.fromVal);
                                     }
                                 }
-                                transTweens.set(tw.prop, tw);
+                                newTweens.set(tw.prop, tw);
                                 break;
                         }
                     }
@@ -847,6 +1136,7 @@
     }
     Glide.items = [];
     Glide.lastTick = 0;
+    Glide.ease = ease;
     Glide._computeStyle = true;
     Glide.tick(performance.now());
     const glide = Glide;

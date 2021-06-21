@@ -1,12 +1,14 @@
-import {TargetType, TweenType} from "../types";
+import {PropType, TargetType, TweenType} from "../types";
 import {quadInOut} from "../util/ease";
 import {Vo} from "./vo";
 import Target from "./target";
+import {getPropType} from "../util/util";
 
 export class Tween {
     target:Target;
     tweenable: any = null;
     type: TweenType = null;
+    propType:PropType;
     targetType:TargetType = null;
     prop: any = "";
     duration: number = 0.0;
@@ -36,9 +38,9 @@ export class Tween {
         this.targetType = target?.type;
         this.type = twType;
         this.prop = prop;
+        this.duration = duration;
         this.fromVal = fromVal;
         this.toVal = toVal;
-        this.duration = duration;
         this.delay = delay;
         this.start = start;
         this.totalDuration = duration + delay; /// needs changing.

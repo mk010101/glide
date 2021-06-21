@@ -1,5 +1,6 @@
 import Context from "./core/context";
 import { G } from "./core/g";
+import * as ease from "./util/ease";
 class Glide {
     static to(targets, duration, params, options = {}) {
         if (!Glide.context && document)
@@ -30,6 +31,7 @@ class Glide {
 }
 Glide.items = [];
 Glide.lastTick = 0;
+Glide.ease = ease;
 Glide._computeStyle = true;
 Glide.tick(performance.now());
 const glide = Glide;

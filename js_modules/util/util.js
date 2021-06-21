@@ -1,6 +1,6 @@
 import { getObjType, is, regColorVal, regProp, regStrValues, regTypes, regVUs } from "./regex";
 import { Vo } from "../core/vo";
-import { toRgbStr } from "./color";
+import { toRgb, toRgbStr } from "./color";
 import Context from "../core/context";
 import { Tween } from "../core/tween";
 export function minMax(val, min, max) {
@@ -38,6 +38,15 @@ export function getValueType(val = null) {
             return "string";
     }
     return;
+}
+export function getPropType(prop) {
+    if (is.propDropShadow(prop))
+        return "dropShadow";
+    else if (is.propColor(prop))
+        return "color";
+    else if (is.propMatrix(prop))
+        return "matrix";
+    return "other";
 }
 export function getDefaultUnit(prop) {
     if (is.unitDegrees(prop))
@@ -94,16 +103,8 @@ export function getVo(targetType, prop, val) {
     vo.targetType = targetType;
     vo.tweenType = getTweenType(targetType, prop);
     vo.prop = prop;
-    switch (vo.tweenType) {
-        case "css":
-        case "transform":
-            let vus = getValuesUnits(val);
-            for (let i = 0; i < vus.length; i++) {
-                vo.values.push(vus[i].value);
-                vo.units.push(vus[i].unit);
-                vo.increments.push(vus[i].increment);
-            }
-            break;
+    let propType = getPropType(prop);
+    switch (propType) {
         case "color":
             let colorMatch = val.match(regColorVal);
             let color;
@@ -117,6 +118,37 @@ export function getVo(targetType, prop, val) {
             }
             vo.strBegin = vo.values.length === 4 ? "rgba" : "rgb";
             break;
+        case "dropShadow":
+            if (!val)
+                val = "0px 0px 0px #cccccc";
+            let rgb = val.match(regColorVal)[0];
+            val = val.replace(rgb, "");
+            let pa = getValuesUnits(val);
+            for (let i = 0; i < pa.length; i++) {
+                vo.values.push(pa[i].value);
+                vo.units.push(pa[i].unit);
+                vo.increments.push(pa[i].increment);
+            }
+            let rgbs = toRgb(rgb);
+            vo.values = vo.values.concat(...rgbs);
+            break;
+        case "matrix":
+            if (!val) {
+                vo.values = [1, 0, 0, 1, 0, 0];
+                vo.units = ["", "", "", "", "", ""];
+            }
+            else {
+                vo.values = getNumbers(val);
+                vo.units = ["", "", "", "", "", ""];
+            }
+            break;
+        case "other":
+            let vus = getValuesUnits(val);
+            for (let i = 0; i < vus.length; i++) {
+                vo.values.push(vus[i].value);
+                vo.units.push(vus[i].unit);
+                vo.increments.push(vus[i].increment);
+            }
     }
     return vo;
 }
@@ -171,7 +203,7 @@ export function normalizeVos(from, to, context) {
         to.diffVals.push(to.values[i] - from.values[i]);
     }
 }
-export function transStrToMap(str) {
+export function strToMap(str) {
     let res = new Map();
     if (!str || str === "" || str === "none")
         return null;

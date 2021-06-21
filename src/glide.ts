@@ -1,12 +1,13 @@
 import Context from "./core/context";
 import {G} from "./core/g";
+import * as ease from "./util/ease";
 
 
 class Glide {
 
     static items: G[] = [];
     static lastTick = 0;
-    //static ease = ease;
+    static ease = ease;
     static context: Context;
     static _computeStyle = true;
 
