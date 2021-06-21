@@ -8,8 +8,8 @@ export class Vo {
     units: string[] = [];
     increments: string[] = [];
     strBegin:string = "";
-    keep:boolean = false;
+    keepOriginal:boolean = false;
     keepStr:string = "";
     diffVals:number[] = [];
-    // normalizedUnits: string[] = [];
 }
+

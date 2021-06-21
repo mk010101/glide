@@ -104,7 +104,7 @@
 
 
         // el.style.transform = strTransform;
-        // el.style.transform = "translate(50px, 50px) rotate(20deg)";
+        el.style.transform = "scale(.8, .7) translateX(50px) rotate(20deg)";
         // el.style.transform = "rotate(30deg) translate(50px, 50px)";
         // el.style.transform = "scale(2) translate(50px, 50px)";
         // el.style.transform = "translate(50px, 50px) scale(2)    ";
@@ -151,8 +151,7 @@
                     // hueRotate: 80,
                     // saturate: 20,
                     // sepia: 90,
-                    // translateX: "50",
-
+                    translateX: "150",
                     // x: "70px",
                     // x: "+=70",
                     // y: 50,
@@ -160,7 +159,7 @@
                     // translateY: 50,
                     // translate: "100, 50",
                     // x: 120,
-                    //rotate: 45,
+                    rotate: -45,
                     // x: 120,
                     // rotate: 45,
                     // scaleX: 3,
@@ -177,6 +176,7 @@
                 }, {delay: 500, zrepeat: 2, zease: "stepped(5)", zstagger: 50})
             // .to(500, {left:"10%"}, {stagger:30})
             // .to(500, {top:50})
+            // .to(500, {rotate:"+=50"})
                 .on('end', () => {
                     console.log(a);
                     // console.log(a.keyframes[0].tweens[0]);

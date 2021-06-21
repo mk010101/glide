@@ -1,6 +1,6 @@
 import Target from "./target";
 import Dispatcher from "./dispatcher";
-import { getTweenType, getVo, minMax, normalizeVos } from "../util/util";
+import { getTweenType, getVo, minMax, normalizeVos, transStrToMap } from "../util/util";
 import { Keyframe } from "./keyframe";
 import { Tween } from "./tween";
 import { Evt } from "./events";
@@ -28,8 +28,8 @@ export class G extends Dispatcher {
     to(duration, params, options = {}) {
         let kf = new Keyframe();
         for (let i = 0; i < this.targets.length; i++) {
-            const tweens = G._getTweens(this.targets[i], duration, params, options);
-            kf.push(...tweens);
+            const tg = G._getTweens(this.targets[i], duration, params, options);
+            kf.push(tg);
         }
         this.totalDuration += kf.totalDuration * this.repeat;
         this.keyframes.push(kf);
@@ -41,38 +41,58 @@ export class G extends Dispatcher {
     update(t) {
         if ((this.paused && !this.seeking) || this.status === 0)
             return;
+        if (!this.currentKf.initialized) {
+            G._initTweens(this.currentKf);
+            this.currentKf.initialized = true;
+        }
         this.time += t * this.dir;
         this.currentTime += t;
-        let tws = this.currentKf.tweens;
-        for (let i = 0; i < tws.length; i++) {
-            const tween = tws[i];
-            if (!tween.initialized) {
-                G._initTween(tween);
-                continue;
+        const tweens = this.currentKf.tweens;
+        for (let i = 0; i < tweens.length; i++) {
+            const tg = tweens[i];
+            const tweenable = tg.tweenable;
+            const type = tg.type;
+            let transformsStr = "";
+            for (let j = 0; j < tg.tweens.length; j++) {
+                const tween = tg.tweens[j];
+                const twType = tween.type;
+                let elapsed = minMax(this.time - tween.start - tween.delay, 0, tween.duration) / tween.duration;
+                let eased = isNaN(elapsed) ? 1 : tween.ease(elapsed);
+                let from = tween.from;
+                let to = tween.to;
+                let tweenable = tween.tweenable;
+                let prop = tween.prop;
+                switch (twType) {
+                    case "css":
+                        let str = "";
+                        for (let j = 0; j < from.values.length; j++) {
+                            let val = from.values[j] + eased * (to.values[j] - tween.from.values[j]);
+                            str += `${val}${to.units[j]} `;
+                        }
+                        tweenable[prop] = str;
+                        break;
+                    case "color":
+                        let r = ~~(from.values[0] + eased * to.diffVals[0]);
+                        let g = ~~(from.values[1] + eased * to.diffVals[1]);
+                        let b = ~~(from.values[2] + eased * to.diffVals[2]);
+                        let a = (from.values.length === 4) ? ", " + (from.values[3] + eased * to.diffVals[3]) : "";
+                        tweenable[prop] = `${to.strBegin}(${r}, ${g}, ${b}${a})`;
+                        break;
+                    case "transform":
+                        if (from.keepOriginal) {
+                            transformsStr += from.keepStr + " ";
+                        }
+                        else {
+                            for (let j = 0; j < from.values.length; j++) {
+                                let val = from.values[j] + eased * (to.values[j] - tween.from.values[j]);
+                                transformsStr += `${to.prop}(${val}${to.units[j]}) `;
+                            }
+                        }
+                        break;
+                }
             }
-            const twType = tween.type;
-            let elapsed = minMax(this.time - tween.start - tween.delay, 0, tween.duration) / tween.duration;
-            let eased = isNaN(elapsed) ? 1 : tween.ease(elapsed);
-            let from = tween.from;
-            let to = tween.to;
-            let tweenable = tween.tweenable;
-            let prop = tween.prop;
-            switch (twType) {
-                case "css":
-                    let str = "";
-                    for (let j = 0; j < from.values.length; j++) {
-                        let val = from.values[j] + eased * (to.values[j] - tween.from.values[j]);
-                        str += `${val}${to.units[j]} `;
-                    }
-                    tweenable[prop] = str;
-                    break;
-                case "color":
-                    let r = ~~(from.values[0] + eased * to.diffVals[0]);
-                    let g = ~~(from.values[1] + eased * to.diffVals[1]);
-                    let b = ~~(from.values[2] + eased * to.diffVals[2]);
-                    let a = (from.values.length === 4) ? ", " + (from.values[3] + eased * to.diffVals[3]) : "";
-                    tweenable[prop] = `${to.strBegin}(${r}, ${g}, ${b}${a})`;
-                    break;
+            if (transformsStr) {
+                tweenable.transform = transformsStr;
             }
         }
         this.dispatch(Evt.progress, null);
@@ -127,14 +147,19 @@ export class G extends Dispatcher {
         return t;
     }
     static _getTweens(target, duration, params, options) {
-        let arr = [];
         const keys = Object.keys(params);
+        let tg = {
+            type: target.type,
+            tweenable: target.tweenable,
+            tweens: []
+        };
         for (let i = 0; i < keys.length; i++) {
             let prop = keys[i];
             let val = params[prop];
             let dur = duration;
             let fromVal;
             let toVal;
+            const twType = getTweenType(target.type, prop);
             if (is.array(val)) {
                 fromVal = val[0];
                 toVal = val[1];
@@ -147,20 +172,68 @@ export class G extends Dispatcher {
             else {
                 toVal = val;
             }
-            const twType = getTweenType(target.type, prop);
             let delay = options.delay || 0;
             let tw = new Tween(target, twType, prop, fromVal, toVal, dur, delay, 0);
-            arr.push(tw);
+            tg.tweens.push(tw);
         }
-        return arr;
+        return tg;
     }
-    static _initTween(tw) {
-        let vFrom = tw.fromVal ? tw.fromVal : tw.target.getExistingValue(tw.prop);
-        let from = getVo(tw.targetType, tw.prop, vFrom);
-        let to = getVo(tw.targetType, tw.prop, tw.toVal);
-        normalizeVos(from, to, tw.target.context);
-        tw.from = from;
-        tw.to = to;
-        tw.initialized = true;
+    static _initTweens(kf) {
+        for (let i = 0; i < kf.tweens.length; i++) {
+            const tg = kf.tweens[i];
+            let transTweens;
+            let transOldTweens;
+            let transChecked = false;
+            for (let j = 0; j < tg.tweens.length; j++) {
+                const tw = tg.tweens[j];
+                let from;
+                let to = getVo(tw.targetType, tw.prop, tw.toVal);
+                if (tw.target.type === "dom") {
+                    switch (tw.type) {
+                        case "css":
+                        case "color":
+                            from = getVo(tw.targetType, tw.prop, tw.target.getExistingValue(tw.prop));
+                            break;
+                        case "transform":
+                            let to = getVo("dom", tw.prop, tw.toVal);
+                            if (!transChecked) {
+                                transOldTweens = transStrToMap(tw.target.getExistingValue("transform"));
+                                transTweens = new Map();
+                                transChecked = true;
+                            }
+                            if (tw.fromVal) {
+                                from = getVo("dom", tw.prop, tw.fromVal);
+                            }
+                            else {
+                                if (transOldTweens && transOldTweens.has(tw.prop)) {
+                                    from = transOldTweens.get(tw.prop).from;
+                                    from.keepOriginal = false;
+                                }
+                                else {
+                                    from = from = getVo("dom", tw.prop, tw.fromVal);
+                                }
+                            }
+                            transTweens.set(tw.prop, tw);
+                            break;
+                    }
+                }
+                tw.from = from;
+                tw.to = to;
+                normalizeVos(from, to, tw.target.context);
+            }
+            if (transOldTweens) {
+                transTweens.forEach((v, k) => {
+                    transOldTweens.set(k, v);
+                });
+                for (let j = tg.tweens.length - 1; j >= 0; j--) {
+                    if (tg.tweens[j].type === "transform") {
+                        tg.tweens.splice(j, 1);
+                    }
+                }
+                transOldTweens.forEach((v) => {
+                    tg.tweens.push(v);
+                });
+            }
+        }
     }
 }

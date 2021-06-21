@@ -1,8 +1,9 @@
 import {TargetType, TweenType, ValueType, ValueUnit} from "../types";
-import {getObjType, is, regColorVal, regTypes, regVUs} from "./regex";
+import {getObjType, is, regColorVal, regProp, regStrValues, regTypes, regValues, regVUs} from "./regex";
 import {Vo} from "../core/vo";
 import {toRgbStr} from "./color";
 import Context from "../core/context";
+import {Tween} from "../core/tween";
 
 
 export function minMax(val: number, min: number, max: number): number {
@@ -142,7 +143,9 @@ export function getVo(targetType: TargetType, prop: any, val: any) {
     switch (vo.tweenType) {
 
         case "css":
+        case "transform":
             let vus: ValueUnit[] = getValuesUnits(val);
+            //console.log(vus)
             for (let i = 0; i < vus.length; i++) {
                 vo.values.push(vus[i].value);
                 vo.units.push(vus[i].unit);
@@ -164,10 +167,18 @@ export function getVo(targetType: TargetType, prop: any, val: any) {
             vo.strBegin = vo.values.length === 4? "rgba" : "rgb";
             break;
 
+
+
     }
 
     return vo;
 
+}
+
+function getVoFromStr(str:string):Vo {
+    let prop = str.match(regProp)[0];
+    str = str.replace(prop, "");
+    return  getVo("dom", prop, str);
 }
 
 /**
@@ -231,9 +242,34 @@ export function normalizeVos(from: Vo, to: Vo, context: Context) {
 }
 
 
-export function parseCssTxt(txt: string) {
 
+
+export function transStrToMap(str: string): Map<string, Tween> {
+
+    let res:Map<string, Tween> = new Map();
+
+    if (!str || str === "" || str === "none") return null;
+
+    let arr = str.match(regStrValues);
+    if (!arr) return null;
+
+    for (let i = 0; i < arr.length; i++) {
+
+
+
+        let part = arr[i];
+        let vo = getVoFromStr(part);
+        vo.keepOriginal = true;
+        vo.keepStr = part;
+        let tw = new Tween(null, "transform", vo.prop, null, null, 0, 0, 0);
+        tw.from = vo;
+        res.set(vo.prop, tw);
+
+    }
+    // console.log(res)
+    return res;
 }
+
 
 
 
