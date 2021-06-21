@@ -79,7 +79,8 @@ export class G extends Dispatcher {
 
             const tg = tweens[i];
             const tweenable = tg.tweenable;
-            const type = tg.type;
+            // const type = tg.type;
+            // let obj:any = {};
 
             let transformsStr = "";
             let filtersStr = "";
@@ -113,16 +114,20 @@ export class G extends Dispatcher {
                         let b = ~~(from.values[2] + eased * to.diffVals[2]);
                         let a = (from.values.length === 4) ? ", " + (from.values[3] + eased * to.diffVals[3]) : "";
                         tweenable[prop] = `${to.strBegin}(${r}, ${g}, ${b}${a})`;
+                        // obj[prop] = `${to.strBegin}(${r}, ${g}, ${b}${a})`;
                         break;
 
                     case "transform":
                         if (from.keepOriginal) {
                             transformsStr += from.keepStr + " ";
                         } else {
+                            transformsStr += `${to.prop}(`;
                             for (let j = 0; j < from.values.length; j++) {
                                 let val = from.values[j] + eased * (to.values[j] - tween.from.values[j]);
-                                transformsStr += `${to.prop}(${val}${to.units[j]}) `;
+                                let sep = j < to.values.length - 1 ? ", " : "";
+                                transformsStr += `${val}${to.units[j]}${sep}`;
                             }
+                            transformsStr += ") ";
                         }
                         break;
 
@@ -134,7 +139,7 @@ export class G extends Dispatcher {
                             let r = ~~(from.values[3] + eased * to.diffVals[3]);
                             let g = ~~(from.values[4] + eased * to.diffVals[4]);
                             let b = ~~(from.values[5] + eased * to.diffVals[5]);
-                            let a = (from.values.length === 7) ? ", " + (from.values[6] + eased * (to.values[6] - from.values[6])): "";
+                            let a = (from.values.length === 7) ? ", " + (from.values[6] + eased * (to.values[6] - from.values[6])) : "";
                             let pref = (from.values.length === 7) ? "rgba" : "rgb";
                             filtersStr += `drop-shadow(${x}${to.units[0]} ${y}${to.units[1]} ${brad}${to.units[2]} `;
                             filtersStr += `${pref}(${r}, ${g}, ${b}${a}))`;
@@ -151,7 +156,10 @@ export class G extends Dispatcher {
 
             if (transformsStr) {
                 tweenable.transform = transformsStr;
+                // obj.transform = transformsStr;
             }
+            // Object.assign(tweenable,obj);
+
 
             if (filtersStr) {
                 tweenable.filter = filtersStr;
@@ -369,6 +377,7 @@ export class G extends Dispatcher {
                 transTweens.forEach((v, k) => {
                     transOldTweens.set(k, v);
                 });
+                // console.log(transOldTweens)
 
                 for (let j = tg.tweens.length - 1; j >= 0; j--) {
                     if (tg.tweens[j].type === "transform") {

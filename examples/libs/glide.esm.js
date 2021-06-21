@@ -843,7 +843,6 @@ class G extends Dispatcher {
         for (let i = 0; i < tweens.length; i++) {
             const tg = tweens[i];
             const tweenable = tg.tweenable;
-            tg.type;
             let transformsStr = "";
             let filtersStr = "";
             for (let j = 0; j < tg.tweens.length; j++) {
@@ -876,10 +875,13 @@ class G extends Dispatcher {
                             transformsStr += from.keepStr + " ";
                         }
                         else {
+                            transformsStr += `${to.prop}(`;
                             for (let j = 0; j < from.values.length; j++) {
                                 let val = from.values[j] + eased * (to.values[j] - tween.from.values[j]);
-                                transformsStr += `${to.prop}(${val}${to.units[j]}) `;
+                                let sep = j < to.values.length - 1 ? ", " : "";
+                                transformsStr += `${val}${to.units[j]}${sep}`;
                             }
+                            transformsStr += ") ";
                         }
                         break;
                     case "filter":
