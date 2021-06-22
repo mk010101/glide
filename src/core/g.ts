@@ -89,23 +89,30 @@ export class G extends Dispatcher {
                 const tween = tg.tweens[j];
                 const twType = tween.type;
 
+
                 let elapsed = minMax(this.time - tween.start - tween.delay, 0, tween.duration) / tween.duration;
                 let eased = isNaN(elapsed) ? 1 : tween.ease(elapsed);
                 let from: Vo = tween.from;
                 let to: Vo = tween.to;
                 let tweenable = tween.tweenable;
                 let prop = tween.prop;
+                const isNum = from.isNumber;
 
                 switch (twType) {
 
                     case "css":
-                        let str = "";
 
-                        for (let j = 0; j < from.values.length; j++) {
-                            let val = from.values[j] + eased * (to.values[j] - tween.from.values[j]);
-                            str += `${val}${to.units[j]} `;
+                        if (isNum) {
+                            tweenable[prop] = from.values[0] + eased * (to.values[0] - tween.from.values[0]);
+                        } else {
+                            let str = "";
+
+                            for (let j = 0; j < from.values.length; j++) {
+                                let val = from.values[j] + eased * (to.values[j] - tween.from.values[j]);
+                                str += `${val}${to.units[j]} `;
+                            }
+                            tweenable[prop] = str;
                         }
-                        tweenable[prop] = str;
                         break;
 
                     case "color":
@@ -226,6 +233,8 @@ export class G extends Dispatcher {
         return t;
     }
 
+
+
     static _getTweens(target: Target, duration: number, params: any, options: any): any {
 
         const keys = Object.keys(params);
@@ -270,6 +279,7 @@ export class G extends Dispatcher {
             } else {
                 toVal = val;
             }
+
 
 
             let delay = options.delay || 0;
@@ -365,12 +375,14 @@ export class G extends Dispatcher {
 
 
                     }
+                } else {
+                    if(!tw.fromVal) tw.fromVal = tw.target.getExistingValue(tw.prop);
+                    from = getVo("obj", tw.prop, tw.fromVal);
                 }
 
                 tw.from = from;
                 tw.to = to;
                 normalizeVos(from, to, tw.target.context);
-
             }
 
             if (transOldTweens) {

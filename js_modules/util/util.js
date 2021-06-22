@@ -103,6 +103,7 @@ export function getVo(targetType, prop, val) {
     vo.targetType = targetType;
     vo.tweenType = getTweenType(targetType, prop);
     vo.prop = prop;
+    vo.isNumber = targetType === "obj";
     let propType = getPropType(prop);
     switch (propType) {
         case "color":
@@ -146,7 +147,8 @@ export function getVo(targetType, prop, val) {
             let vus = getValuesUnits(val);
             for (let i = 0; i < vus.length; i++) {
                 vo.values.push(vus[i].value);
-                vo.units.push(vus[i].unit);
+                let unit = targetType === "dom" ? vus[i].unit : null;
+                vo.units.push(unit);
                 vo.increments.push(vus[i].increment);
             }
     }
@@ -177,15 +179,17 @@ export function normalizeVos(from, to, context) {
         let uFrom = from.units[i];
         let uTo = to.units[i];
         let incr = to.increments[i];
-        if (!uFrom)
-            uFrom = from.units[i] = getDefaultUnit(from.prop);
-        if (!uTo)
-            uTo = to.units[i] = uFrom;
-        if (uFrom && uFrom !== uTo) {
-            if (is.propTransform(from.prop) && (uFrom === "%" && uTo !== "%" || uFrom !== "%" && uTo === "%")) {
-            }
-            else {
-                from.values[i] = Context.convertUnits(from.values[i], uFrom, uTo, context.units);
+        if (!from.isNumber) {
+            if (!uFrom)
+                uFrom = from.units[i] = getDefaultUnit(from.prop);
+            if (!uTo)
+                uTo = to.units[i] = uFrom;
+            if (uFrom && uFrom !== uTo) {
+                if (is.propTransform(from.prop) && (uFrom === "%" && uTo !== "%" || uFrom !== "%" && uTo === "%")) {
+                }
+                else {
+                    from.values[i] = Context.convertUnits(from.values[i], uFrom, uTo, context.units);
+                }
             }
         }
         if (incr === "-") {

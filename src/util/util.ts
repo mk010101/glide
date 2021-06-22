@@ -154,7 +154,9 @@ export function getVo(targetType: TargetType, prop: any, val: any) {
     vo.targetType = targetType;
     vo.tweenType = getTweenType(targetType, prop);
     vo.prop = prop;
+    vo.isNumber = targetType === "obj";
     let propType = getPropType(prop);
+    // console.log(targetType, prop)
 
     switch (propType) {
 
@@ -211,11 +213,14 @@ export function getVo(targetType: TargetType, prop: any, val: any) {
             break;
 
         case "other":
+
             let vus: ValueUnit[] = getValuesUnits(val);
+
             //console.log(vus)
             for (let i = 0; i < vus.length; i++) {
                 vo.values.push(vus[i].value);
-                vo.units.push(vus[i].unit);
+                let unit = targetType === "dom"? vus[i].unit : null;
+                vo.units.push(unit);
                 vo.increments.push(vus[i].increment);
             }
 
@@ -263,14 +268,16 @@ export function normalizeVos(from: Vo, to: Vo, context: Context) {
         let uFrom = from.units[i];
         let uTo = to.units[i];
         let incr = to.increments[i];
-        if (!uFrom) uFrom = from.units[i] = getDefaultUnit(from.prop);
-        if (!uTo) uTo = to.units[i] = uFrom;
-        if (uFrom && uFrom !== uTo) {
-            //TODO: Add logic to deal with translate(XYZ) percentages!
-            if (is.propTransform(from.prop) && (uFrom === "%" && uTo !== "%" || uFrom !== "%" && uTo === "%")) {
-                //console.log("% conversion!")
-            } else {
-                from.values[i] = Context.convertUnits(from.values[i], uFrom, uTo, context.units);
+        if (!from.isNumber) {
+            if (!uFrom) uFrom = from.units[i] = getDefaultUnit(from.prop);
+            if (!uTo) uTo = to.units[i] = uFrom;
+            if (uFrom && uFrom !== uTo) {
+                //TODO: Add logic to deal with translate(XYZ) percentages!
+                if (is.propTransform(from.prop) && (uFrom === "%" && uTo !== "%" || uFrom !== "%" && uTo === "%")) {
+                    //console.log("% conversion!")
+                } else {
+                    from.values[i] = Context.convertUnits(from.values[i], uFrom, uTo, context.units);
+                }
             }
         }
 

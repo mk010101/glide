@@ -261,6 +261,7 @@
             this.values = [];
             this.units = [];
             this.increments = [];
+            this.isNumber = false;
             this.strBegin = "";
             this.keepOriginal = false;
             this.keepStr = "";
@@ -659,6 +660,7 @@
         vo.targetType = targetType;
         vo.tweenType = getTweenType(targetType, prop);
         vo.prop = prop;
+        vo.isNumber = targetType === "obj";
         let propType = getPropType(prop);
         switch (propType) {
             case "color":
@@ -702,7 +704,8 @@
                 let vus = getValuesUnits(val);
                 for (let i = 0; i < vus.length; i++) {
                     vo.values.push(vus[i].value);
-                    vo.units.push(vus[i].unit);
+                    let unit = targetType === "dom" ? vus[i].unit : null;
+                    vo.units.push(unit);
                     vo.increments.push(vus[i].increment);
                 }
         }
@@ -733,14 +736,16 @@
             let uFrom = from.units[i];
             let uTo = to.units[i];
             let incr = to.increments[i];
-            if (!uFrom)
-                uFrom = from.units[i] = getDefaultUnit(from.prop);
-            if (!uTo)
-                uTo = to.units[i] = uFrom;
-            if (uFrom && uFrom !== uTo) {
-                if (is.propTransform(from.prop) && (uFrom === "%" && uTo !== "%" || uFrom !== "%" && uTo === "%")) ;
-                else {
-                    from.values[i] = Context.convertUnits(from.values[i], uFrom, uTo, context.units);
+            if (!from.isNumber) {
+                if (!uFrom)
+                    uFrom = from.units[i] = getDefaultUnit(from.prop);
+                if (!uTo)
+                    uTo = to.units[i] = uFrom;
+                if (uFrom && uFrom !== uTo) {
+                    if (is.propTransform(from.prop) && (uFrom === "%" && uTo !== "%" || uFrom !== "%" && uTo === "%")) ;
+                    else {
+                        from.values[i] = Context.convertUnits(from.values[i], uFrom, uTo, context.units);
+                    }
                 }
             }
             if (incr === "-") {
@@ -860,14 +865,20 @@
                     let to = tween.to;
                     let tweenable = tween.tweenable;
                     let prop = tween.prop;
+                    const isNum = from.isNumber;
                     switch (twType) {
                         case "css":
-                            let str = "";
-                            for (let j = 0; j < from.values.length; j++) {
-                                let val = from.values[j] + eased * (to.values[j] - tween.from.values[j]);
-                                str += `${val}${to.units[j]} `;
+                            if (isNum) {
+                                tweenable[prop] = from.values[0] + eased * (to.values[0] - tween.from.values[0]);
                             }
-                            tweenable[prop] = str;
+                            else {
+                                let str = "";
+                                for (let j = 0; j < from.values.length; j++) {
+                                    let val = from.values[j] + eased * (to.values[j] - tween.from.values[j]);
+                                    str += `${val}${to.units[j]} `;
+                                }
+                                tweenable[prop] = str;
+                            }
                             break;
                         case "color":
                             let r = ~~(from.values[0] + eased * to.diffVals[0]);
@@ -1086,6 +1097,11 @@
                                 newTweens.set(tw.prop, tw);
                                 break;
                         }
+                    }
+                    else {
+                        if (!tw.fromVal)
+                            tw.fromVal = tw.target.getExistingValue(tw.prop);
+                        from = getVo("obj", tw.prop, tw.fromVal);
                     }
                     tw.from = from;
                     tw.to = to;
