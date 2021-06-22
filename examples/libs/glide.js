@@ -799,7 +799,7 @@
             this.duration = 0;
             this.totalDuration = 0;
             this.initialized = false;
-            this.tweens = [];
+            this.tgs = [];
         }
         push(tg) {
             for (let i = 0; i < tg.tweens.length; i++) {
@@ -808,7 +808,7 @@
                     this.totalDuration = tw.totalDuration;
                 }
             }
-            this.tweens.push(tg);
+            this.tgs.push(tg);
         }
     }
 
@@ -820,7 +820,7 @@
     };
 
     const Ease = ease;
-    class G extends Dispatcher {
+    class Animation extends Dispatcher {
         constructor(targets, duration, params, options = {}) {
             super();
             this.status = 1;
@@ -837,13 +837,13 @@
             this.repeat = 1;
             this.num = 0;
             this.repeat = (options.repeat !== (void 0) && options.repeat > 0) ? options.repeat + 1 : 1;
-            this.targets = G._getTargets(targets, options);
+            this.targets = Animation._getTargets(targets, options);
             this.to(duration, params, options);
         }
         to(duration, params, options = {}) {
             let kf = new Keyframe();
             for (let i = 0; i < this.targets.length; i++) {
-                const tg = G._getTweens(this.targets[i], duration, params, options);
+                const tg = Animation._getTweens(this.targets[i], duration, params, options);
                 kf.push(tg);
             }
             this.totalDuration += kf.totalDuration * this.repeat;
@@ -857,14 +857,14 @@
             if ((this.paused && !this.seeking) || this.status === 0)
                 return;
             if (!this.currentKf.initialized) {
-                G._initTweens(this.currentKf);
+                Animation._initTweens(this.currentKf);
                 this.currentKf.initialized = true;
             }
             this.time += t * this.dir;
             this.currentTime += t;
-            const tweens = this.currentKf.tweens;
-            for (let i = 0; i < tweens.length; i++) {
-                const tg = tweens[i];
+            const tgs = this.currentKf.tgs;
+            for (let i = 0; i < tgs.length; i++) {
+                const tg = tgs[i];
                 const tweenable = tg.tweenable;
                 let transformsStr = "";
                 let filtersStr = "";
@@ -872,6 +872,8 @@
                     const tween = tg.tweens[j];
                     const twType = tween.type;
                     let elapsed = minMax(this.time - tween.start - tween.delay, 0, tween.duration) / tween.duration;
+                    if (elapsed === 0 && this.dir === 1)
+                        continue;
                     let eased = isNaN(elapsed) ? 1 : tween.ease(elapsed);
                     let from = tween.from;
                     let to = tween.to;
@@ -1006,66 +1008,69 @@
             for (let i = 0; i < keys.length; i++) {
                 let prop = keys[i];
                 let val = params[prop];
-                let dur = duration;
-                let fromVal;
-                let toVal;
-                if (target.type === "dom") {
-                    if (prop === "bg")
-                        prop = "backgroundColor";
-                    else if (prop === "x")
-                        prop = "translateX";
-                    else if (prop === "y")
-                        prop = "translateY";
-                    else if (prop === "hueRotate")
-                        prop = "hue-rotate";
-                    else if (prop === "dropShadow")
-                        prop = "drop-shadow";
-                }
-                const twType = getTweenType(target.type, prop);
-                if (is.array(val)) {
-                    fromVal = val[0];
-                    toVal = val[1];
-                }
-                else if (is.obj(val)) {
-                    const o = val;
-                    dur = o.duration;
-                    toVal = o.value;
-                }
-                else {
-                    toVal = val;
-                }
-                let delay = options.delay || 0;
-                let tw = new Tween(target, twType, prop, fromVal, toVal, dur, delay, 0);
-                if (options.stagger) {
-                    tw.start = target.pos * options.stagger;
-                    tw.totalDuration += target.pos * options.stagger;
-                }
-                let ease;
-                let optEase = options.ease;
-                if (optEase) {
-                    if (is.string(optEase)) {
-                        let res = optEase.match(/[\w]+|[-\d.]+/g);
-                        if (res && res.length === 1) {
-                            ease = Ease[optEase];
-                        }
-                        else if (res && res.length === 2) {
-                            let e = Ease[res[0]];
-                            if (is.func(e))
-                                ease = Ease[res[0]](parseFloat(res[1]));
-                        }
-                    }
-                    else
-                        ease = optEase;
-                }
-                tw.ease = ease || Ease.quadInOut;
-                tw.propType = getPropType(prop);
+                let tw = Animation._getTween(target, prop, val, duration, options);
                 tg.tweens.push(tw);
             }
             return tg;
         }
+        static _getTween(target, prop, val, dur, options) {
+            let fromVal;
+            let toVal;
+            if (target.type === "dom") {
+                if (prop === "bg")
+                    prop = "backgroundColor";
+                else if (prop === "x")
+                    prop = "translateX";
+                else if (prop === "y")
+                    prop = "translateY";
+                else if (prop === "hueRotate")
+                    prop = "hue-rotate";
+                else if (prop === "dropShadow")
+                    prop = "drop-shadow";
+            }
+            const twType = getTweenType(target.type, prop);
+            if (is.array(val)) {
+                fromVal = val[0];
+                toVal = val[1];
+            }
+            else if (is.obj(val)) {
+                const o = val;
+                dur = o.duration;
+                toVal = o.value;
+            }
+            else {
+                toVal = val;
+            }
+            let delay = options.delay || 0;
+            let tw = new Tween(target, twType, prop, fromVal, toVal, dur, delay, 0);
+            if (options.stagger) {
+                tw.start = target.pos * options.stagger;
+                tw.totalDuration += target.pos * options.stagger;
+            }
+            let ease;
+            let optEase = options.ease;
+            if (optEase) {
+                if (is.string(optEase)) {
+                    let res = optEase.match(/[\w]+|[-\d.]+/g);
+                    if (res && res.length === 1) {
+                        ease = Ease[optEase];
+                    }
+                    else if (res && res.length === 2) {
+                        let e = Ease[res[0]];
+                        if (is.func(e))
+                            ease = Ease[res[0]](parseFloat(res[1]));
+                    }
+                }
+                else
+                    ease = optEase;
+            }
+            tw.ease = ease || Ease.quadInOut;
+            tw.propType = getPropType(prop);
+            return tw;
+        }
         static _initTweens(kf) {
-            for (let i = 0; i < kf.tweens.length; i++) {
-                const tg = kf.tweens[i];
+            for (let i = 0; i < kf.tgs.length; i++) {
+                const tg = kf.tgs[i];
                 let transTweens;
                 let transOldTweens;
                 let transChecked = false;
@@ -1148,7 +1153,7 @@
                 Glide.setContext(document.body);
             options.context = options.context ? new Context(options.context) : Glide.context;
             options.computeStyle = options.computeStyle !== (void 0) ? options.computeStyle : Glide._computeStyle;
-            let a = new G(targets, duration, params, options);
+            let a = new Animation(targets, duration, params, options);
             Glide.items.push(a);
             return a;
         }

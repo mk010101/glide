@@ -11,7 +11,7 @@ import * as $Ease from "../util/ease";
 
 const Ease: { [key: string]: any } = $Ease;
 
-export class G extends Dispatcher {
+export class Animation extends Dispatcher {
 
     status = 1;
     targets: Target[] = [];
@@ -35,7 +35,7 @@ export class G extends Dispatcher {
 
         this.repeat = (options.repeat !== (void 0) && options.repeat > 0) ? options.repeat + 1 : 1;
 
-        this.targets = G._getTargets(targets, options);
+        this.targets = Animation._getTargets(targets, options);
         this.to(duration, params, options);
 
     }
@@ -46,7 +46,7 @@ export class G extends Dispatcher {
         let kf = new Keyframe();
 
         for (let i = 0; i < this.targets.length; i++) {
-            const tg = G._getTweens(this.targets[i], duration, params, options);
+            const tg = Animation._getTweens(this.targets[i], duration, params, options);
             kf.push(tg);
         }
 
@@ -66,18 +66,18 @@ export class G extends Dispatcher {
         if ((this.paused && !this.seeking) || this.status === 0) return;
 
         if (!this.currentKf.initialized) {
-            G._initTweens(this.currentKf);
+            Animation._initTweens(this.currentKf);
             this.currentKf.initialized = true;
         }
 
         this.time += t * this.dir;
         this.currentTime += t;
 
-        const tweens = this.currentKf.tweens;
+        const tgs = this.currentKf.tgs;
 
-        for (let i = 0; i < tweens.length; i++) {
+        for (let i = 0; i < tgs.length; i++) {
 
-            const tg = tweens[i];
+            const tg = tgs[i];
             const tweenable = tg.tweenable;
             // const type = tg.type;
             // let obj:any = {};
@@ -91,6 +91,7 @@ export class G extends Dispatcher {
 
 
                 let elapsed = minMax(this.time - tween.start - tween.delay, 0, tween.duration) / tween.duration;
+                if(elapsed === 0 && this.dir === 1) continue;
                 let eased = isNaN(elapsed) ? 1 : tween.ease(elapsed);
                 let from: Vo = tween.from;
                 let to: Vo = tween.to;
@@ -249,80 +250,79 @@ export class G extends Dispatcher {
         };
 
         for (let i = 0; i < keys.length; i++) {
-
             let prop: any = keys[i];
             let val: any = params[prop];
-            let dur = duration;
-
-            let fromVal: any;
-            let toVal: any;
-
-            if (target.type === "dom") {
-                if (prop === "bg")
-                    prop = "backgroundColor";
-                else if (prop === "x")
-                    prop = "translateX";
-                else if (prop === "y")
-                    prop = "translateY";
-                else if (prop === "hueRotate")
-                    prop = "hue-rotate";
-                else if (prop === "dropShadow")
-                    prop = "drop-shadow";
-            }
-
-            const twType = getTweenType(target.type, prop);
-
-            if (is.array(val)) {
-                fromVal = val[0];
-                toVal = val[1];
-            } else if (is.obj(val)) {
-                const o: Value = val;
-                dur = o.duration;
-                toVal = o.value;
-            } else {
-                toVal = val;
-            }
-
-
-
-            let delay = options.delay || 0;
-            let tw = new Tween(target, twType, prop, fromVal, toVal, dur, delay, 0);
-
-            if (options.stagger) {
-                tw.start = target.pos * options.stagger;
-                tw.totalDuration += target.pos * options.stagger;
-            }
-
-            let ease: any;
-            let optEase = options.ease;
-            if (optEase) {
-                if (is.string(optEase)) {
-                    let res = optEase.match(/[\w]+|[-\d.]+/g);
-                    if (res && res.length === 1) {
-                        ease = Ease[optEase];
-                    } else if (res && res.length === 2) {
-                        let e = Ease[res[0]];
-                        if (is.func(e)) ease = Ease[res[0]](parseFloat(res[1]));
-                    }
-                } else ease = optEase;
-            }
-
-            tw.ease = ease || Ease.quadInOut;
-            tw.propType = getPropType(prop);
+            let tw = Animation._getTween(target, prop, val, duration, options);
             tg.tweens.push(tw);
-
-
         }
         return tg;
+    }
 
+
+
+    static _getTween(target:Target, prop:string, val:any, dur:number, options:any):Tween {
+        let fromVal: any;
+        let toVal: any;
+
+        if (target.type === "dom") {
+            if (prop === "bg")
+                prop = "backgroundColor";
+            else if (prop === "x")
+                prop = "translateX";
+            else if (prop === "y")
+                prop = "translateY";
+            else if (prop === "hueRotate")
+                prop = "hue-rotate";
+            else if (prop === "dropShadow")
+                prop = "drop-shadow";
+        }
+
+        const twType = getTweenType(target.type, prop);
+
+        if (is.array(val)) {
+            fromVal = val[0];
+            toVal = val[1];
+        } else if (is.obj(val)) {
+            const o: Value = val;
+            dur = o.duration;
+            toVal = o.value;
+        } else {
+            toVal = val;
+        }
+
+        let delay = options.delay || 0;
+        let tw = new Tween(target, twType, prop, fromVal, toVal, dur, delay, 0);
+
+        if (options.stagger) {
+            tw.start = target.pos * options.stagger;
+            tw.totalDuration += target.pos * options.stagger;
+        }
+
+        let ease: any;
+        let optEase = options.ease;
+        if (optEase) {
+            if (is.string(optEase)) {
+                let res = optEase.match(/[\w]+|[-\d.]+/g);
+                if (res && res.length === 1) {
+                    ease = Ease[optEase];
+                } else if (res && res.length === 2) {
+                    let e = Ease[res[0]];
+                    if (is.func(e)) ease = Ease[res[0]](parseFloat(res[1]));
+                }
+            } else ease = optEase;
+        }
+
+        tw.ease = ease || Ease.quadInOut;
+        tw.propType = getPropType(prop);
+        return tw;
     }
 
 
     static _initTweens(kf: Keyframe) {
 
-        for (let i = 0; i < kf.tweens.length; i++) {
+        for (let i = 0; i < kf.tgs.length; i++) {
 
-            const tg = kf.tweens[i];
+            const tg = kf.tgs[i];
 
             let transTweens: Map<string, Tween>;
             let transOldTweens: Map<string, Tween>;

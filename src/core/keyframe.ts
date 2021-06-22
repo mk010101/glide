@@ -8,11 +8,11 @@ export class Keyframe {
     totalDuration: number = 0;
     initialized = false;
 
-    tweens: TweenGroup[] = [];
+    tgs: TweenGroup[] = [];
     // css: Tween[];
     // color: Tween[];
-    transforms: TweenGroup[];
-    filters: TweenGroup[];
+    // transforms: TweenGroup[];
+    // filters: TweenGroup[];
     // obj: Tween[];
 
 
@@ -42,7 +42,7 @@ export class Keyframe {
              */
 
         }
-        this.tweens.push(tg);
+        this.tgs.push(tg);
 
 
 
