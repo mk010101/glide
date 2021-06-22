@@ -191,6 +191,10 @@ export class Animation extends Dispatcher {
 
         if (this.currentTime >= this.currentKf.totalDuration) {
 
+            if (this.currentKf.callFunc) {
+                this.currentKf.callFunc(this.currentKf.callParams);
+            }
+
             if (this.dir > 0 && this.keyframes.length > this.num + 1) {
                 this.num++;
                 this.time = 0;
@@ -218,6 +222,14 @@ export class Animation extends Dispatcher {
 
         }
 
+    }
+
+    call(func: Function, ...params: any) {
+        let kf = new Keyframe();
+        kf.callFunc = func;
+        kf.callParams = params;
+        this.keyframes.push(kf);
+        return this;
     }
 
     reset() {

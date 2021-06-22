@@ -6,17 +6,13 @@ export class Keyframe {
     duration: number = 0;
     totalDuration: number = 0;
     initialized = false;
-
     tgs: TweenGroup[] = [];
-    // css: Tween[];
-    // color: Tween[];
-    // transforms: TweenGroup[];
-    // filters: TweenGroup[];
-    // obj: Tween[];
+    callFunc:Function = null;
+    callParams:any = null;
+
 
 
     push(tg: TweenGroup) {
-
 
         for (let i = 0; i < tg.tweens.length; i++) {
             let tw = tg.tweens[i];
