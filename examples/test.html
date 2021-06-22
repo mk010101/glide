@@ -90,7 +90,7 @@
         const els = document.querySelectorAll(".el");
         const el = els[0];
 
-        const strTransform = "rotate(20deg) translate(150%, 5rem) scale(1.2, 2)";
+        // const strTransform = "rotate(20deg) translate(150%, 5rem) scale(1.2, 2)";
         // const strTransform = "rotate(0deg)";
         // const strTransform = "rotate(0deg)";
         const strFilter = "blur(1px) brightness(0.6) drop-shadow(-2px -2px 4px #333333) hue-rotate(-20deg)";
@@ -130,7 +130,7 @@
 
         function run() {
             let t0 = performance.now();
-            let a = glide.to(els, 500,
+            let a = glide.to(els, 1000,
                 {
                     // opacity: .5,
                     // left: "150px",
@@ -153,16 +153,16 @@
                     // saturate: 20,
                     // sepia: 90,
                     // translateX: "4rem",
-                    // x: "70px",
-                    x: {value:"12rem", ease:"bounceOut", duration:1200},
-                    y: 50,
+                    x: "70px",
+                    // x: {value:"12rem", ease:"bounceOut", duration:1200},
+                    // y: 50,
                     // y: "+=20",
                     // translateY: 50,
                     // translate: "100",
                     // scale: 1.5
                     // x: 120,
                     // rotate: {value: "2rad", duration: 1000},
-                    // rotate: -45,
+                    rotate: -45,
                     // scaleX: -1,
                     // scale: ".75, .75",
                     // matrix: "(1, 0, 0, 1, 30, 10)",
@@ -174,9 +174,9 @@
                     //bg: "hsla(15deg, 100% 50%, .5)",
                     // bg: "#339922",
                     //borderColor: "rgba(153,215,255,0.8)"
-                }, {delay: 500, zrepeat: 2, zease: "stepped(5)", stagger: 50, zloop:false})
+                }, {delay: 500, zrepeat: 2, zease: "stepped(5)", stagger: 50, zloop:false, paused:false})
             // .to(500, {left:"10%"}, {stagger:30})
-            // .to(500, {top:50})
+            .to(500, {top:150})
             // .to(500, {rotate:"+=50"})
                 .on('end', () => {
                     console.log(a);
@@ -186,7 +186,7 @@
                 });
 
             setTimeout(() => {
-                //a.seek(1300)
+                // a.seek(900)
                 // a.remove(document.querySelector(".el"))
             }, 300);
         }

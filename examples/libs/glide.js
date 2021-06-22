@@ -895,12 +895,14 @@
             this.time = 0.0;
             this.totalDuration = 0.0;
             this.currentTime = 0.0;
+            this.runningTime = 0.0;
             this.playedTimes = 0;
             this.loop = true;
             this.repeat = 1;
             this.num = 0;
             this.repeat = (options.repeat != (void 0) && options.repeat > 0) ? options.repeat + 1 : 1;
             this.loop = options.loop != (void 0) ? options.loop : true;
+            this.paused = options.paused != (void 0) ? options.paused : false;
             this.targets = Animation._getTargets(targets, options);
             this.to(duration, params, options);
         }
@@ -926,6 +928,7 @@
             }
             this.time += t * this.dir;
             this.currentTime += t;
+            this.runningTime += t;
             const tgs = this.currentKf.tgs;
             for (let i = 0; i < tgs.length; i++) {
                 const tg = tgs[i];
@@ -1061,6 +1064,14 @@
                     this.keyframes.splice(i, 1);
                 }
             }
+        }
+        seek(ms) {
+            ms = minMax(ms, 0, this.totalDuration);
+            this.seeking = true;
+            while (this.runningTime <= ms) {
+                this.update(5);
+            }
+            this.seeking = false;
         }
         static _getTargets(targets, options) {
             if (typeof targets === "string") {

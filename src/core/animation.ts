@@ -24,6 +24,7 @@ export class Animation extends Dispatcher {
     // duration = 0.0;
     totalDuration = 0.0;
     currentTime = 0.0;
+    runningTime = 0.0;
     playedTimes = 0;
     loop = true;
     repeat = 1;
@@ -35,6 +36,7 @@ export class Animation extends Dispatcher {
 
         this.repeat = (options.repeat != (void 0) && options.repeat > 0) ? options.repeat + 1 : 1;
         this.loop = options.loop != (void 0) ? options.loop : true;
+        this.paused = options.paused != (void 0)? options.paused : false;
 
         this.targets = Animation._getTargets(targets, options);
         this.to(duration, params, options);
@@ -73,6 +75,7 @@ export class Animation extends Dispatcher {
 
         this.time += t * this.dir;
         this.currentTime += t;
+        this.runningTime += t;
 
         const tgs = this.currentKf.tgs;
 
@@ -234,6 +237,15 @@ export class Animation extends Dispatcher {
                 this.keyframes.splice(i, 1);
             }
         }
+    }
+
+    seek(ms:number) {
+        ms = minMax(ms, 0, this.totalDuration);
+        this.seeking = true;
+        while (this.runningTime <= ms) {
+            this.update(5)
+        }
+        this.seeking = false;
     }
 
 
