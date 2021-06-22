@@ -158,6 +158,10 @@ export class Animation extends Dispatcher {
                             filtersStr += `${to.prop}(${v}${to.units[0]}) `;
                         }
                         break;
+
+                    case "direct":
+                        tweenable[prop] = from.values[0] + eased * to.diffVals[0];
+                        break
                 }
 
             }
@@ -305,6 +309,7 @@ export class Animation extends Dispatcher {
 
         let delay = options.delay || 0;
         let tw = new Tween(target, twType, prop, fromVal, toVal, dur, delay, 0);
+        if (twType === "direct") tw.tweenable = target.target;
 
         if (options.stagger) {
             let del = target.pos * options.stagger;
@@ -325,9 +330,9 @@ export class Animation extends Dispatcher {
                 }
             } else ease = optEase;
         }
-
         tw.ease = ease || Ease.quadInOut;
         tw.propType = getPropType(prop);
+
         return tw;
     }
 
@@ -361,7 +366,10 @@ export class Animation extends Dispatcher {
 
                         case "css":
                         case "color":
-                            from = getVo(tw.targetType, tw.prop, tw.target.getExistingValue(tw.prop));
+                        case "direct":
+                            if (tw.fromVal) from = getVo(tw.targetType, tw.prop, tw.fromVal);
+                            else
+                                from = getVo(tw.targetType, tw.prop, tw.target.getExistingValue(tw.prop));
                             break;
 
                         case "transform":
