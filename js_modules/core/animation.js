@@ -60,7 +60,7 @@ export class Animation extends Dispatcher {
                 const twType = tween.type;
                 let elapsed = minMax(this.time - tween.start - tween.delay, 0, tween.duration) / tween.duration;
                 if (elapsed === 0 && this.dir === 1)
-                    continue;
+                    return;
                 let eased = isNaN(elapsed) ? 1 : tween.ease(elapsed);
                 let from = tween.from;
                 let to = tween.to;
@@ -232,8 +232,9 @@ export class Animation extends Dispatcher {
         let delay = options.delay || 0;
         let tw = new Tween(target, twType, prop, fromVal, toVal, dur, delay, 0);
         if (options.stagger) {
-            tw.start = target.pos * options.stagger;
-            tw.totalDuration += target.pos * options.stagger;
+            let del = target.pos * options.stagger;
+            tw.start = del;
+            tw.totalDuration += del;
         }
         let ease;
         let optEase = options.ease;
@@ -286,7 +287,7 @@ export class Animation extends Dispatcher {
                                 oldTweens = transOldTweens;
                                 newTweens = transTweens;
                             }
-                            else if (!filterChecked) {
+                            else if (tw.type === "filter" && !filterChecked) {
                                 filterOldTweens = strToMap(tw.target.getExistingValue("filter"));
                                 filterTweens = new Map();
                                 filterChecked = true;

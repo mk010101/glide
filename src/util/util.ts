@@ -142,6 +142,31 @@ function getNumbers(val: string): number[] {
 }
 
 
+export function unwrapValues(prop: string, val: any): any {
+    const propX = prop + "X";
+    const propY = prop + "Y";
+    if (is.number(val)) {
+        return [
+            {prop: propX, val: val},
+            {prop: propY, val: val}
+        ];
+    } else if (is.string(val)) {
+        let res = val.match(regValues);
+        if (res.length === 1) res.push(res[0]);
+        return [
+            {prop: propX, val: res[0]},
+            {prop: propY, val: res[1]}
+        ];
+    } else if (is.array(val)) {
+        if (val.lengh === 1) val.push(val[0]);
+        return [
+            {prop: propX, val: val[0]},
+            {prop: propY, val: val[1]}
+        ];
+    }
+}
+
+
 /**
  * Creates {Vo} object
  * @param targetType
@@ -159,7 +184,7 @@ export function getVo(targetType: TargetType, prop: any, val: any) {
     // console.log(targetType, prop, val);
 
     if (targetType === "dom" && is.valueOne(prop)) {
-        if(val == void 0)
+        if (val == void 0)
             val = 1;
     }
 
@@ -224,7 +249,7 @@ export function getVo(targetType: TargetType, prop: any, val: any) {
             //console.log(vus)
             for (let i = 0; i < vus.length; i++) {
                 vo.values.push(vus[i].value);
-                let unit = targetType === "dom"? vus[i].unit : null;
+                let unit = targetType === "dom" ? vus[i].unit : null;
                 vo.units.push(unit);
                 vo.increments.push(vus[i].increment);
             }
@@ -321,11 +346,46 @@ export function strToMap(str: string): Map<string, Tween> {
         let vo = getVoFromStr(part);
         vo.keepOriginal = true;
         vo.keepStr = part;
+        /*
+        if (is.propDual(vo.prop)) {
+            let prop = part.match(regProp)[0];
+            let propX = prop + "X";
+            let propY = prop + "Y";
+            let part2 = part.replace(prop, "");
+            let vus = part2.match(regValues);
+            if (vus.length === 1) vus.push(is.valueOne(prop)? 1 : 0);
+
+            let vox = getVo("dom", propX, vus[0]);
+            vox.keepOriginal = true;
+            vox.keepStr = `${propX}(${vus[0]})`;
+
+            let voy = getVo("dom", propY, vus[1]);
+            voy.keepOriginal = true;
+            voy.keepStr = `${propY}(${vus[1]})`;
+
+            let twx = new Tween(null, "transform", propX, null, null, 0, 0, 0);
+            twx.from = vox;
+            res.set(propX, twx);
+
+            let twy = new Tween(null, "transform", propY, null, null, 0, 0, 0);
+            twy.from = voy;
+            res.set(propY, twy);
+
+            //console.log(vo.prop, vo.values)
+            // let res = unwrapValues(vo.prop, vo.values);
+        } else {
+            let tw = new Tween(null, "transform", vo.prop, null, null, 0, 0, 0);
+            tw.from = vo;
+            res.set(vo.prop, tw);
+        }
+        //*/
+
         let tw = new Tween(null, "transform", vo.prop, null, null, 0, 0, 0);
         tw.from = vo;
         res.set(vo.prop, tw);
 
     }
+    // console.log(res)
     return res;
 }
 

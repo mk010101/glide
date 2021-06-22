@@ -1,6 +1,6 @@
 import Target from "./target";
 import Dispatcher from "./dispatcher";
-import {getPropType, getTweenType, getVo, minMax, normalizeVos, print, strToMap} from "../util/util";
+import {getPropType, getTweenType, getVo, minMax, normalizeVos, print, strToMap, unwrapValues} from "../util/util";
 import {Keyframe} from "./keyframe";
 import {Tween} from "./tween";
 import {Evt} from "./events";
@@ -91,7 +91,7 @@ export class Animation extends Dispatcher {
 
 
                 let elapsed = minMax(this.time - tween.start - tween.delay, 0, tween.duration) / tween.duration;
-                if(elapsed === 0 && this.dir === 1) continue;
+                if (elapsed === 0 && this.dir === 1) return;
                 let eased = isNaN(elapsed) ? 1 : tween.ease(elapsed);
                 let from: Vo = tween.from;
                 let to: Vo = tween.to;
@@ -238,7 +238,6 @@ export class Animation extends Dispatcher {
     }
 
 
-
     static _getTweens(target: Target, duration: number, params: any, options: any): any {
 
         const keys = Object.keys(params);
@@ -252,15 +251,29 @@ export class Animation extends Dispatcher {
         for (let i = 0; i < keys.length; i++) {
             let prop: any = keys[i];
             let val: any = params[prop];
+
+            /*
+            // If value is like scale(2) or translate(20px 5rem), unwrap it.
+            if (target.type === "dom" && is.propDual(prop)) {
+                let res = unwrapValues(prop, val);
+                tg.tweens.push(Animation._getTween(target, res[0].prop, res[0].val, duration, options));
+                tg.tweens.push(Animation._getTween(target, res[1].prop, res[1].val, duration, options));
+            } else {
+                let tw = Animation._getTween(target, prop, val, duration, options);
+                tg.tweens.push(tw);
+            }
+            //*/
+
             let tw = Animation._getTween(target, prop, val, duration, options);
             tg.tweens.push(tw);
+
+
         }
         return tg;
     }
 
 
-
-    static _getTween(target:Target, prop:string, val:any, dur:number, options:any):Tween {
+    static _getTween(target: Target, prop: string, val: any, dur: number, options: any): Tween {
         let fromVal: any;
         let toVal: any;
 
@@ -294,8 +307,9 @@ export class Animation extends Dispatcher {
         let tw = new Tween(target, twType, prop, fromVal, toVal, dur, delay, 0);
 
         if (options.stagger) {
-            tw.start = target.pos * options.stagger;
-            tw.totalDuration += target.pos * options.stagger;
+            let del = target.pos * options.stagger;
+            tw.start = del;
+            tw.totalDuration += del;
         }
 
         let ease: any;
@@ -353,14 +367,13 @@ export class Animation extends Dispatcher {
                         case "transform":
                         case "filter":
 
-                            // let to = getVo("dom", tw.prop, tw.toVal);
                             if (tw.type === "transform" && !transChecked) {
                                 transOldTweens = strToMap(tw.target.getExistingValue("transform"));
                                 transTweens = new Map<string, Tween>();
                                 transChecked = true;
                                 oldTweens = transOldTweens;
                                 newTweens = transTweens;
-                            } else if (!filterChecked) {
+                            } else if (tw.type === "filter" && !filterChecked) {
                                 filterOldTweens = strToMap(tw.target.getExistingValue("filter"));
                                 filterTweens = new Map<string, Tween>();
                                 filterChecked = true;
@@ -372,6 +385,7 @@ export class Animation extends Dispatcher {
                                 from = getVo("dom", tw.prop, tw.fromVal);
                             } else {
                                 if (oldTweens && oldTweens.has(tw.prop)) {
+                                    // console.log(tw.prop)
                                     from = oldTweens.get(tw.prop).from;
                                     from.keepOriginal = false;
                                 } else {
@@ -384,12 +398,13 @@ export class Animation extends Dispatcher {
 
                     }
                 } else {
-                    if(!tw.fromVal) tw.fromVal = tw.target.getExistingValue(tw.prop);
+                    if (!tw.fromVal) tw.fromVal = tw.target.getExistingValue(tw.prop);
                     from = getVo("obj", tw.prop, tw.fromVal);
                 }
 
                 tw.from = from;
                 tw.to = to;
+                // console.log(from, to)
                 normalizeVos(from, to, tw.target.context);
             }
 

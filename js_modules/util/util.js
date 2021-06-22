@@ -1,4 +1,4 @@
-import { getObjType, is, regColorVal, regProp, regStrValues, regTypes, regVUs } from "./regex";
+import { getObjType, is, regColorVal, regProp, regStrValues, regTypes, regValues, regVUs } from "./regex";
 import { Vo } from "../core/vo";
 import { toRgb, toRgbStr } from "./color";
 import Context from "../core/context";
@@ -97,6 +97,33 @@ export function getValuesUnits(val) {
 function getNumbers(val) {
     let nums = val.match(/[-.\d]+/g);
     return nums.map((v) => parseFloat(v));
+}
+export function unwrapValues(prop, val) {
+    const propX = prop + "X";
+    const propY = prop + "Y";
+    if (is.number(val)) {
+        return [
+            { prop: propX, val: val },
+            { prop: propY, val: val }
+        ];
+    }
+    else if (is.string(val)) {
+        let res = val.match(regValues);
+        if (res.length === 1)
+            res.push(res[0]);
+        return [
+            { prop: propX, val: res[0] },
+            { prop: propY, val: res[1] }
+        ];
+    }
+    else if (is.array(val)) {
+        if (val.lengh === 1)
+            val.push(val[0]);
+        return [
+            { prop: propX, val: val[0] },
+            { prop: propY, val: val[1] }
+        ];
+    }
 }
 export function getVo(targetType, prop, val) {
     let vo = new Vo();
