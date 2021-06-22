@@ -179,6 +179,7 @@
 
     class Target {
         constructor(target, context) {
+            this.pos = 0;
             this.target = target;
             this.context = context;
             this.init();
@@ -669,6 +670,10 @@
         vo.prop = prop;
         vo.isNumber = targetType === "obj";
         let propType = getPropType(prop);
+        if (targetType === "dom" && is.valueOne(prop)) {
+            if (val == void 0)
+                val = 1;
+        }
         switch (propType) {
             case "color":
                 let colorMatch = val.match(regColorVal);
@@ -978,7 +983,9 @@
             let t = [];
             if (is.list(targets)) {
                 for (let i = 0; i < targets.length; i++) {
-                    t.push(new Target(targets[i], options.context));
+                    let target = new Target(targets[i], options.context);
+                    target.pos = i;
+                    t.push(target);
                 }
             }
             else if (is.tweenable(targets)) {
@@ -1029,6 +1036,10 @@
                 }
                 let delay = options.delay || 0;
                 let tw = new Tween(target, twType, prop, fromVal, toVal, dur, delay, 0);
+                if (options.stagger) {
+                    tw.start = target.pos * options.stagger;
+                    tw.totalDuration += target.pos * options.stagger;
+                }
                 let ease;
                 let optEase = options.ease;
                 if (optEase) {

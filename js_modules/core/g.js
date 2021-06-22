@@ -169,8 +169,11 @@ export class G extends Dispatcher {
         }
         let t = [];
         if (is.list(targets)) {
+            let staggerTime = 0;
             for (let i = 0; i < targets.length; i++) {
-                t.push(new Target(targets[i], options.context));
+                let target = new Target(targets[i], options.context);
+                target.pos = i;
+                t.push(target);
             }
         }
         else if (is.tweenable(targets)) {
@@ -221,6 +224,10 @@ export class G extends Dispatcher {
             }
             let delay = options.delay || 0;
             let tw = new Tween(target, twType, prop, fromVal, toVal, dur, delay, 0);
+            if (options.stagger) {
+                tw.start = target.pos * options.stagger;
+                tw.totalDuration += target.pos * options.stagger;
+            }
             let ease;
             let optEase = options.ease;
             if (optEase) {

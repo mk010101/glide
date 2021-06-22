@@ -1,6 +1,7 @@
 import { is } from "../util/regex";
 export default class Target {
     constructor(target, context) {
+        this.pos = 0;
         this.target = target;
         this.context = context;
         this.init();

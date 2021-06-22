@@ -156,7 +156,12 @@ export function getVo(targetType: TargetType, prop: any, val: any) {
     vo.prop = prop;
     vo.isNumber = targetType === "obj";
     let propType = getPropType(prop);
-    // console.log(targetType, prop)
+    // console.log(targetType, prop, val);
+
+    if (targetType === "dom" && is.valueOne(prop)) {
+        if(val == void 0)
+            val = 1;
+    }
 
     switch (propType) {
 

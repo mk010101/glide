@@ -105,6 +105,10 @@ export function getVo(targetType, prop, val) {
     vo.prop = prop;
     vo.isNumber = targetType === "obj";
     let propType = getPropType(prop);
+    if (targetType === "dom" && is.valueOne(prop)) {
+        if (val == void 0)
+            val = 1;
+    }
     switch (propType) {
         case "color":
             let colorMatch = val.match(regColorVal);

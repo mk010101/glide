@@ -104,7 +104,7 @@
 
 
         // el.style.transform = strTransform;
-        el.style.transform = "scale(.8, .7) translateX(50px) rotate(20deg)";
+        // el.style.transform = "scale(.8, .7) translateX(50px) rotate(20deg)";
         // el.style.transform = "rotate(30deg) translate(50px, 50px)";
         // el.style.transform = "scale(2) translate(50px, 50px)";
         // el.style.transform = "translate(50px, 50px) scale(2)    ";
@@ -144,11 +144,11 @@
                     // width: "5%",
                     // height: "10%",
                     // "drop-shadow": "6px 6px 3px #330033",
-                    dropShadow: "rgba(20,50,150, .6) 6px 6px 3px",
+                    // dropShadow: "rgba(20,50,150, .6) 6px 6px 3px",
                     // invert: 90,
                     // blur: 3,
                     // grayscale: 80,
-                    hueRotate: 80,
+                    // hueRotate: 80,
                     // saturate: 20,
                     // sepia: 90,
                     // translateX: "150",
@@ -162,8 +162,8 @@
                     rotate: {value: "2rad", duration: 1000},
                     // x: 120,
                     // rotate: 45,
-                    // scaleX: 3,
-                    scale: "1.5, 1.5",
+                    // scaleX: -1,
+                    scale: ".75, .75",
                     // matrix: "(1, 0, 0, 1, 30, 10)",
                     // transformOrigin: "0 -100"
                     // backgroundColor: "#ff6c41",
@@ -173,7 +173,7 @@
                     //bg: "hsla(15deg, 100% 50%, .5)",
                     // bg: "#339922",
                     //borderColor: "rgba(153,215,255,0.8)"
-                }, {delay: 500, zrepeat: 1, zease: "stepped(5)", zstagger: 50})
+                }, {delay: 500, zrepeat: 1, zease: "stepped(5)", stagger: 50})
             // .to(500, {left:"10%"}, {stagger:30})
             // .to(500, {top:50})
             // .to(500, {rotate:"+=50"})
@@ -190,6 +190,7 @@
         }
 
         run();
+
 
 
 
