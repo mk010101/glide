@@ -1,5 +1,4 @@
-import {Tween} from "./tween";
-import {TweenGroup} from "../types";
+import {TweenGroup} from "./vo";
 
 export class Keyframe {
 

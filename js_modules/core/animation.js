@@ -1,9 +1,10 @@
 import Target from "./target";
 import Dispatcher from "./dispatcher";
-import { getPropType, getTweenType, getVo, minMax, normalizeVos, strToMap } from "../util/util";
+import { getPropType, getTweenType, getVo, minMax, normalizeVos, strToMap, unwrapValues } from "../util/util";
 import { Keyframe } from "./keyframe";
 import { Tween } from "./tween";
 import { Evt } from "./events";
+import { TweenGroup } from "./vo";
 import { is } from "../util/regex";
 import * as $Ease from "../util/ease";
 const Ease = $Ease;
@@ -160,6 +161,7 @@ export class Animation extends Dispatcher {
                 }
                 else {
                     this.status = 0;
+                    this.targets = [];
                     this.dispatch(Evt.end, null);
                 }
             }
@@ -167,6 +169,20 @@ export class Animation extends Dispatcher {
         }
     }
     reset() {
+    }
+    remove(target) {
+        for (let i = this.keyframes.length - 1; i >= 0; i--) {
+            let kf = this.keyframes[i];
+            for (let j = kf.tgs.length - 1; j >= 0; j--) {
+                const tg = kf.tgs[j];
+                if (tg.target.target === target) {
+                    kf.tgs.splice(j, 1);
+                }
+            }
+            if (kf.tgs.length === 0) {
+                this.keyframes.splice(i, 1);
+            }
+        }
     }
     static _getTargets(targets, options) {
         if (typeof targets === "string") {
@@ -191,16 +207,19 @@ export class Animation extends Dispatcher {
     }
     static _getTweens(target, duration, params, options) {
         const keys = Object.keys(params);
-        let tg = {
-            type: target.type,
-            tweenable: target.tweenable,
-            tweens: []
-        };
+        let tg = new TweenGroup(target);
         for (let i = 0; i < keys.length; i++) {
             let prop = keys[i];
             let val = params[prop];
-            let tw = Animation._getTween(target, prop, val, duration, options);
-            tg.tweens.push(tw);
+            if (target.type === "dom" && is.propDual(prop)) {
+                let res = unwrapValues(prop, val);
+                tg.tweens.push(Animation._getTween(target, res[0].prop, res[0].val, duration, options));
+                tg.tweens.push(Animation._getTween(target, res[1].prop, res[1].val, duration, options));
+            }
+            else {
+                let tw = Animation._getTween(target, prop, val, duration, options);
+                tg.tweens.push(tw);
+            }
         }
         return tg;
     }

@@ -16,9 +16,3 @@ export type ValueUnit = {
     unit:string;
     increment: string;
 }
-
-export type TweenGroup = {
-    type:TargetType;
-    tweenable:any;
-    tweens:Tween[];
-}

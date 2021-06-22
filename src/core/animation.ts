@@ -4,8 +4,8 @@ import {getPropType, getTweenType, getVo, minMax, normalizeVos, print, strToMap,
 import {Keyframe} from "./keyframe";
 import {Tween} from "./tween";
 import {Evt} from "./events";
-import {TweenGroup, Value} from "../types";
-import {Vo} from "./vo";
+import {Value} from "../types";
+import {TweenGroup, Vo} from "./vo";
 import {is} from "../util/regex";
 import * as $Ease from "../util/ease";
 
@@ -204,6 +204,7 @@ export class Animation extends Dispatcher {
                     }
                 } else {
                     this.status = 0;
+                    this.targets = [];
                     this.dispatch(Evt.end, null);
                 }
             }
@@ -216,6 +217,21 @@ export class Animation extends Dispatcher {
 
     reset() {
 
+    }
+
+    remove(target: any) {
+        for (let i = this.keyframes.length - 1; i >= 0; i--) {
+            let kf = this.keyframes[i];
+            for (let j = kf.tgs.length - 1; j >= 0; j--) {
+                const tg = kf.tgs[j];
+                if (tg.target.target === target) {
+                    kf.tgs.splice(j, 1);
+                }
+            }
+            if (kf.tgs.length === 0) {
+                this.keyframes.splice(i, 1);
+            }
+        }
     }
 
 
@@ -246,17 +262,13 @@ export class Animation extends Dispatcher {
 
         const keys = Object.keys(params);
 
-        let tg: TweenGroup = {
-            type: target.type,
-            tweenable: target.tweenable,
-            tweens: []
-        };
+        let tg = new TweenGroup(target);
 
         for (let i = 0; i < keys.length; i++) {
             let prop: any = keys[i];
             let val: any = params[prop];
 
-            /*
+            //*
             // If value is like scale(2) or translate(20px 5rem), unwrap it.
             if (target.type === "dom" && is.propDual(prop)) {
                 let res = unwrapValues(prop, val);
@@ -268,8 +280,8 @@ export class Animation extends Dispatcher {
             }
             //*/
 
-            let tw = Animation._getTween(target, prop, val, duration, options);
-            tg.tweens.push(tw);
+            // let tw = Animation._getTween(target, prop, val, duration, options);
+            // tg.tweens.push(tw);
 
 
         }
