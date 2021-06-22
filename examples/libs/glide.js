@@ -899,7 +899,8 @@
             this.loop = true;
             this.repeat = 1;
             this.num = 0;
-            this.repeat = (options.repeat !== (void 0) && options.repeat > 0) ? options.repeat + 1 : 1;
+            this.repeat = (options.repeat != (void 0) && options.repeat > 0) ? options.repeat + 1 : 1;
+            this.loop = options.loop != (void 0) ? options.loop : true;
             this.targets = Animation._getTargets(targets, options);
             this.to(duration, params, options);
         }
@@ -1044,6 +1045,8 @@
             }
         }
         reset() {
+            this.time = 0;
+            this.num = 0;
         }
         remove(target) {
             for (let i = this.keyframes.length - 1; i >= 0; i--) {
@@ -1113,14 +1116,16 @@
                     prop = "drop-shadow";
             }
             const twType = getTweenType(target.type, prop);
+            let optEase;
             if (is.array(val)) {
                 fromVal = val[0];
                 toVal = val[1];
             }
             else if (is.obj(val)) {
                 const o = val;
-                dur = o.duration;
-                toVal = o.value;
+                toVal = o.value != (void 0) ? o.value : val;
+                dur = o.duration != (void 0) ? o.duration : dur;
+                optEase = o.ease != (void 0) ? o.ease : options.ease;
             }
             else {
                 toVal = val;
@@ -1135,7 +1140,6 @@
                 tw.totalDuration += del;
             }
             let ease;
-            let optEase = options.ease;
             if (optEase) {
                 if (is.string(optEase)) {
                     let res = optEase.match(/[\w]+|[-\d.]+/g);
