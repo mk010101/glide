@@ -109,8 +109,9 @@ export function unwrapValues(prop, val) {
     }
     else if (is.string(val)) {
         let res = val.match(regValues);
-        if (res.length === 1)
-            res.push(res[0]);
+        if (res.length === 1) {
+            res.push(is.valueOne(prop) ? "1" : "0");
+        }
         return [
             { prop: propX, val: res[0] },
             { prop: propY, val: res[1] }
