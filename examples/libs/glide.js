@@ -903,6 +903,7 @@
             this.repeat = (options.repeat != (void 0) && options.repeat > 0) ? options.repeat + 1 : 1;
             this.loop = options.loop != (void 0) ? options.loop : true;
             this.paused = options.paused != (void 0) ? options.paused : false;
+            this.keep = options.keep != (void 0) ? options.keep : false;
             this.targets = Animation._getTargets(targets, options);
             this.to(duration, params, options);
         }
@@ -920,7 +921,7 @@
             return this;
         }
         update(t) {
-            if ((this.paused && !this.seeking) || this.status === 0)
+            if ((this.paused && !this.seeking) || this.status === -1)
                 return;
             if (!this.currentKf.initialized) {
                 Animation._initTweens(this.currentKf);
@@ -1039,7 +1040,7 @@
                         }
                     }
                     else {
-                        this.status = 0;
+                        this.status = this.status = this.keep ? 0 : -1;
                         this.targets = [];
                         this.dispatch(Evt.end, null);
                     }
@@ -1065,11 +1066,21 @@
                 }
             }
         }
+        stop() {
+            this.num = 0;
+            this.currentKf = this.keyframes[0];
+            this.currentTime = 0;
+            this.playedTimes = 0;
+            this.dir = 1;
+            this.time = 0;
+        }
         seek(ms) {
             ms = minMax(ms, 0, this.totalDuration);
             this.seeking = true;
-            while (this.runningTime <= ms) {
-                this.update(5);
+            this.stop();
+            while (ms >= 0) {
+                this.update(10);
+                ms -= 10;
             }
             this.seeking = false;
         }
@@ -1270,7 +1281,7 @@
                 if (item.status === 1) {
                     item.update(delta);
                 }
-                else if (item.status === 0) {
+                else if (item.status === -1) {
                     Glide.items.splice(i, 1);
                 }
             }

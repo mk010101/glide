@@ -25,7 +25,7 @@
             linear-gradient(to bottom, #d2dadd 1px, transparent 1px);
             padding: 50px;
             width: calc(100vw);
-            height: calc(100vh);
+            height: calc(100vh - 50px);
         }
 
         .svg {
@@ -174,7 +174,7 @@
                     //bg: "hsla(15deg, 100% 50%, .5)",
                     // bg: "#339922",
                     //borderColor: "rgba(153,215,255,0.8)"
-                }, {delay: 500, zrepeat: 2, zease: "stepped(5)", stagger: 50, zloop:false, paused:false})
+                }, {delay: 500, zrepeat: 2, zease: "stepped(5)", stagger: 50, zloop:false, zpaused:true, keep:true})
             // .to(500, {left:"10%"}, {stagger:30})
             .to(500, {top:150})
             // .to(500, {rotate:"+=50"})
@@ -189,7 +189,19 @@
                 // a.seek(900)
                 // a.remove(document.querySelector(".el"))
             }, 300);
+
+            const r = document.createElement("input");
+            r.type = "range";
+            r.min = "0";
+            r.max = a.totalDuration;
+            document.body.appendChild(r);
+            r.addEventListener("input", ()=> {
+                let val = parseInt(r.value);
+                a.seek(val);
+            })
         }
+
+
 
         run();
 

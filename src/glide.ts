@@ -29,7 +29,7 @@ class Glide {
             let item = Glide.items[i];
             if (item.status === 1) {
                 item.update(delta);
-            } else if (item.status === 0) {
+            } else if (item.status === -1) {
                 Glide.items.splice(i, 1);
             }
         }
