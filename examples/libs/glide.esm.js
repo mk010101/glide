@@ -64,6 +64,7 @@ class Context {
     }
 }
 
+const regValues = /[-%\w]+[-\d.]*/gi;
 const regVUs = /[-+=.\w%]+/g;
 const regStrValues = /(([a-z].*?)\(.*?\))(?=\s([a-z].*?)\(.*?\)|\s*$)/gi;
 const regColorVal = /([rgbahsl]+\([,%a-z \d.-]+\))|#[0-9A-F]{6}/gi;
@@ -781,9 +782,32 @@ function strToMap(str) {
         let vo = getVoFromStr(part);
         vo.keepOriginal = true;
         vo.keepStr = part;
-        let tw = new Tween(null, "transform", vo.prop, null, null, 0, 0, 0);
-        tw.from = vo;
-        res.set(vo.prop, tw);
+        if (is.propDual(vo.prop)) {
+            let prop = part.match(regProp)[0];
+            let propX = prop + "X";
+            let propY = prop + "Y";
+            let part2 = part.replace(prop, "");
+            let vus = part2.match(regValues);
+            if (vus.length === 1)
+                vus.push(is.valueOne(prop) ? "1" : "0");
+            let vox = getVo("dom", propX, vus[0]);
+            vox.keepOriginal = true;
+            vox.keepStr = `${propX}(${vus[0]})`;
+            let voy = getVo("dom", propY, vus[1]);
+            voy.keepOriginal = true;
+            voy.keepStr = `${propY}(${vus[1]})`;
+            let twx = new Tween(null, "transform", propX, null, null, 0, 0, 0);
+            twx.from = vox;
+            res.set(propX, twx);
+            let twy = new Tween(null, "transform", propY, null, null, 0, 0, 0);
+            twy.from = voy;
+            res.set(propY, twy);
+        }
+        else {
+            let tw = new Tween(null, "transform", vo.prop, null, null, 0, 0, 0);
+            tw.from = vo;
+            res.set(vo.prop, tw);
+        }
     }
     return res;
 }

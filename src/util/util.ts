@@ -350,14 +350,14 @@ export function strToMap(str: string): Map<string, Tween> {
         let vo = getVoFromStr(part);
         vo.keepOriginal = true;
         vo.keepStr = part;
-        /*
+        //*
         if (is.propDual(vo.prop)) {
             let prop = part.match(regProp)[0];
             let propX = prop + "X";
             let propY = prop + "Y";
             let part2 = part.replace(prop, "");
             let vus = part2.match(regValues);
-            if (vus.length === 1) vus.push(is.valueOne(prop)? 1 : 0);
+            if (vus.length === 1) vus.push(is.valueOne(prop)? "1" : "0");
 
             let vox = getVo("dom", propX, vus[0]);
             vox.keepOriginal = true;
@@ -384,9 +384,9 @@ export function strToMap(str: string): Map<string, Tween> {
         }
         //*/
 
-        let tw = new Tween(null, "transform", vo.prop, null, null, 0, 0, 0);
-        tw.from = vo;
-        res.set(vo.prop, tw);
+        // let tw = new Tween(null, "transform", vo.prop, null, null, 0, 0, 0);
+        // tw.from = vo;
+        // res.set(vo.prop, tw);
 
     }
     // console.log(res)
