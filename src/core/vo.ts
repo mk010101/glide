@@ -7,6 +7,7 @@ export class Vo {
     values: number[] = [];
     units: string[] = [];
     increments: string[] = [];
+    isNumber:boolean = false;
     strBegin:string = "";
     keepOriginal:boolean = false;
     keepStr:string = "";

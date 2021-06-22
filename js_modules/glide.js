@@ -1,5 +1,5 @@
 import Context from "./core/context";
-import { G } from "./core/g";
+import { Animation } from "./core/animation";
 import * as ease from "./util/ease";
 class Glide {
     static to(targets, duration, params, options = {}) {
@@ -7,7 +7,7 @@ class Glide {
             Glide.setContext(document.body);
         options.context = options.context ? new Context(options.context) : Glide.context;
         options.computeStyle = options.computeStyle !== (void 0) ? options.computeStyle : Glide._computeStyle;
-        let a = new G(targets, duration, params, options);
+        let a = new Animation(targets, duration, params, options);
         Glide.items.push(a);
         return a;
     }

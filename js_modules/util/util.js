@@ -1,4 +1,4 @@
-import { getObjType, is, regColorVal, regProp, regStrValues, regTypes, regVUs } from "./regex";
+import { getObjType, is, regColorVal, regProp, regStrValues, regTypes, regValues, regVUs } from "./regex";
 import { Vo } from "../core/vo";
 import { toRgb, toRgbStr } from "./color";
 import Context from "../core/context";
@@ -98,12 +98,45 @@ function getNumbers(val) {
     let nums = val.match(/[-.\d]+/g);
     return nums.map((v) => parseFloat(v));
 }
+export function unwrapValues(prop, val) {
+    const propX = prop + "X";
+    const propY = prop + "Y";
+    if (is.number(val)) {
+        return [
+            { prop: propX, val: val },
+            { prop: propY, val: val }
+        ];
+    }
+    else if (is.string(val)) {
+        let res = val.match(regValues);
+        if (res.length === 1) {
+            res.push(is.valueOne(prop) ? "1" : "0");
+        }
+        return [
+            { prop: propX, val: res[0] },
+            { prop: propY, val: res[1] }
+        ];
+    }
+    else if (is.array(val)) {
+        if (val.lengh === 1)
+            val.push(val[0]);
+        return [
+            { prop: propX, val: val[0] },
+            { prop: propY, val: val[1] }
+        ];
+    }
+}
 export function getVo(targetType, prop, val) {
     let vo = new Vo();
     vo.targetType = targetType;
     vo.tweenType = getTweenType(targetType, prop);
     vo.prop = prop;
+    vo.isNumber = targetType === "obj";
     let propType = getPropType(prop);
+    if (targetType === "dom" && is.valueOne(prop)) {
+        if (val == void 0)
+            val = 1;
+    }
     switch (propType) {
         case "color":
             let colorMatch = val.match(regColorVal);
@@ -146,7 +179,8 @@ export function getVo(targetType, prop, val) {
             let vus = getValuesUnits(val);
             for (let i = 0; i < vus.length; i++) {
                 vo.values.push(vus[i].value);
-                vo.units.push(vus[i].unit);
+                let unit = targetType === "dom" ? vus[i].unit : null;
+                vo.units.push(unit);
                 vo.increments.push(vus[i].increment);
             }
     }
@@ -177,15 +211,17 @@ export function normalizeVos(from, to, context) {
         let uFrom = from.units[i];
         let uTo = to.units[i];
         let incr = to.increments[i];
-        if (!uFrom)
-            uFrom = from.units[i] = getDefaultUnit(from.prop);
-        if (!uTo)
-            uTo = to.units[i] = uFrom;
-        if (uFrom && uFrom !== uTo) {
-            if (is.propTransform(from.prop) && (uFrom === "%" && uTo !== "%" || uFrom !== "%" && uTo === "%")) {
-            }
-            else {
-                from.values[i] = Context.convertUnits(from.values[i], uFrom, uTo, context.units);
+        if (!from.isNumber) {
+            if (!uFrom)
+                uFrom = from.units[i] = getDefaultUnit(from.prop);
+            if (!uTo)
+                uTo = to.units[i] = uFrom;
+            if (uFrom && uFrom !== uTo) {
+                if (is.propTransform(from.prop) && (uFrom === "%" && uTo !== "%" || uFrom !== "%" && uTo === "%")) {
+                }
+                else {
+                    from.values[i] = Context.convertUnits(from.values[i], uFrom, uTo, context.units);
+                }
             }
         }
         if (incr === "-") {
@@ -215,9 +251,32 @@ export function strToMap(str) {
         let vo = getVoFromStr(part);
         vo.keepOriginal = true;
         vo.keepStr = part;
-        let tw = new Tween(null, "transform", vo.prop, null, null, 0, 0, 0);
-        tw.from = vo;
-        res.set(vo.prop, tw);
+        if (is.propDual(vo.prop)) {
+            let prop = part.match(regProp)[0];
+            let propX = prop + "X";
+            let propY = prop + "Y";
+            let part2 = part.replace(prop, "");
+            let vus = part2.match(regValues);
+            if (vus.length === 1)
+                vus.push(is.valueOne(prop) ? "1" : "0");
+            let vox = getVo("dom", propX, vus[0]);
+            vox.keepOriginal = true;
+            vox.keepStr = `${propX}(${vus[0]})`;
+            let voy = getVo("dom", propY, vus[1]);
+            voy.keepOriginal = true;
+            voy.keepStr = `${propY}(${vus[1]})`;
+            let twx = new Tween(null, "transform", propX, null, null, 0, 0, 0);
+            twx.from = vox;
+            res.set(propX, twx);
+            let twy = new Tween(null, "transform", propY, null, null, 0, 0, 0);
+            twy.from = voy;
+            res.set(propY, twy);
+        }
+        else {
+            let tw = new Tween(null, "transform", vo.prop, null, null, 0, 0, 0);
+            tw.from = vo;
+            res.set(vo.prop, tw);
+        }
     }
     return res;
 }

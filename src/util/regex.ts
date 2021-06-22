@@ -97,8 +97,9 @@ export const is = {
     unitDegrees(val: any) {
         return (/rotate|skew/i.test(val));
     },
-    valDual(val: any) {
-        return (/translate\(|scale\(|skew\(/i.test(val));
+    // can be in the form of scale(1) or translate(10px, 50%).
+    propDual(val: any) {
+        return (val === "translate" || val === "scale" || val === "skew");
     },
     unitPercent(val: any) {
         return (/invert|contrast|grayscale|saturate|sepia/i.test(val));

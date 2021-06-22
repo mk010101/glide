@@ -11,6 +11,7 @@ export default class Target {
     // cssTxt: string;
     computedStyle: CSSStyleDeclaration;
     context: Context;
+    pos = 0;
 
 
     constructor(target: any, context: Context) {

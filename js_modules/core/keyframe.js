@@ -3,7 +3,7 @@ export class Keyframe {
         this.duration = 0;
         this.totalDuration = 0;
         this.initialized = false;
-        this.tweens = [];
+        this.tgs = [];
     }
     push(tg) {
         for (let i = 0; i < tg.tweens.length; i++) {
@@ -12,6 +12,6 @@ export class Keyframe {
                 this.totalDuration = tw.totalDuration;
             }
         }
-        this.tweens.push(tg);
+        this.tgs.push(tg);
     }
 }

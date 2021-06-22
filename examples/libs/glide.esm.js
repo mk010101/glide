@@ -1,3 +1,4 @@
+const PI = Math.PI;
 class Context {
     constructor(parent) {
         this.units = {
@@ -14,8 +15,6 @@ class Context {
             pt: 1,
             pc: 1,
             "%": 1,
-            turn: 1,
-            deg: 1 / 360,
         };
         this.setUnits(parent);
     }
@@ -43,20 +42,29 @@ class Context {
         let keys = Object.keys(this.units);
         for (let i = 0; i < keys.length; i++) {
             let key = keys[i];
-            if (key !== "turn" && key !== "deg" && key !== "rad") {
-                el.style.width = 1 + key;
-                this.units[key] = parseFloat(computed.width);
-            }
+            el.style.width = 1 + key;
+            this.units[key] = parseFloat(computed.width);
         }
         p.removeChild(el);
     }
     static convertUnits(val, from, to, units) {
+        if (from === "deg" && to === "rad")
+            return val * PI / 180;
+        else if (from === "rad" && to === "deg")
+            return val / PI * 180;
+        if (from === "deg" && to === "rad")
+            return val * PI / 180;
+        else if (from === "turn" && to === "deg")
+            return val * 360;
+        if (from === "deg" && to === "turn")
+            return val / 360;
         let px = units[from];
         let un = units[to];
         return px / un * val;
     }
 }
 
+const regValues = /[-%\w]+[-\d.]*/gi;
 const regVUs = /[-+=.\w%]+/g;
 const regStrValues = /(([a-z].*?)\(.*?\))(?=\s([a-z].*?)\(.*?\)|\s*$)/gi;
 const regColorVal = /([rgbahsl]+\([,%a-z \d.-]+\))|#[0-9A-F]{6}/gi;
@@ -150,8 +158,8 @@ const is = {
     unitDegrees(val) {
         return (/rotate|skew/i.test(val));
     },
-    valDual(val) {
-        return (/translate\(|scale\(|skew\(/i.test(val));
+    propDual(val) {
+        return (val === "translate" || val === "scale" || val === "skew");
     },
     unitPercent(val) {
         return (/invert|contrast|grayscale|saturate|sepia/i.test(val));
@@ -166,6 +174,7 @@ const is = {
 
 class Target {
     constructor(target, context) {
+        this.pos = 0;
         this.target = target;
         this.context = context;
         this.init();
@@ -255,6 +264,7 @@ class Vo {
         this.values = [];
         this.units = [];
         this.increments = [];
+        this.isNumber = false;
         this.strBegin = "";
         this.keepOriginal = false;
         this.keepStr = "";
@@ -653,7 +663,12 @@ function getVo(targetType, prop, val) {
     vo.targetType = targetType;
     vo.tweenType = getTweenType(targetType, prop);
     vo.prop = prop;
+    vo.isNumber = targetType === "obj";
     let propType = getPropType(prop);
+    if (targetType === "dom" && is.valueOne(prop)) {
+        if (val == void 0)
+            val = 1;
+    }
     switch (propType) {
         case "color":
             let colorMatch = val.match(regColorVal);
@@ -696,7 +711,8 @@ function getVo(targetType, prop, val) {
             let vus = getValuesUnits(val);
             for (let i = 0; i < vus.length; i++) {
                 vo.values.push(vus[i].value);
-                vo.units.push(vus[i].unit);
+                let unit = targetType === "dom" ? vus[i].unit : null;
+                vo.units.push(unit);
                 vo.increments.push(vus[i].increment);
             }
     }
@@ -727,14 +743,16 @@ function normalizeVos(from, to, context) {
         let uFrom = from.units[i];
         let uTo = to.units[i];
         let incr = to.increments[i];
-        if (!uFrom)
-            uFrom = from.units[i] = getDefaultUnit(from.prop);
-        if (!uTo)
-            uTo = to.units[i] = uFrom;
-        if (uFrom && uFrom !== uTo) {
-            if (is.propTransform(from.prop) && (uFrom === "%" && uTo !== "%" || uFrom !== "%" && uTo === "%")) ;
-            else {
-                from.values[i] = Context.convertUnits(from.values[i], uFrom, uTo, context.units);
+        if (!from.isNumber) {
+            if (!uFrom)
+                uFrom = from.units[i] = getDefaultUnit(from.prop);
+            if (!uTo)
+                uTo = to.units[i] = uFrom;
+            if (uFrom && uFrom !== uTo) {
+                if (is.propTransform(from.prop) && (uFrom === "%" && uTo !== "%" || uFrom !== "%" && uTo === "%")) ;
+                else {
+                    from.values[i] = Context.convertUnits(from.values[i], uFrom, uTo, context.units);
+                }
             }
         }
         if (incr === "-") {
@@ -764,9 +782,32 @@ function strToMap(str) {
         let vo = getVoFromStr(part);
         vo.keepOriginal = true;
         vo.keepStr = part;
-        let tw = new Tween(null, "transform", vo.prop, null, null, 0, 0, 0);
-        tw.from = vo;
-        res.set(vo.prop, tw);
+        if (is.propDual(vo.prop)) {
+            let prop = part.match(regProp)[0];
+            let propX = prop + "X";
+            let propY = prop + "Y";
+            let part2 = part.replace(prop, "");
+            let vus = part2.match(regValues);
+            if (vus.length === 1)
+                vus.push(is.valueOne(prop) ? "1" : "0");
+            let vox = getVo("dom", propX, vus[0]);
+            vox.keepOriginal = true;
+            vox.keepStr = `${propX}(${vus[0]})`;
+            let voy = getVo("dom", propY, vus[1]);
+            voy.keepOriginal = true;
+            voy.keepStr = `${propY}(${vus[1]})`;
+            let twx = new Tween(null, "transform", propX, null, null, 0, 0, 0);
+            twx.from = vox;
+            res.set(propX, twx);
+            let twy = new Tween(null, "transform", propY, null, null, 0, 0, 0);
+            twy.from = voy;
+            res.set(propY, twy);
+        }
+        else {
+            let tw = new Tween(null, "transform", vo.prop, null, null, 0, 0, 0);
+            tw.from = vo;
+            res.set(vo.prop, tw);
+        }
     }
     return res;
 }
@@ -776,7 +817,7 @@ class Keyframe {
         this.duration = 0;
         this.totalDuration = 0;
         this.initialized = false;
-        this.tweens = [];
+        this.tgs = [];
     }
     push(tg) {
         for (let i = 0; i < tg.tweens.length; i++) {
@@ -785,7 +826,7 @@ class Keyframe {
                 this.totalDuration = tw.totalDuration;
             }
         }
-        this.tweens.push(tg);
+        this.tgs.push(tg);
     }
 }
 
@@ -797,7 +838,7 @@ const Evt = {
 };
 
 const Ease = ease;
-class G extends Dispatcher {
+class Animation extends Dispatcher {
     constructor(targets, duration, params, options = {}) {
         super();
         this.status = 1;
@@ -814,13 +855,13 @@ class G extends Dispatcher {
         this.repeat = 1;
         this.num = 0;
         this.repeat = (options.repeat !== (void 0) && options.repeat > 0) ? options.repeat + 1 : 1;
-        this.targets = G._getTargets(targets, options);
+        this.targets = Animation._getTargets(targets, options);
         this.to(duration, params, options);
     }
     to(duration, params, options = {}) {
         let kf = new Keyframe();
         for (let i = 0; i < this.targets.length; i++) {
-            const tg = G._getTweens(this.targets[i], duration, params, options);
+            const tg = Animation._getTweens(this.targets[i], duration, params, options);
             kf.push(tg);
         }
         this.totalDuration += kf.totalDuration * this.repeat;
@@ -834,35 +875,42 @@ class G extends Dispatcher {
         if ((this.paused && !this.seeking) || this.status === 0)
             return;
         if (!this.currentKf.initialized) {
-            G._initTweens(this.currentKf);
+            Animation._initTweens(this.currentKf);
             this.currentKf.initialized = true;
         }
         this.time += t * this.dir;
         this.currentTime += t;
-        const tweens = this.currentKf.tweens;
-        for (let i = 0; i < tweens.length; i++) {
-            const tg = tweens[i];
+        const tgs = this.currentKf.tgs;
+        for (let i = 0; i < tgs.length; i++) {
+            const tg = tgs[i];
             const tweenable = tg.tweenable;
-            tg.type;
             let transformsStr = "";
             let filtersStr = "";
             for (let j = 0; j < tg.tweens.length; j++) {
                 const tween = tg.tweens[j];
                 const twType = tween.type;
                 let elapsed = minMax(this.time - tween.start - tween.delay, 0, tween.duration) / tween.duration;
+                if (elapsed === 0 && this.dir === 1)
+                    return;
                 let eased = isNaN(elapsed) ? 1 : tween.ease(elapsed);
                 let from = tween.from;
                 let to = tween.to;
                 let tweenable = tween.tweenable;
                 let prop = tween.prop;
+                const isNum = from.isNumber;
                 switch (twType) {
                     case "css":
-                        let str = "";
-                        for (let j = 0; j < from.values.length; j++) {
-                            let val = from.values[j] + eased * (to.values[j] - tween.from.values[j]);
-                            str += `${val}${to.units[j]} `;
+                        if (isNum) {
+                            tweenable[prop] = from.values[0] + eased * (to.values[0] - tween.from.values[0]);
                         }
-                        tweenable[prop] = str;
+                        else {
+                            let str = "";
+                            for (let j = 0; j < from.values.length; j++) {
+                                let val = from.values[j] + eased * (to.values[j] - tween.from.values[j]);
+                                str += `${val}${to.units[j]} `;
+                            }
+                            tweenable[prop] = str;
+                        }
                         break;
                     case "color":
                         let r = ~~(from.values[0] + eased * to.diffVals[0]);
@@ -876,10 +924,13 @@ class G extends Dispatcher {
                             transformsStr += from.keepStr + " ";
                         }
                         else {
+                            transformsStr += `${to.prop}(`;
                             for (let j = 0; j < from.values.length; j++) {
                                 let val = from.values[j] + eased * (to.values[j] - tween.from.values[j]);
-                                transformsStr += `${to.prop}(${val}${to.units[j]}) `;
+                                let sep = j < to.values.length - 1 ? ", " : "";
+                                transformsStr += `${val}${to.units[j]}${sep}`;
                             }
+                            transformsStr += ") ";
                         }
                         break;
                     case "filter":
@@ -952,7 +1003,9 @@ class G extends Dispatcher {
         let t = [];
         if (is.list(targets)) {
             for (let i = 0; i < targets.length; i++) {
-                t.push(new Target(targets[i], options.context));
+                let target = new Target(targets[i], options.context);
+                target.pos = i;
+                t.push(target);
             }
         }
         else if (is.tweenable(targets)) {
@@ -973,62 +1026,70 @@ class G extends Dispatcher {
         for (let i = 0; i < keys.length; i++) {
             let prop = keys[i];
             let val = params[prop];
-            let dur = duration;
-            let fromVal;
-            let toVal;
-            if (target.type === "dom") {
-                if (prop === "bg")
-                    prop = "backgroundColor";
-                else if (prop === "x")
-                    prop = "translateX";
-                else if (prop === "y")
-                    prop = "translateY";
-                else if (prop === "hueRotate")
-                    prop = "hue-rotate";
-                else if (prop === "dropShadow")
-                    prop = "drop-shadow";
-            }
-            const twType = getTweenType(target.type, prop);
-            if (is.array(val)) {
-                fromVal = val[0];
-                toVal = val[1];
-            }
-            else if (is.obj(val)) {
-                const o = val;
-                dur = o.duration;
-                toVal = o.value;
-            }
-            else {
-                toVal = val;
-            }
-            let delay = options.delay || 0;
-            let tw = new Tween(target, twType, prop, fromVal, toVal, dur, delay, 0);
-            let ease;
-            let optEase = options.ease;
-            if (optEase) {
-                if (is.string(optEase)) {
-                    let res = optEase.match(/[\w]+|[-\d.]+/g);
-                    if (res && res.length === 1) {
-                        ease = Ease[optEase];
-                    }
-                    else if (res && res.length === 2) {
-                        let e = Ease[res[0]];
-                        if (is.func(e))
-                            ease = Ease[res[0]](parseFloat(res[1]));
-                    }
-                }
-                else
-                    ease = optEase;
-            }
-            tw.ease = ease || Ease.quadInOut;
-            tw.propType = getPropType(prop);
+            let tw = Animation._getTween(target, prop, val, duration, options);
             tg.tweens.push(tw);
         }
         return tg;
     }
+    static _getTween(target, prop, val, dur, options) {
+        let fromVal;
+        let toVal;
+        if (target.type === "dom") {
+            if (prop === "bg")
+                prop = "backgroundColor";
+            else if (prop === "x")
+                prop = "translateX";
+            else if (prop === "y")
+                prop = "translateY";
+            else if (prop === "hueRotate")
+                prop = "hue-rotate";
+            else if (prop === "dropShadow")
+                prop = "drop-shadow";
+        }
+        const twType = getTweenType(target.type, prop);
+        if (is.array(val)) {
+            fromVal = val[0];
+            toVal = val[1];
+        }
+        else if (is.obj(val)) {
+            const o = val;
+            dur = o.duration;
+            toVal = o.value;
+        }
+        else {
+            toVal = val;
+        }
+        let delay = options.delay || 0;
+        let tw = new Tween(target, twType, prop, fromVal, toVal, dur, delay, 0);
+        if (options.stagger) {
+            let del = target.pos * options.stagger;
+            tw.start = del;
+            tw.totalDuration += del;
+        }
+        let ease;
+        let optEase = options.ease;
+        if (optEase) {
+            if (is.string(optEase)) {
+                let res = optEase.match(/[\w]+|[-\d.]+/g);
+                if (res && res.length === 1) {
+                    ease = Ease[optEase];
+                }
+                else if (res && res.length === 2) {
+                    let e = Ease[res[0]];
+                    if (is.func(e))
+                        ease = Ease[res[0]](parseFloat(res[1]));
+                }
+            }
+            else
+                ease = optEase;
+        }
+        tw.ease = ease || Ease.quadInOut;
+        tw.propType = getPropType(prop);
+        return tw;
+    }
     static _initTweens(kf) {
-        for (let i = 0; i < kf.tweens.length; i++) {
-            const tg = kf.tweens[i];
+        for (let i = 0; i < kf.tgs.length; i++) {
+            const tg = kf.tgs[i];
             let transTweens;
             let transOldTweens;
             let transChecked = false;
@@ -1056,7 +1117,7 @@ class G extends Dispatcher {
                                 oldTweens = transOldTweens;
                                 newTweens = transTweens;
                             }
-                            else if (!filterChecked) {
+                            else if (tw.type === "filter" && !filterChecked) {
                                 filterOldTweens = strToMap(tw.target.getExistingValue("filter"));
                                 filterTweens = new Map();
                                 filterChecked = true;
@@ -1078,6 +1139,11 @@ class G extends Dispatcher {
                             newTweens.set(tw.prop, tw);
                             break;
                     }
+                }
+                else {
+                    if (!tw.fromVal)
+                        tw.fromVal = tw.target.getExistingValue(tw.prop);
+                    from = getVo("obj", tw.prop, tw.fromVal);
                 }
                 tw.from = from;
                 tw.to = to;
@@ -1106,7 +1172,7 @@ class Glide {
             Glide.setContext(document.body);
         options.context = options.context ? new Context(options.context) : Glide.context;
         options.computeStyle = options.computeStyle !== (void 0) ? options.computeStyle : Glide._computeStyle;
-        let a = new G(targets, duration, params, options);
+        let a = new Animation(targets, duration, params, options);
         Glide.items.push(a);
         return a;
     }
