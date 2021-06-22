@@ -28,7 +28,7 @@ export class Animation extends Dispatcher {
     playedTimes = 0;
     loop = true;
     repeat = 1;
-    keep:false;
+    keep: false;
 
     num: number = 0;
 
@@ -37,8 +37,8 @@ export class Animation extends Dispatcher {
 
         this.repeat = (options.repeat != (void 0) && options.repeat > 0) ? options.repeat + 1 : 1;
         this.loop = options.loop != (void 0) ? options.loop : true;
-        this.paused = options.paused != (void 0)? options.paused : false;
-        this.keep = options.keep != (void 0)? options.keep : false;
+        this.paused = options.paused != (void 0) ? options.paused : false;
+        this.keep = options.keep != (void 0) ? options.keep : false;
 
         this.targets = Animation._getTargets(targets, options);
         this.to(duration, params, options);
@@ -209,8 +209,7 @@ export class Animation extends Dispatcher {
                         this.currentKf = this.keyframes[0];
                     }
                 } else {
-                    this.status = this.status = this.keep? 0 : -1;
-                    this.targets = [];
+                    this.status = this.status = this.keep ? 0 : -1;
                     this.dispatch(Evt.end, null);
                 }
             }
@@ -250,7 +249,7 @@ export class Animation extends Dispatcher {
         this.time = 0;
     }
 
-    seek(ms:number) {
+    seek(ms: number) {
         ms = minMax(ms, 0, this.totalDuration);
         this.seeking = true;
 
@@ -339,15 +338,15 @@ export class Animation extends Dispatcher {
         }
 
         const twType = getTweenType(target.type, prop);
-        let optEase;
+        let optEase = options.ease;
         if (is.array(val)) {
             fromVal = val[0];
             toVal = val[1];
         } else if (is.obj(val)) {
             const o: Value = val;
-            toVal = o.value != (void 0)? o.value :val;
-            dur = o.duration != (void 0)? o.duration : dur;
-            optEase = o.ease != (void 0)? o.ease : options.ease;
+            toVal = o.value != (void 0) ? o.value : val;
+            dur = o.duration != (void 0) ? o.duration : dur;
+            optEase = o.ease != (void 0) ? o.ease : options.ease;
         } else {
             toVal = val;
         }

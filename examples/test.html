@@ -153,8 +153,8 @@
                     // saturate: 20,
                     // sepia: 90,
                     // translateX: "4rem",
-                    x: "70px",
-                    // x: {value:"12rem", ease:"bounceOut", duration:1200},
+                    // x: "270px",
+                    x: {value:"12rem", ease:"bounceOut", duration:1200},
                     // y: 50,
                     // y: "+=20",
                     // translateY: 50,
@@ -174,7 +174,13 @@
                     //bg: "hsla(15deg, 100% 50%, .5)",
                     // bg: "#339922",
                     //borderColor: "rgba(153,215,255,0.8)"
-                }, {delay: 500, zrepeat: 2, zease: "stepped(5)", stagger: 50, zloop:false, zpaused:true, keep:true})
+                }, {delay: 500,
+                    zrepeat: 2,
+                    // ease: "stepped(5)",
+                    stagger: 50,
+                    zloop:false,
+                    zpaused:true,
+                    zkeep:true})
             // .to(500, {left:"10%"}, {stagger:30})
             .to(500, {top:150})
             // .to(500, {rotate:"+=50"})

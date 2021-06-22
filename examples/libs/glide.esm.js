@@ -1035,7 +1035,6 @@ class Animation extends Dispatcher {
                 }
                 else {
                     this.status = this.status = this.keep ? 0 : -1;
-                    this.targets = [];
                     this.dispatch(Evt.end, null);
                 }
             }
@@ -1132,7 +1131,7 @@ class Animation extends Dispatcher {
                 prop = "drop-shadow";
         }
         const twType = getTweenType(target.type, prop);
-        let optEase;
+        let optEase = options.ease;
         if (is.array(val)) {
             fromVal = val[0];
             toVal = val[1];
