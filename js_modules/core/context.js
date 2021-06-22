@@ -1,3 +1,10 @@
+const PI = Math.PI;
+function degToRad(val) {
+    return val * PI / 180;
+}
+function radToDeg(val) {
+    return val / PI * 180;
+}
 export default class Context {
     constructor(parent) {
         this.units = {
@@ -14,8 +21,6 @@ export default class Context {
             pt: 1,
             pc: 1,
             "%": 1,
-            turn: 1,
-            deg: 1 / 360,
         };
         this.setUnits(parent);
     }
@@ -43,14 +48,22 @@ export default class Context {
         let keys = Object.keys(this.units);
         for (let i = 0; i < keys.length; i++) {
             let key = keys[i];
-            if (key !== "turn" && key !== "deg" && key !== "rad") {
-                el.style.width = 1 + key;
-                this.units[key] = parseFloat(computed.width);
-            }
+            el.style.width = 1 + key;
+            this.units[key] = parseFloat(computed.width);
         }
         p.removeChild(el);
     }
     static convertUnits(val, from, to, units) {
+        if (from === "deg" && to === "rad")
+            return val * PI / 180;
+        else if (from === "rad" && to === "deg")
+            return val / PI * 180;
+        if (from === "deg" && to === "rad")
+            return val * PI / 180;
+        else if (from === "turn" && to === "deg")
+            return val * 360;
+        if (from === "deg" && to === "turn")
+            return val / 360;
         let px = units[from];
         let un = units[to];
         return px / un * val;

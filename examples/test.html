@@ -159,7 +159,7 @@
                     // translateY: 50,
                     // translate: "100, 50",
                     // x: 120,
-                    rotate: {value: -45, duration: 1000},
+                    rotate: {value: "2rad", duration: 1000},
                     // x: 120,
                     // rotate: 45,
                     // scaleX: 3,
@@ -189,12 +189,8 @@
             }, 300);
         }
 
-        //run();
+        run();
 
-        let obj = {x: 10, y: -11, z:0};
-        let an = glide.to(obj, 500, {x: -5, y: "+=10"})
-        // .on("progress", ()=> console.log(obj))
-            .on("end", () => console.log(an));
 
 
         /* ==============================================++++=================++++++++==========+++++++++++=============
