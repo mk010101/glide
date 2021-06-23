@@ -72,11 +72,10 @@
     }
 
     const regValues = /[-%\w]+[-\d.]*/gi;
-    const regVUs = /[-+=.\w%]+/g;
     const regStrValues = /(([a-z].*?)\(.*?\))(?=\s([a-z].*?)\(.*?\)|\s*$)/gi;
     const regColorVal = /([rgbahsl]+\([,%a-z \d.-]+\))|#[0-9A-F]{6}/gi;
     const regProp = /^[-\w]+[^( ]/gi;
-    const regTypes = /Null|Number|String|Object|Array/g;
+    const regNums = /[-.\d]+/g;
     function getObjType(val) {
         return Object.prototype.toString.call(val);
     }
@@ -562,10 +561,7 @@
             this.from = null;
             this.to = null;
             this.ease = quadInOut;
-            this.initialized = false;
             this.isNum = false;
-            this.nums = [];
-            this.strings = [];
             this.twType = twType;
             this.prop = prop;
             this.duration = duration;
@@ -593,18 +589,6 @@
             return "direct";
         return "css";
     }
-    function getValueType(val = null) {
-        let t = getObjType(val).match(regTypes)[0];
-        switch (t) {
-            case "Null":
-                return "null";
-            case "Number":
-                return "number";
-            case "String":
-                return "string";
-        }
-        return;
-    }
     function getPropType(prop) {
         if (is.propDropShadow(prop))
             return "dropShadow";
@@ -613,52 +597,6 @@
         else if (is.propMatrix(prop))
             return "matrix";
         return "other";
-    }
-    function getDefaultUnit(prop) {
-        if (is.unitDegrees(prop))
-            return "deg";
-        else if (is.unitPercent(prop))
-            return "%";
-        else if (is.unitless(prop))
-            return "";
-        return "px";
-    }
-    function getValueUnit(val) {
-        const increment = val.match(/-=|\+=|\*=|\/=/g);
-        if (increment)
-            increment[0] = increment[0].replace("=", "");
-        val = val.replace("-=", "");
-        const v = val.match(/[-.\d]+|[%\w]+/g);
-        if (v.length === 1)
-            v.push(null);
-        return {
-            value: parseFloat(v[0]),
-            unit: v.length === 1 ? "" : v[1],
-            increment: increment ? increment[0] : null
-        };
-    }
-    function getValuesUnits(val) {
-        let vus = [];
-        let vtype = getValueType(val);
-        if (vtype === "null") {
-            return [{
-                    value: 0,
-                    unit: null,
-                    increment: null
-                }];
-        }
-        else if (vtype === "number") {
-            return [{
-                    value: val,
-                    unit: null,
-                    increment: null
-                }];
-        }
-        let arr = val.match(regVUs);
-        for (let i = 0; i < arr.length; i++) {
-            vus.push(getValueUnit(arr[i]));
-        }
-        return vus;
     }
     function getNumbers(val) {
         let nums = val.match(/[-.\d]+/g);
@@ -695,9 +633,9 @@
     function getVo(targetType, prop, val) {
         let vo = new Vo();
         let propType = getPropType(prop);
-        if (targetType === "dom" && is.valueOne(prop)) {
-            if (val == void 0)
-                val = 1;
+        if (is.number(val)) {
+            vo.numbers = [val];
+            return vo;
         }
         switch (propType) {
             case "color":
@@ -708,42 +646,15 @@
                     val = val.replace(colorMatch[0], color);
                 }
                 vo.numbers = getNumbers(val);
-                for (let i = 0; i < vo.numbers.length; i++) {
-                    vo.units.push("");
-                }
+                vo.strings = val.split(regNums);
+                vo.valueTypes.push(0, 0, 0);
+                if (vo.numbers.length === 4)
+                    vo.valueTypes.push(1);
                 break;
-            case "dropShadow":
-                if (!val)
-                    val = "0px 0px 0px #cccccc";
-                let rgb = val.match(regColorVal)[0];
-                val = val.replace(rgb, "");
-                let pa = getValuesUnits(val);
-                for (let i = 0; i < pa.length; i++) {
-                    vo.numbers.push(pa[i].value);
-                    vo.units.push(pa[i].unit);
-                    vo.increments.push(pa[i].increment);
-                }
-                let rgbs = toRgb(rgb);
-                vo.numbers = vo.numbers.concat(...rgbs);
-                break;
-            case "matrix":
-                if (!val) {
-                    vo.numbers = [1, 0, 0, 1, 0, 0];
-                    vo.units = ["", "", "", "", "", ""];
-                }
-                else {
-                    vo.numbers = getNumbers(val);
-                    vo.units = ["", "", "", "", "", ""];
-                }
-                break;
-            case "other":
-                let vus = getValuesUnits(val);
-                for (let i = 0; i < vus.length; i++) {
-                    vo.numbers.push(vus[i].value);
-                    let unit = targetType === "dom" ? vus[i].unit : null;
-                    vo.units.push(unit);
-                    vo.increments.push(vus[i].increment);
-                }
+        }
+        if (targetType === "dom" && is.valueOne(prop)) {
+            if (val == void 0)
+                val = 1;
         }
         return vo;
     }
@@ -756,47 +667,15 @@
         const prop = tw.prop;
         const from = tw.from;
         const to = tw.to;
-        if (prop === "drop-shadow") {
-            if (tw.from.numbers.length > to.numbers.length)
-                to.numbers.push(1);
-            else if (from.numbers.length < to.numbers.length)
-                from.numbers.push(1);
-        }
-        let longer = to.units.length > from.units.length ? to : from;
-        let shorter = longer === from ? to : from;
-        for (let i = 0; i < longer.units.length - shorter.units.length; i++) {
-            shorter.units.push(null);
-            let v = is.valueOne(tw.prop) ? 1 : 0;
-            shorter.numbers.push(v);
+        if (from.numbers.length !== to.numbers.length) {
+            let shorter = from.numbers.length > to.numbers.length ? to : from;
+            let longer = shorter === from ? to : from;
+            if (is.propColor(prop)) {
+                shorter.numbers.push(1);
+                shorter.strings = longer.strings;
+            }
         }
         for (let i = 0; i < from.units.length; i++) {
-            let uFrom = from.units[i];
-            let uTo = to.units[i];
-            let incr = to.increments[i];
-            if (!tw.isNum) {
-                if (!uFrom)
-                    uFrom = from.units[i] = getDefaultUnit(tw.prop);
-                if (!uTo)
-                    uTo = to.units[i] = uFrom;
-                if (uFrom && uFrom !== uTo) {
-                    if (is.propTransform(tw.prop) && (uFrom === "%" && uTo !== "%" || uFrom !== "%" && uTo === "%")) ;
-                    else {
-                        from.numbers[i] = Context.convertUnits(from.numbers[i], uFrom, uTo, context.units);
-                    }
-                }
-            }
-            if (incr === "-") {
-                to.numbers[i] = from.numbers[i] - to.numbers[i];
-            }
-            else if (incr === "+") {
-                to.numbers[i] += from.numbers[i];
-            }
-            else if (incr === "*") {
-                to.numbers[i] *= from.numbers[i];
-            }
-            else if (incr === "/") {
-                to.numbers[i] /= from.numbers[i];
-            }
         }
     }
     function strToMap(str) {
@@ -957,6 +836,7 @@
                 const tgs = this.keyframes[i].tgs;
                 if (this.keyframes[i].initialized) {
                     for (let j = 0; j < tgs.length; j++) {
+                        Animation._render(tgs, 0, 1);
                     }
                 }
             }
@@ -990,7 +870,33 @@
             this.status = this._preSeekState;
             this._seeking = false;
         }
+        static _getRenderStr(from, to, t) {
+            let str = to.strings[0];
+            for (let i = 1; i < to.strings.length; i++) {
+                let val = from.numbers[i - 1] + t * (to.numbers[i - 1] - from.numbers[i - 1]);
+                if (to.valueTypes[i - 1] === 0)
+                    val = ~~val;
+                str += val + to.strings[i];
+            }
+            return str;
+        }
         static _render(tgs, time, dir) {
+            for (let i = 0, k = tgs.length; i < k; i++) {
+                const tg = tgs[i];
+                for (let j = 0, f = tg.tweens.length; j < f; j++) {
+                    const tween = tg.tweens[j];
+                    tween.twType;
+                    let elapsed = minMax(time - tween.start - tween.delay, 0, tween.duration) / tween.duration;
+                    if (elapsed === 0 && dir === 1)
+                        return;
+                    let eased = isNaN(elapsed) ? 1 : tween.ease(elapsed);
+                    let from = tween.from;
+                    let to = tween.to;
+                    tween.tweenable;
+                    let prop = tween.prop;
+                    tg.target.tweenable[prop] = Animation._getRenderStr(from, to, eased);
+                }
+            }
         }
         static _getTargets(targets, options) {
             if (typeof targets === "string") {

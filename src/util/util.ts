@@ -1,5 +1,5 @@
 import {PropType, TargetType, TweenType, ValueType, ValueUnit} from "../types";
-import {getObjType, is, regColorVal, regProp, regStrValues, regTypes, regValues, regVUs} from "./regex";
+import {getObjType, is, regColorVal, regNums, regProp, regStrValues, regTypes, regValues, regVUs} from "./regex";
 import {Vo} from "../core/vo";
 import {toRgb, toRgbStr} from "./color";
 import Context from "../core/context";
@@ -155,7 +155,7 @@ export function unwrapValues(prop: string, val: any): any {
         if (res.length === 1) {
             // let vu = getValuesUnits(res[0]);
             // console.log(vu)
-            res.push(is.valueOne(prop)? "1" : "0");
+            res.push(is.valueOne(prop) ? "1" : "0");
         }
         return [
             {prop: propX, val: res[0]},
@@ -182,30 +182,14 @@ export function getVo(targetType: TargetType, prop: any, val: any) {
     let vo = new Vo();
     let propType = getPropType(prop);
 
-    // vo.targetType = targetType;
-    // vo.tweenType = getTweenType(targetType, prop);
-    // vo.prop = prop;
-    // vo.isNumber = targetType === "obj";
-    // console.log(targetType, prop, val);
+    // console.log(prop, val)
 
-    if (targetType === "dom" && is.valueOne(prop)) {
-        if (val == void 0)
-            val = 1;
+    if (is.number(val)) {
+        vo.numbers = [val];
+        return vo;
     }
 
-
     switch (propType) {
-
-        // case "css":
-        // case "transform":
-        //     let vus: ValueUnit[] = getValuesUnits(val);
-        //     //console.log(vus)
-        //     for (let i = 0; i < vus.length; i++) {
-        //         vo.values.push(vus[i].value);
-        //         vo.units.push(vus[i].unit);
-        //         vo.increments.push(vus[i].increment);
-        //     }
-        //     break;
 
         case "color":
             let colorMatch = val.match(regColorVal);
@@ -215,53 +199,92 @@ export function getVo(targetType: TargetType, prop: any, val: any) {
                 val = val.replace(colorMatch[0], color);
             }
             vo.numbers = getNumbers(val);
-            for (let i = 0; i < vo.numbers.length; i++) {
-                vo.units.push("");
-            }
-            // vo.strBegin = vo.values.length === 4 ? "rgba" : "rgb";
+            vo.strings = val.split(regNums);
+            vo.valueTypes.push(0, 0, 0);
+            if (vo.numbers.length === 4) vo.valueTypes.push(1);
             break;
-
-        case "dropShadow":
-
-            if (!val) val = "0px 0px 0px #cccccc";
-            let rgb = val.match(regColorVal)[0];
-            val = val.replace(rgb, "");
-            let pa: ValueUnit[] = getValuesUnits(val);
-            for (let i = 0; i < pa.length; i++) {
-                vo.numbers.push(pa[i].value);
-                vo.units.push(pa[i].unit);
-                vo.increments.push(pa[i].increment);
-            }
-            let rgbs = toRgb(rgb);
-            /// First 3 items are offset-x, offset-y and blur-radius. The other 3 or 4 - rgb(a) values.
-            vo.numbers = vo.numbers.concat(...rgbs);
-            // console.log(vo.values)
-            break;
-
-        case "matrix":
-            if (!val) {
-                vo.numbers = [1, 0, 0, 1, 0, 0];
-                vo.units = ["", "", "", "", "", ""];
-            } else {
-                vo.numbers = getNumbers(val);
-                vo.units = ["", "", "", "", "", ""];
-            }
-            break;
-
-        case "other":
-
-            let vus: ValueUnit[] = getValuesUnits(val);
-
-            //console.log(vus)
-            for (let i = 0; i < vus.length; i++) {
-                vo.numbers.push(vus[i].value);
-                let unit = targetType === "dom" ? vus[i].unit : null;
-                vo.units.push(unit);
-                vo.increments.push(vus[i].increment);
-            }
-
 
     }
+
+    // console.log(vo)
+
+
+    if (targetType === "dom" && is.valueOne(prop)) {
+        if (val == void 0)
+            val = 1;
+    }
+
+    /*
+
+        switch (propType) {
+
+            // case "css":
+            // case "transform":
+            //     let vus: ValueUnit[] = getValuesUnits(val);
+            //     //console.log(vus)
+            //     for (let i = 0; i < vus.length; i++) {
+            //         vo.values.push(vus[i].value);
+            //         vo.units.push(vus[i].unit);
+            //         vo.increments.push(vus[i].increment);
+            //     }
+            //     break;
+
+            case "color":
+                let colorMatch = val.match(regColorVal);
+                let color: string;
+                if (colorMatch) {
+                    color = toRgbStr(colorMatch[0]);
+                    val = val.replace(colorMatch[0], color);
+                }
+                vo.numbers = getNumbers(val);
+                for (let i = 0; i < vo.numbers.length; i++) {
+                    vo.units.push("");
+                }
+                // vo.strBegin = vo.values.length === 4 ? "rgba" : "rgb";
+                break;
+
+            case "dropShadow":
+
+                if (!val) val = "0px 0px 0px #cccccc";
+                let rgb = val.match(regColorVal)[0];
+                val = val.replace(rgb, "");
+                let pa: ValueUnit[] = getValuesUnits(val);
+                for (let i = 0; i < pa.length; i++) {
+                    vo.numbers.push(pa[i].value);
+                    vo.units.push(pa[i].unit);
+                    vo.increments.push(pa[i].increment);
+                }
+                let rgbs = toRgb(rgb);
+                /// First 3 items are offset-x, offset-y and blur-radius. The other 3 or 4 - rgb(a) values.
+                vo.numbers = vo.numbers.concat(...rgbs);
+                // console.log(vo.values)
+                break;
+
+            case "matrix":
+                if (!val) {
+                    vo.numbers = [1, 0, 0, 1, 0, 0];
+                    vo.units = ["", "", "", "", "", ""];
+                } else {
+                    vo.numbers = getNumbers(val);
+                    vo.units = ["", "", "", "", "", ""];
+                }
+                break;
+
+            case "other":
+
+                let vus: ValueUnit[] = getValuesUnits(val);
+
+                //console.log(vus)
+                for (let i = 0; i < vus.length; i++) {
+                    vo.numbers.push(vus[i].value);
+                    let unit = targetType === "dom" ? vus[i].unit : null;
+                    vo.units.push(unit);
+                    vo.increments.push(vus[i].increment);
+                }
+
+
+        }
+    */
 
     return vo;
 
@@ -278,11 +301,34 @@ function getVoFromStr(str: string): Vo {
  * @param tw {Tween}
  * @param context {Context}
  */
-export function normalizeTween(tw:Tween, context: Context) {
+export function normalizeTween(tw: Tween, context: Context) {
 
     const prop = tw.prop;
     const from = tw.from;
     const to = tw.to;
+
+    if (from.numbers.length !== to.numbers.length) {
+        let shorter: Vo = from.numbers.length > to.numbers.length ? to : from;
+        let longer: Vo = shorter === from ? to : from;
+
+        if (is.propColor(prop)) {
+            shorter.numbers.push(1);
+            shorter.strings = longer.strings;
+        }
+
+    }
+
+    for (let i = 0; i < from.units.length; i++) {
+
+
+
+    }
+
+
+
+    // console.log(tw)
+
+    /*
     if (prop === "drop-shadow") {
         if (tw.from.numbers.length > to.numbers.length)
             to.numbers.push(1);
@@ -290,8 +336,8 @@ export function normalizeTween(tw:Tween, context: Context) {
             from.numbers.push(1);
     }
 
-    let longer = to.units.length > from.units.length? to : from;
-    let shorter = longer === from? to : from;
+    let longer = to.units.length > from.units.length ? to : from;
+    let shorter = longer === from ? to : from;
     for (let i = 0; i < longer.units.length - shorter.units.length; i++) {
         shorter.units.push(null);
         let v = is.valueOne(tw.prop) ? 1 : 0;
@@ -332,6 +378,7 @@ export function normalizeTween(tw:Tween, context: Context) {
         //tw.diffVals.push(to.values[i] - from.values[i]);
 
     }
+     */
     // console.log(from.units, to.units);
     // console.log(from.values, to.values);
 }
@@ -387,7 +434,7 @@ export function strToMap(str: string): Map<string, Tween> {
         }
         //*/
 
-        let tw = new Tween( "transform", "prop", null, null, 0, 0, 0);
+        let tw = new Tween("transform", "prop", null, null, 0, 0, 0);
         tw.from = vo;
         res.set(tw.prop, tw);
 

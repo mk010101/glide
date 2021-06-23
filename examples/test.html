@@ -112,7 +112,8 @@
         // el.style.filter = "drop-shadow(-2px -2px 4px #333333)";
         // el.style.filter = "drop-shadow(-2px -2px 4px rgba(10,10,10,.8))";
         // el.style.margin = strMargins;
-        el.style.backgroundColor = "hsla(70, 50%, 50%, 1)";
+        // el.style.backgroundColor = "hsla(70deg, 50%, 50%, .7)";
+        el.style.backgroundColor = "#ffcc00";
         // el.style.borderColor = "hsla(25, 70%, 40%)";
         // el.style.top = "20px";
         el.style.left = "50px";
@@ -227,22 +228,6 @@
             TESTS
          =============================================================================================================*/
 
-        const reg = /[^\d.+=]+|[-+=.\d]+/g;
-
-        console.log("rgb-a(250, 15, 34, .3)".match(reg))
-
-
-
-        let nums = [255, 5, 120, .4];
-        let strs = ["rgba(", ", ", ", ", ", ", ")"];
-        function mergeArrs(numA, strA) {
-            let str = strA[0];
-            for (let i = 1; i < strA.length; i++) {
-                str += numA[i-1] + strA[i];
-            }
-            console.log(str);
-        }
-        // mergeArrs(nums, strs);
 
 
         // let oo = Object.assign(el.style,{transform:"scale(1,1)"});

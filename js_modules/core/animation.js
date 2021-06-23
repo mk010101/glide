@@ -154,7 +154,35 @@ export class Animation extends Dispatcher {
         this.status = this._preSeekState;
         this._seeking = false;
     }
+    static _getRenderStr(from, to, t) {
+        let str = to.strings[0];
+        for (let i = 1; i < to.strings.length; i++) {
+            let val = from.numbers[i - 1] + t * (to.numbers[i - 1] - from.numbers[i - 1]);
+            if (to.valueTypes[i - 1] === 0)
+                val = ~~val;
+            str += val + to.strings[i];
+        }
+        return str;
+    }
     static _render(tgs, time, dir) {
+        for (let i = 0, k = tgs.length; i < k; i++) {
+            const tg = tgs[i];
+            let transformsStr = "";
+            let filtersStr = "";
+            for (let j = 0, f = tg.tweens.length; j < f; j++) {
+                const tween = tg.tweens[j];
+                const twType = tween.twType;
+                let elapsed = minMax(time - tween.start - tween.delay, 0, tween.duration) / tween.duration;
+                if (elapsed === 0 && dir === 1)
+                    return;
+                let eased = isNaN(elapsed) ? 1 : tween.ease(elapsed);
+                let from = tween.from;
+                let to = tween.to;
+                let tweenable = tween.tweenable;
+                let prop = tween.prop;
+                tg.target.tweenable[prop] = Animation._getRenderStr(from, to, eased);
+            }
+        }
     }
     static _getTargets(targets, options) {
         if (typeof targets === "string") {

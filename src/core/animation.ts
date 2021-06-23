@@ -203,8 +203,45 @@ export class Animation extends Dispatcher {
         STATIC METHODS
      =================================================================================================================*/
 
+    static _getRenderStr(from:Vo, to:Vo, t:number) {
+        let str = to.strings[0];
+        for (let i = 1; i < to.strings.length; i++) {
+            let val:number = from.numbers[i-1] + t * (to.numbers[i-1] - from.numbers[i-1]);
+            if (to.valueTypes[i-1] === 0) val = ~~val;
+            str += val + to.strings[i];
+        }
+        return str;
+    }
 
     static _render(tgs: TweenGroup[], time: number, dir: number) {
+
+        for (let i = 0, k = tgs.length; i < k; i++) {
+
+            const tg = tgs[i];
+            // const tweenable = tg.tweenable;
+            // const type = tg.type;
+            // let obj:any = {};
+
+            let transformsStr = "";
+            let filtersStr = "";
+
+            for (let j = 0, f = tg.tweens.length; j < f; j++) {
+                const tween = tg.tweens[j];
+                const twType = tween.twType;
+
+
+                let elapsed = minMax(time - tween.start - tween.delay, 0, tween.duration) / tween.duration;
+                if (elapsed === 0 && dir === 1) return;
+                let eased = isNaN(elapsed) ? 1 : tween.ease(elapsed);
+                let from: Vo = tween.from;
+                let to: Vo = tween.to;
+                let tweenable = tween.tweenable;
+                let prop = tween.prop;
+                // const isNum = from.isNumber;
+                tg.target.tweenable[prop] = Animation._getRenderStr(from, to, eased);
+            }
+        }
+
         /*
         for (let i = 0, k = tgs.length; i < k; i++) {
 

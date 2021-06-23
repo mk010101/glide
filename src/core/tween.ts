@@ -20,11 +20,11 @@ export class Tween {
     from: Vo = null;
     to: Vo = null;
     ease: Function = quadInOut;
-    initialized = false;
+    // initialized = false;
     isNum = false;
 
-    nums:number[] = [];
-    strings:string[] = [];
+    // nums:number[] = [];
+    // strings:string[] = [];
 
     // computed: Vo = new Vo();
 
