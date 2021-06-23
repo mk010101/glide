@@ -1,4 +1,5 @@
 import {TargetType, TweenType} from "../types";
+import {Tween} from "./tween";
 
 export class Vo {
     targetType:TargetType = "dom";
@@ -14,3 +15,16 @@ export class Vo {
     diffVals:number[] = [];
 }
 
+export class TweenGroup {
+    target:any = null;
+    tweenable:any = null;
+    type:TargetType = "dom";
+    tweens:Tween[] = [];
+
+    constructor(target:any) {
+        this.target = target;
+        this.tweenable = target.tweenable;
+        this.type = target.type;
+    }
+
+}

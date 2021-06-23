@@ -4,6 +4,8 @@ export class Keyframe {
         this.totalDuration = 0;
         this.initialized = false;
         this.tgs = [];
+        this.callFunc = null;
+        this.callParams = null;
     }
     push(tg) {
         for (let i = 0; i < tg.tweens.length; i++) {

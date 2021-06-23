@@ -13,3 +13,14 @@ export class Vo {
         this.diffVals = [];
     }
 }
+export class TweenGroup {
+    constructor(target) {
+        this.target = null;
+        this.tweenable = null;
+        this.type = "dom";
+        this.tweens = [];
+        this.target = target;
+        this.tweenable = target.tweenable;
+        this.type = target.type;
+    }
+}

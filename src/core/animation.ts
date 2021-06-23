@@ -4,8 +4,8 @@ import {getPropType, getTweenType, getVo, minMax, normalizeVos, print, strToMap,
 import {Keyframe} from "./keyframe";
 import {Tween} from "./tween";
 import {Evt} from "./events";
-import {TweenGroup, Value} from "../types";
-import {Vo} from "./vo";
+import {Value} from "../types";
+import {TweenGroup, Vo} from "./vo";
 import {is} from "../util/regex";
 import * as $Ease from "../util/ease";
 
@@ -24,16 +24,21 @@ export class Animation extends Dispatcher {
     // duration = 0.0;
     totalDuration = 0.0;
     currentTime = 0.0;
+    runningTime = 0.0;
     playedTimes = 0;
     loop = true;
     repeat = 1;
+    keep: false;
 
     num: number = 0;
 
     constructor(targets: any, duration: number, params: any, options: any = {}) {
         super();
 
-        this.repeat = (options.repeat !== (void 0) && options.repeat > 0) ? options.repeat + 1 : 1;
+        this.repeat = (options.repeat != (void 0) && options.repeat > 0) ? options.repeat + 1 : 1;
+        this.loop = options.loop != (void 0) ? options.loop : true;
+        this.paused = options.paused != (void 0) ? options.paused : false;
+        this.keep = options.keep != (void 0) ? options.keep : false;
 
         this.targets = Animation._getTargets(targets, options);
         this.to(duration, params, options);
@@ -63,7 +68,7 @@ export class Animation extends Dispatcher {
 
     update(t: number) {
 
-        if ((this.paused && !this.seeking) || this.status === 0) return;
+        if ((this.paused && !this.seeking) || this.status === -1) return;
 
         if (!this.currentKf.initialized) {
             Animation._initTweens(this.currentKf);
@@ -72,6 +77,7 @@ export class Animation extends Dispatcher {
 
         this.time += t * this.dir;
         this.currentTime += t;
+        this.runningTime += t;
 
         const tgs = this.currentKf.tgs;
 
@@ -158,6 +164,10 @@ export class Animation extends Dispatcher {
                             filtersStr += `${to.prop}(${v}${to.units[0]}) `;
                         }
                         break;
+
+                    case "direct":
+                        tweenable[prop] = from.values[0] + eased * to.diffVals[0];
+                        break
                 }
 
             }
@@ -181,6 +191,10 @@ export class Animation extends Dispatcher {
 
         if (this.currentTime >= this.currentKf.totalDuration) {
 
+            if (this.currentKf.callFunc) {
+                this.currentKf.callFunc(this.currentKf.callParams);
+            }
+
             if (this.dir > 0 && this.keyframes.length > this.num + 1) {
                 this.num++;
                 this.time = 0;
@@ -199,7 +213,7 @@ export class Animation extends Dispatcher {
                         this.currentKf = this.keyframes[0];
                     }
                 } else {
-                    this.status = 0;
+                    this.status = this.status = this.keep ? 0 : -1;
                     this.dispatch(Evt.end, null);
                 }
             }
@@ -210,8 +224,57 @@ export class Animation extends Dispatcher {
 
     }
 
-    reset() {
+    call(func: Function, ...params: any) {
+        let kf = new Keyframe();
+        kf.callFunc = func;
+        kf.callParams = params;
+        this.keyframes.push(kf);
+        return this;
+    }
 
+    reset() {
+        this.time = 0;
+        this.num = 0;
+    }
+
+    remove(target: any) {
+        for (let i = this.keyframes.length - 1; i >= 0; i--) {
+            let kf = this.keyframes[i];
+            for (let j = kf.tgs.length - 1; j >= 0; j--) {
+                const tg = kf.tgs[j];
+                if (tg.target.target === target) {
+                    kf.tgs.splice(j, 1);
+                }
+            }
+            if (kf.tgs.length === 0) {
+                this.keyframes.splice(i, 1);
+            }
+        }
+    }
+
+    stop() {
+        this.num = 0;
+        this.currentKf = this.keyframes[0];
+        this.currentTime = 0;
+        this.playedTimes = 0;
+        this.dir = 1;
+        this.time = 0;
+    }
+
+    seek(ms: number) {
+        ms = minMax(ms, 0, this.totalDuration);
+        this.seeking = true;
+
+        // this._lastState = this.status;
+        this.stop();
+        // this.status = 1;
+
+        while (ms >= 0) {
+            this.update(10);
+            ms -= 10;
+        }
+        // this.status = this._lastState;
+        this.seeking = false;
     }
 
 
@@ -242,17 +305,13 @@ export class Animation extends Dispatcher {
 
         const keys = Object.keys(params);
 
-        let tg: TweenGroup = {
-            type: target.type,
-            tweenable: target.tweenable,
-            tweens: []
-        };
+        let tg = new TweenGroup(target);
 
         for (let i = 0; i < keys.length; i++) {
             let prop: any = keys[i];
             let val: any = params[prop];
 
-            /*
+            //*
             // If value is like scale(2) or translate(20px 5rem), unwrap it.
             if (target.type === "dom" && is.propDual(prop)) {
                 let res = unwrapValues(prop, val);
@@ -264,8 +323,8 @@ export class Animation extends Dispatcher {
             }
             //*/
 
-            let tw = Animation._getTween(target, prop, val, duration, options);
-            tg.tweens.push(tw);
+            // let tw = Animation._getTween(target, prop, val, duration, options);
+            // tg.tweens.push(tw);
 
 
         }
@@ -291,20 +350,22 @@ export class Animation extends Dispatcher {
         }
 
         const twType = getTweenType(target.type, prop);
-
+        let optEase = options.ease;
         if (is.array(val)) {
             fromVal = val[0];
             toVal = val[1];
         } else if (is.obj(val)) {
             const o: Value = val;
-            dur = o.duration;
-            toVal = o.value;
+            toVal = o.value != (void 0) ? o.value : val;
+            dur = o.duration != (void 0) ? o.duration : dur;
+            optEase = o.ease != (void 0) ? o.ease : options.ease;
         } else {
             toVal = val;
         }
 
         let delay = options.delay || 0;
         let tw = new Tween(target, twType, prop, fromVal, toVal, dur, delay, 0);
+        if (twType === "direct") tw.tweenable = target.target;
 
         if (options.stagger) {
             let del = target.pos * options.stagger;
@@ -313,7 +374,7 @@ export class Animation extends Dispatcher {
         }
 
         let ease: any;
-        let optEase = options.ease;
+
         if (optEase) {
             if (is.string(optEase)) {
                 let res = optEase.match(/[\w]+|[-\d.]+/g);
@@ -325,9 +386,9 @@ export class Animation extends Dispatcher {
                 }
             } else ease = optEase;
         }
-
         tw.ease = ease || Ease.quadInOut;
         tw.propType = getPropType(prop);
+
         return tw;
     }
 
@@ -361,7 +422,10 @@ export class Animation extends Dispatcher {
 
                         case "css":
                         case "color":
-                            from = getVo(tw.targetType, tw.prop, tw.target.getExistingValue(tw.prop));
+                        case "direct":
+                            if (tw.fromVal) from = getVo(tw.targetType, tw.prop, tw.fromVal);
+                            else
+                                from = getVo(tw.targetType, tw.prop, tw.target.getExistingValue(tw.prop));
                             break;
 
                         case "transform":

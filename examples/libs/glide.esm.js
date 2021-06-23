@@ -271,6 +271,17 @@ class Vo {
         this.diffVals = [];
     }
 }
+class TweenGroup {
+    constructor(target) {
+        this.target = null;
+        this.tweenable = null;
+        this.type = "dom";
+        this.tweens = [];
+        this.target = target;
+        this.tweenable = target.tweenable;
+        this.type = target.type;
+    }
+}
 
 function toRgb(val) {
     if (is.hex(val)) {
@@ -658,6 +669,34 @@ function getNumbers(val) {
     let nums = val.match(/[-.\d]+/g);
     return nums.map((v) => parseFloat(v));
 }
+function unwrapValues(prop, val) {
+    const propX = prop + "X";
+    const propY = prop + "Y";
+    if (is.number(val)) {
+        return [
+            { prop: propX, val: val },
+            { prop: propY, val: val }
+        ];
+    }
+    else if (is.string(val)) {
+        let res = val.match(regValues);
+        if (res.length === 1) {
+            res.push(is.valueOne(prop) ? "1" : "0");
+        }
+        return [
+            { prop: propX, val: res[0] },
+            { prop: propY, val: res[1] }
+        ];
+    }
+    else if (is.array(val)) {
+        if (val.lengh === 1)
+            val.push(val[0]);
+        return [
+            { prop: propX, val: val[0] },
+            { prop: propY, val: val[1] }
+        ];
+    }
+}
 function getVo(targetType, prop, val) {
     let vo = new Vo();
     vo.targetType = targetType;
@@ -818,6 +857,8 @@ class Keyframe {
         this.totalDuration = 0;
         this.initialized = false;
         this.tgs = [];
+        this.callFunc = null;
+        this.callParams = null;
     }
     push(tg) {
         for (let i = 0; i < tg.tweens.length; i++) {
@@ -850,11 +891,15 @@ class Animation extends Dispatcher {
         this.time = 0.0;
         this.totalDuration = 0.0;
         this.currentTime = 0.0;
+        this.runningTime = 0.0;
         this.playedTimes = 0;
         this.loop = true;
         this.repeat = 1;
         this.num = 0;
-        this.repeat = (options.repeat !== (void 0) && options.repeat > 0) ? options.repeat + 1 : 1;
+        this.repeat = (options.repeat != (void 0) && options.repeat > 0) ? options.repeat + 1 : 1;
+        this.loop = options.loop != (void 0) ? options.loop : true;
+        this.paused = options.paused != (void 0) ? options.paused : false;
+        this.keep = options.keep != (void 0) ? options.keep : false;
         this.targets = Animation._getTargets(targets, options);
         this.to(duration, params, options);
     }
@@ -872,7 +917,7 @@ class Animation extends Dispatcher {
         return this;
     }
     update(t) {
-        if ((this.paused && !this.seeking) || this.status === 0)
+        if ((this.paused && !this.seeking) || this.status === -1)
             return;
         if (!this.currentKf.initialized) {
             Animation._initTweens(this.currentKf);
@@ -880,6 +925,7 @@ class Animation extends Dispatcher {
         }
         this.time += t * this.dir;
         this.currentTime += t;
+        this.runningTime += t;
         const tgs = this.currentKf.tgs;
         for (let i = 0; i < tgs.length; i++) {
             const tg = tgs[i];
@@ -954,6 +1000,9 @@ class Animation extends Dispatcher {
                             filtersStr += `${to.prop}(${v}${to.units[0]}) `;
                         }
                         break;
+                    case "direct":
+                        tweenable[prop] = from.values[0] + eased * to.diffVals[0];
+                        break;
                 }
             }
             if (transformsStr) {
@@ -965,6 +1014,9 @@ class Animation extends Dispatcher {
         }
         this.dispatch(Evt.progress, null);
         if (this.currentTime >= this.currentKf.totalDuration) {
+            if (this.currentKf.callFunc) {
+                this.currentKf.callFunc(this.currentKf.callParams);
+            }
             if (this.dir > 0 && this.keyframes.length > this.num + 1) {
                 this.num++;
                 this.time = 0;
@@ -987,14 +1039,55 @@ class Animation extends Dispatcher {
                     }
                 }
                 else {
-                    this.status = 0;
+                    this.status = this.status = this.keep ? 0 : -1;
                     this.dispatch(Evt.end, null);
                 }
             }
             this.currentTime = 0;
         }
     }
+    call(func, ...params) {
+        let kf = new Keyframe();
+        kf.callFunc = func;
+        kf.callParams = params;
+        this.keyframes.push(kf);
+        return this;
+    }
     reset() {
+        this.time = 0;
+        this.num = 0;
+    }
+    remove(target) {
+        for (let i = this.keyframes.length - 1; i >= 0; i--) {
+            let kf = this.keyframes[i];
+            for (let j = kf.tgs.length - 1; j >= 0; j--) {
+                const tg = kf.tgs[j];
+                if (tg.target.target === target) {
+                    kf.tgs.splice(j, 1);
+                }
+            }
+            if (kf.tgs.length === 0) {
+                this.keyframes.splice(i, 1);
+            }
+        }
+    }
+    stop() {
+        this.num = 0;
+        this.currentKf = this.keyframes[0];
+        this.currentTime = 0;
+        this.playedTimes = 0;
+        this.dir = 1;
+        this.time = 0;
+    }
+    seek(ms) {
+        ms = minMax(ms, 0, this.totalDuration);
+        this.seeking = true;
+        this.stop();
+        while (ms >= 0) {
+            this.update(10);
+            ms -= 10;
+        }
+        this.seeking = false;
     }
     static _getTargets(targets, options) {
         if (typeof targets === "string") {
@@ -1018,16 +1111,19 @@ class Animation extends Dispatcher {
     }
     static _getTweens(target, duration, params, options) {
         const keys = Object.keys(params);
-        let tg = {
-            type: target.type,
-            tweenable: target.tweenable,
-            tweens: []
-        };
+        let tg = new TweenGroup(target);
         for (let i = 0; i < keys.length; i++) {
             let prop = keys[i];
             let val = params[prop];
-            let tw = Animation._getTween(target, prop, val, duration, options);
-            tg.tweens.push(tw);
+            if (target.type === "dom" && is.propDual(prop)) {
+                let res = unwrapValues(prop, val);
+                tg.tweens.push(Animation._getTween(target, res[0].prop, res[0].val, duration, options));
+                tg.tweens.push(Animation._getTween(target, res[1].prop, res[1].val, duration, options));
+            }
+            else {
+                let tw = Animation._getTween(target, prop, val, duration, options);
+                tg.tweens.push(tw);
+            }
         }
         return tg;
     }
@@ -1047,27 +1143,30 @@ class Animation extends Dispatcher {
                 prop = "drop-shadow";
         }
         const twType = getTweenType(target.type, prop);
+        let optEase = options.ease;
         if (is.array(val)) {
             fromVal = val[0];
             toVal = val[1];
         }
         else if (is.obj(val)) {
             const o = val;
-            dur = o.duration;
-            toVal = o.value;
+            toVal = o.value != (void 0) ? o.value : val;
+            dur = o.duration != (void 0) ? o.duration : dur;
+            optEase = o.ease != (void 0) ? o.ease : options.ease;
         }
         else {
             toVal = val;
         }
         let delay = options.delay || 0;
         let tw = new Tween(target, twType, prop, fromVal, toVal, dur, delay, 0);
+        if (twType === "direct")
+            tw.tweenable = target.target;
         if (options.stagger) {
             let del = target.pos * options.stagger;
             tw.start = del;
             tw.totalDuration += del;
         }
         let ease;
-        let optEase = options.ease;
         if (optEase) {
             if (is.string(optEase)) {
                 let res = optEase.match(/[\w]+|[-\d.]+/g);
@@ -1106,7 +1205,11 @@ class Animation extends Dispatcher {
                     switch (tw.type) {
                         case "css":
                         case "color":
-                            from = getVo(tw.targetType, tw.prop, tw.target.getExistingValue(tw.prop));
+                        case "direct":
+                            if (tw.fromVal)
+                                from = getVo(tw.targetType, tw.prop, tw.fromVal);
+                            else
+                                from = getVo(tw.targetType, tw.prop, tw.target.getExistingValue(tw.prop));
                             break;
                         case "transform":
                         case "filter":
@@ -1183,7 +1286,7 @@ class Glide {
             if (item.status === 1) {
                 item.update(delta);
             }
-            else if (item.status === 0) {
+            else if (item.status === -1) {
                 Glide.items.splice(i, 1);
             }
         }
