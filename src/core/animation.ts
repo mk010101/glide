@@ -16,12 +16,8 @@ export class Animation extends Dispatcher {
     status = 1;
     targets: Target[] = [];
     keyframes: Keyframe[] = [];
-    currentKf: Keyframe;
     paused = false;
-    seeking = false;
-    dir = 1;
     time = 0.0;
-    // duration = 0.0;
     totalDuration = 0.0;
     currentTime = 0.0;
     runningTime = 0.0;
@@ -30,7 +26,11 @@ export class Animation extends Dispatcher {
     repeat = 1;
     keep: false;
 
-    num: number = 0;
+    _pos: number = 0;
+    _currentKf: Keyframe;
+    _seeking = false;
+    _preSeekState:number = 1;
+    _dir = 1;
 
     constructor(targets: any, duration: number, params: any, options: any = {}) {
         super();
@@ -54,13 +54,13 @@ export class Animation extends Dispatcher {
             const tg = Animation._getTweens(this.targets[i], duration, params, options);
             kf.push(tg);
         }
-
+        kf.startTime = this.totalDuration / this.repeat;
         this.totalDuration += kf.totalDuration * this.repeat;
 
         this.keyframes.push(kf);
 
-        if (!this.currentKf) {
-            this.currentKf = kf;
+        if (!this._currentKf) {
+            this._currentKf = kf;
         }
         return this;
     }
@@ -68,151 +68,48 @@ export class Animation extends Dispatcher {
 
     update(t: number) {
 
-        if ((this.paused && !this.seeking) || this.status === -1) return;
+        if ((this.paused && !this._seeking) || this.status === -1) return;
 
-        if (!this.currentKf.initialized) {
-            Animation._initTweens(this.currentKf);
-            this.currentKf.initialized = true;
+        if (!this._currentKf.initialized) {
+            Animation._initTweens(this._currentKf);
+            this._currentKf.initialized = true;
         }
 
-        this.time += t * this.dir;
+        this.time += t * this._dir;
         this.currentTime += t;
         this.runningTime += t;
 
+        // console.log(~~this.time, ~~this.currentTime)
+
         this.dispatch(Evt.progress, null);
 
-        const tgs = this.currentKf.tgs;
+        const tgs = this._currentKf.tgs;
 
-        Animation._render(tgs, this.time, this.dir);
-
-        /*for (let i = 0; i < tgs.length; i++) {
-
-            const tg = tgs[i];
-            const tweenable = tg.tweenable;
-            // const type = tg.type;
-            // let obj:any = {};
-
-            let transformsStr = "";
-            let filtersStr = "";
-
-            for (let j = 0; j < tg.tweens.length; j++) {
-                const tween = tg.tweens[j];
-                const twType = tween.type;
+        Animation._render(tgs, this.time, this._dir);
 
 
-                let elapsed = minMax(this.time - tween.start - tween.delay, 0, tween.duration) / tween.duration;
-                if (elapsed === 0 && this.dir === 1) return;
-                let eased = isNaN(elapsed) ? 1 : tween.ease(elapsed);
-                let from: Vo = tween.from;
-                let to: Vo = tween.to;
-                let tweenable = tween.tweenable;
-                let prop = tween.prop;
-                const isNum = from.isNumber;
+        if (this.currentTime >= this._currentKf.totalDuration) {
 
-                switch (twType) {
-
-                    case "css":
-
-                        if (isNum) {
-                            tweenable[prop] = from.values[0] + eased * (to.values[0] - tween.from.values[0]);
-                        } else {
-                            let str = "";
-
-                            for (let j = 0; j < from.values.length; j++) {
-                                let val = from.values[j] + eased * (to.values[j] - tween.from.values[j]);
-                                str += `${val}${to.units[j]} `;
-                            }
-                            tweenable[prop] = str;
-                        }
-                        break;
-
-                    case "color":
-                        let r = ~~(from.values[0] + eased * to.diffVals[0]);
-                        let g = ~~(from.values[1] + eased * to.diffVals[1]);
-                        let b = ~~(from.values[2] + eased * to.diffVals[2]);
-                        let a = (from.values.length === 4) ? ", " + (from.values[3] + eased * to.diffVals[3]) : "";
-                        tweenable[prop] = `${to.strBegin}(${r}, ${g}, ${b}${a})`;
-                        // obj[prop] = `${to.strBegin}(${r}, ${g}, ${b}${a})`;
-                        break;
-
-                    case "transform":
-                        if (from.keepOriginal) {
-                            transformsStr += from.keepStr + " ";
-                        } else {
-                            transformsStr += `${to.prop}(`;
-                            for (let j = 0; j < from.values.length; j++) {
-                                let val = from.values[j] + eased * (to.values[j] - tween.from.values[j]);
-                                let sep = j < to.values.length - 1 ? ", " : "";
-                                transformsStr += `${val}${to.units[j]}${sep}`;
-                            }
-                            transformsStr += ") ";
-                        }
-                        break;
-
-                    case "filter":
-                        if (prop === "drop-shadow" && !from.keepOriginal) {
-                            let x = from.values[0] + eased * to.diffVals[0];
-                            let y = from.values[1] + eased * to.diffVals[1];
-                            let brad = from.values[2] + eased * to.diffVals[2];
-                            let r = ~~(from.values[3] + eased * to.diffVals[3]);
-                            let g = ~~(from.values[4] + eased * to.diffVals[4]);
-                            let b = ~~(from.values[5] + eased * to.diffVals[5]);
-                            let a = (from.values.length === 7) ? ", " + (from.values[6] + eased * (to.values[6] - from.values[6])) : "";
-                            let pref = (from.values.length === 7) ? "rgba" : "rgb";
-                            filtersStr += `drop-shadow(${x}${to.units[0]} ${y}${to.units[1]} ${brad}${to.units[2]} `;
-                            filtersStr += `${pref}(${r}, ${g}, ${b}${a}))`;
-                        } else if (from.keepOriginal) {
-                            filtersStr += from.keepStr + " ";
-                        } else {
-                            let v = from.values[0] + eased * to.diffVals[0];
-                            filtersStr += `${to.prop}(${v}${to.units[0]}) `;
-                        }
-                        break;
-
-                    case "direct":
-                        tweenable[prop] = from.values[0] + eased * to.diffVals[0];
-                        break
-                }
-
+            if (this._currentKf.callFunc) {
+                this._currentKf.callFunc(this._currentKf.callParams);
             }
 
-            if (transformsStr) {
-                tweenable.transform = transformsStr;
-                // obj.transform = transformsStr;
-            }
-            // Object.assign(tweenable,obj);
-
-
-            if (filtersStr) {
-                tweenable.filter = filtersStr;
-            }
-
-
-        }*/
-
-
-        if (this.currentTime >= this.currentKf.totalDuration) {
-
-            if (this.currentKf.callFunc) {
-                this.currentKf.callFunc(this.currentKf.callParams);
-            }
-
-            if (this.dir > 0 && this.keyframes.length > this.num + 1) {
-                this.num++;
+            if (this._dir > 0 && this.keyframes.length > this._pos + 1) {
+                this._pos++;
                 this.time = 0;
-                this.currentKf = this.keyframes[this.num];
-            } else if (this.dir < 0 && this.num > 0) {
-                this.num--;
-                this.currentKf = this.keyframes[this.num];
-                this.time = this.currentKf.totalDuration;
+                this._currentKf = this.keyframes[this._pos];
+            } else if (this._dir < 0 && this._pos > 0) {
+                this._pos--;
+                this._currentKf = this.keyframes[this._pos];
+                this.time = this._currentKf.totalDuration;
             } else {
                 this.playedTimes++;
                 if (this.playedTimes < this.repeat) {
                     if (this.loop) {
-                        this.dir *= -1;
+                        this._dir *= -1;
                     } else {
                         this.reset();
-                        this.currentKf = this.keyframes[0];
+                        this._currentKf = this.keyframes[0];
                     }
                 } else {
                     this.status = this.status = this.keep ? 0 : -1;
@@ -225,6 +122,87 @@ export class Animation extends Dispatcher {
         }
 
     }
+
+
+
+    call(func: Function, ...params: any) {
+        let kf = new Keyframe();
+        kf.callFunc = func;
+        kf.callParams = params;
+        this.keyframes.push(kf);
+        return this;
+    }
+
+
+    remove(target: any) {
+        for (let i = this.keyframes.length - 1; i >= 0; i--) {
+            let kf = this.keyframes[i];
+            for (let j = kf.tgs.length - 1; j >= 0; j--) {
+                const tg = kf.tgs[j];
+                if (tg.target.target === target) {
+                    kf.tgs.splice(j, 1);
+                }
+            }
+            if (kf.tgs.length === 0) {
+                this.keyframes.splice(i, 1);
+            }
+        }
+    }
+
+
+    reset() {
+        this.stop();
+        for (let i = this.keyframes.length-1; i >= 0 ; i--) {
+            const tgs = this.keyframes[i].tgs;
+            if (this.keyframes[i].initialized) {
+                for (let j = 0; j < tgs.length; j++) {
+                    Animation._render(tgs, 0, 1);
+                }
+            }
+        }
+    }
+
+
+    stop() {
+        this.status = 0;
+        this._pos = 0;
+        this._currentKf = this.keyframes[0];
+        this.currentTime = 0;
+        this.runningTime = 0;
+        this.playedTimes = 0;
+        this._dir = 1;
+        this.time = 0;
+    }
+
+    play() {
+        if (this.status > -1) {
+            this.status = 1;
+            this.paused = false;
+        }
+    }
+
+    seek(ms: number) {
+        ms = minMax(ms, 0, this.totalDuration);
+
+        this._seeking = true;
+        this._preSeekState = this.status;
+        this.status = 0;
+
+        this.reset();
+
+        while (ms >= 0) {
+            this.update(10);
+            ms -= 10;
+        }
+
+        this.status = this._preSeekState;
+        this._seeking = false;
+    }
+
+    /* =================================================================================================================
+        STATIC METHODS
+     =================================================================================================================*/
+
 
     static _render(tgs: TweenGroup[], time: number, dir: number) {
 
@@ -332,66 +310,6 @@ export class Animation extends Dispatcher {
 
 
         }
-    }
-
-    call(func: Function, ...params: any) {
-        let kf = new Keyframe();
-        kf.callFunc = func;
-        kf.callParams = params;
-        this.keyframes.push(kf);
-        return this;
-    }
-
-
-    remove(target: any) {
-        for (let i = this.keyframes.length - 1; i >= 0; i--) {
-            let kf = this.keyframes[i];
-            for (let j = kf.tgs.length - 1; j >= 0; j--) {
-                const tg = kf.tgs[j];
-                if (tg.target.target === target) {
-                    kf.tgs.splice(j, 1);
-                }
-            }
-            if (kf.tgs.length === 0) {
-                this.keyframes.splice(i, 1);
-            }
-        }
-    }
-
-    reset() {
-
-    }
-
-    stop() {
-        this.status = 0;
-        this.num = 0;
-        this.currentKf = this.keyframes[0];
-        this.currentTime = 0;
-        this.runningTime = 0;
-        this.playedTimes = 0;
-        this.dir = 1;
-        this.time = 0;
-    }
-
-    seek(ms: number) {
-        ms = minMax(ms, 0, this.totalDuration);
-
-        this.dir = ms > this.currentTime ? 1 : -1;
-        this.time = ms > this.currentTime ? 0 : ms;
-
-        this.seeking = true;
-        this.status = 0;
-        // this.currentTime = 0;
-        // this.runningTime = 0;
-        // this.stop();
-        // this.status = 1;
-
-        while (ms >= 0) {
-            this.update(10);
-            ms -= 10;
-        }
-        // this.status = 1;
-        this.seeking = false;
     }
 
 

@@ -79,7 +79,7 @@
 
         let stage = document.querySelector(".stage");
 
-        const num = 1;
+        const num = 10;
 
         let str = "";
         for (let i = 0; i < num; i++) {
@@ -104,7 +104,7 @@
 
 
         // el.style.transform = strTransform;
-        el.style.transform = "scale(.8, .7) translate(50px) rotate(20deg)";
+        // el.style.transform = "scale(.8, .7) translate(50px) rotate(20deg)";
         // el.style.transform = "translate(30%, 50px)";
         // el.style.transform = "scale(2) translate(50px, 50px)";
         // el.style.transform = "translate(50px, 50px) scale(2)    ";
@@ -115,8 +115,8 @@
         el.style.backgroundColor = "hsla(70, 50%, 50%, 1)";
         // el.style.borderColor = "hsla(25, 70%, 40%)";
         // el.style.top = "20px";
-        // el.style.left = "20px";
-        el.style.margin = "20px";
+        el.style.left = "50px";
+        // el.style.margin = "20px";
 
 
         // console.log(strFilter.match(regFilters));
@@ -130,12 +130,12 @@
 
         function run() {
             let t0 = performance.now();
-            let a = glide.to(els, 1000,
+            let a = glide.to(els, 500,
                 {
                     // opacity: .5,
                     // left: "150px",
                     // left: 50,
-                    // left: "19%",
+                    left: "15rem",
                     // left: "+=13%",
                     // top: "50%",
                     // top: {value:"50%", duration:600},
@@ -153,7 +153,7 @@
                     // saturate: 20,
                     // sepia: 90,
                     // translateX: "4rem",
-                    x: "270px",
+                    // x: "270px",
                     // x: {value: "12rem", ease: "bounceOut", duration: 1200},
                     // y: 50,
                     // y: "+=20",
@@ -176,17 +176,17 @@
                     //borderColor: "rgba(153,215,255,0.8)"
                 }, {
                     delay: 500,
-                    zrepeat: 2,
+                    // repeat: 2,
                     // ease: "stepped(5)",
-                    stagger: 50,
-                    zloop: false,
-                    zpaused: true,
-                    zkeep: true
+                    // stagger: 50,
+                    // loop: false,
+                    // paused: true,
+                    // keep: true
                 })
                 // .to(500, {left:"10%"}, {stagger:30})
                 // .call((params) => {console.log("called!", params)}, 123, 334)
-                // .to(500, {top: 150})
-                .to(500, {rotate:"90", bg:"#335599"})
+                .to(500, {top: 150})
+                .to(500, {rotate:"90", bg:"#89a4bd"})
                 .on("progress", ()=> {updRange(a.runningTime)})
                 .on('end', () => {
                     console.log(a);
@@ -198,7 +198,7 @@
             setTimeout(() => {
                 // a.stop();
                 // a.reset();
-                a.seek(0)
+                // a.seek(0)
                 // a.remove(document.querySelector(".el"))
             }, 1200);
 
@@ -212,7 +212,7 @@
                 a.seek(val);
             });
             function updRange(v) {
-                // r.value = v.toString();
+                r.value = v.toString();
             }
         }
 
