@@ -5,7 +5,7 @@ export class Vo {
     // targetType:TargetType = "dom";
     // tweenType:TweenType = "css";
     // prop:any = "";
-    valueTypes: number[] = [];/// float, int
+    floats: number[] = [];/// float:1, int:0
     numbers: number[] = [];
     units: string[] = [];
     increments: string[] = [];

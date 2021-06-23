@@ -1,6 +1,6 @@
 export class Vo {
     constructor() {
-        this.valueTypes = [];
+        this.floats = [];
         this.numbers = [];
         this.units = [];
         this.increments = [];

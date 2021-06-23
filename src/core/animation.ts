@@ -207,9 +207,11 @@ export class Animation extends Dispatcher {
         let str = to.strings[0];
         for (let i = 1; i < to.strings.length; i++) {
             let val:number = from.numbers[i-1] + t * (to.numbers[i-1] - from.numbers[i-1]);
-            if (to.valueTypes[i-1] === 0) val = ~~val;
-            str += val + to.strings[i];
+            let unit = to.units[i-1]? to.units[i-1] : "";
+            if (to.floats[i-1] === 0) val = ~~val;
+            str += `${val}${unit}${to.strings[i]}`;
         }
+        // console.log(str)
         return str;
     }
 

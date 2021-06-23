@@ -170,6 +170,23 @@ export function unwrapValues(prop: string, val: any): any {
     }
 }
 
+function getBeginStr(prop:string) {
+    if (is.propTransform(prop) || is.propFilter(prop))
+        return "(";
+    return "";
+}
+
+function getEndStr(prop:string) {
+    if (is.propTransform(prop) || is.propFilter(prop))
+        return ")";
+    return "";
+}
+
+function getSepStr(prop:string) {
+    if (is.propTransform(prop) || is.propFilter(prop))
+        return ", ";
+    return " ";
+}
 
 /**
  * Creates {Vo} object
@@ -200,13 +217,28 @@ export function getVo(targetType: TargetType, prop: any, val: any) {
             }
             vo.numbers = getNumbers(val);
             vo.strings = val.split(regNums);
-            vo.valueTypes.push(0, 0, 0);
-            if (vo.numbers.length === 4) vo.valueTypes.push(1);
+            vo.floats.push(0, 0, 0);
+            if (vo.numbers.length === 4) vo.floats.push(1);
             break;
+
+        default:
+            let vus: ValueUnit[] = getValuesUnits(val);
+            vo.strings.push(getBeginStr(prop));
+            let separator = getSepStr(prop);
+            for (let i = 0; i < vus.length; i++) {
+                vo.numbers.push(vus[i].value);
+                vo.units.push(vus[i].unit);
+                vo.increments.push(vus[i].increment);
+                vo.floats.push(1);
+            }
+            for (let i = 1; i < vo.numbers.length; i++) {
+                vo.strings.push(separator);
+            }
+            vo.strings.push(getEndStr(prop));
 
     }
 
-    // console.log(vo)
+    console.log(vo)
 
 
     if (targetType === "dom" && is.valueOne(prop)) {
@@ -310,10 +342,17 @@ export function normalizeTween(tw: Tween, context: Context) {
     if (from.numbers.length !== to.numbers.length) {
         let shorter: Vo = from.numbers.length > to.numbers.length ? to : from;
         let longer: Vo = shorter === from ? to : from;
+        let diff = longer.numbers.length - shorter.numbers.length;
 
         if (is.propColor(prop)) {
             shorter.numbers.push(1);
             shorter.strings = longer.strings;
+        } else {
+            let one_zero = is.valueOne(prop)? 1 : 0;
+            for (let i = 0; i < diff; i++) {
+                shorter.numbers.push(one_zero);
+                // shorter.numbers.push(one_zero);
+            }
         }
 
     }
@@ -321,9 +360,7 @@ export function normalizeTween(tw: Tween, context: Context) {
     for (let i = 0; i < from.units.length; i++) {
 
 
-
     }
-
 
 
     // console.log(tw)

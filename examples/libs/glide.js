@@ -72,9 +72,11 @@
     }
 
     const regValues = /[-%\w]+[-\d.]*/gi;
+    const regVUs = /[-+=.\w%]+/g;
     const regStrValues = /(([a-z].*?)\(.*?\))(?=\s([a-z].*?)\(.*?\)|\s*$)/gi;
     const regColorVal = /([rgbahsl]+\([,%a-z \d.-]+\))|#[0-9A-F]{6}/gi;
     const regProp = /^[-\w]+[^( ]/gi;
+    const regTypes = /Null|Number|String|Object|Array/g;
     const regNums = /[-.\d]+/g;
     function getObjType(val) {
         return Object.prototype.toString.call(val);
@@ -264,7 +266,7 @@
 
     class Vo {
         constructor() {
-            this.valueTypes = [];
+            this.floats = [];
             this.numbers = [];
             this.units = [];
             this.increments = [];
@@ -589,6 +591,18 @@
             return "direct";
         return "css";
     }
+    function getValueType(val = null) {
+        let t = getObjType(val).match(regTypes)[0];
+        switch (t) {
+            case "Null":
+                return "null";
+            case "Number":
+                return "number";
+            case "String":
+                return "string";
+        }
+        return;
+    }
     function getPropType(prop) {
         if (is.propDropShadow(prop))
             return "dropShadow";
@@ -597,6 +611,43 @@
         else if (is.propMatrix(prop))
             return "matrix";
         return "other";
+    }
+    function getValueUnit(val) {
+        const increment = val.match(/-=|\+=|\*=|\/=/g);
+        if (increment)
+            increment[0] = increment[0].replace("=", "");
+        val = val.replace("-=", "");
+        const v = val.match(/[-.\d]+|[%\w]+/g);
+        if (v.length === 1)
+            v.push(null);
+        return {
+            value: parseFloat(v[0]),
+            unit: v.length === 1 ? "" : v[1],
+            increment: increment ? increment[0] : null
+        };
+    }
+    function getValuesUnits(val) {
+        let vus = [];
+        let vtype = getValueType(val);
+        if (vtype === "null") {
+            return [{
+                    value: 0,
+                    unit: null,
+                    increment: null
+                }];
+        }
+        else if (vtype === "number") {
+            return [{
+                    value: val,
+                    unit: null,
+                    increment: null
+                }];
+        }
+        let arr = val.match(regVUs);
+        for (let i = 0; i < arr.length; i++) {
+            vus.push(getValueUnit(arr[i]));
+        }
+        return vus;
     }
     function getNumbers(val) {
         let nums = val.match(/[-.\d]+/g);
@@ -630,6 +681,21 @@
             ];
         }
     }
+    function getBeginStr(prop) {
+        if (is.propTransform(prop) || is.propFilter(prop))
+            return "(";
+        return "";
+    }
+    function getEndStr(prop) {
+        if (is.propTransform(prop) || is.propFilter(prop))
+            return ")";
+        return "";
+    }
+    function getSepStr(prop) {
+        if (is.propTransform(prop) || is.propFilter(prop))
+            return ", ";
+        return " ";
+    }
     function getVo(targetType, prop, val) {
         let vo = new Vo();
         let propType = getPropType(prop);
@@ -647,11 +713,26 @@
                 }
                 vo.numbers = getNumbers(val);
                 vo.strings = val.split(regNums);
-                vo.valueTypes.push(0, 0, 0);
+                vo.floats.push(0, 0, 0);
                 if (vo.numbers.length === 4)
-                    vo.valueTypes.push(1);
+                    vo.floats.push(1);
                 break;
+            default:
+                let vus = getValuesUnits(val);
+                vo.strings.push(getBeginStr(prop));
+                let separator = getSepStr(prop);
+                for (let i = 0; i < vus.length; i++) {
+                    vo.numbers.push(vus[i].value);
+                    vo.units.push(vus[i].unit);
+                    vo.increments.push(vus[i].increment);
+                    vo.floats.push(1);
+                }
+                for (let i = 1; i < vo.numbers.length; i++) {
+                    vo.strings.push(separator);
+                }
+                vo.strings.push(getEndStr(prop));
         }
+        console.log(vo);
         if (targetType === "dom" && is.valueOne(prop)) {
             if (val == void 0)
                 val = 1;
@@ -670,9 +751,16 @@
         if (from.numbers.length !== to.numbers.length) {
             let shorter = from.numbers.length > to.numbers.length ? to : from;
             let longer = shorter === from ? to : from;
+            let diff = longer.numbers.length - shorter.numbers.length;
             if (is.propColor(prop)) {
                 shorter.numbers.push(1);
                 shorter.strings = longer.strings;
+            }
+            else {
+                let one_zero = is.valueOne(prop) ? 1 : 0;
+                for (let i = 0; i < diff; i++) {
+                    shorter.numbers.push(one_zero);
+                }
             }
         }
         for (let i = 0; i < from.units.length; i++) {
@@ -874,9 +962,10 @@
             let str = to.strings[0];
             for (let i = 1; i < to.strings.length; i++) {
                 let val = from.numbers[i - 1] + t * (to.numbers[i - 1] - from.numbers[i - 1]);
-                if (to.valueTypes[i - 1] === 0)
+                let unit = to.units[i - 1] ? to.units[i - 1] : "";
+                if (to.floats[i - 1] === 0)
                     val = ~~val;
-                str += val + to.strings[i];
+                str += `${val}${unit}${to.strings[i]}`;
             }
             return str;
         }

@@ -125,6 +125,21 @@ export function unwrapValues(prop, val) {
         ];
     }
 }
+function getBeginStr(prop) {
+    if (is.propTransform(prop) || is.propFilter(prop))
+        return "(";
+    return "";
+}
+function getEndStr(prop) {
+    if (is.propTransform(prop) || is.propFilter(prop))
+        return ")";
+    return "";
+}
+function getSepStr(prop) {
+    if (is.propTransform(prop) || is.propFilter(prop))
+        return ", ";
+    return " ";
+}
 export function getVo(targetType, prop, val) {
     let vo = new Vo();
     let propType = getPropType(prop);
@@ -142,11 +157,26 @@ export function getVo(targetType, prop, val) {
             }
             vo.numbers = getNumbers(val);
             vo.strings = val.split(regNums);
-            vo.valueTypes.push(0, 0, 0);
+            vo.floats.push(0, 0, 0);
             if (vo.numbers.length === 4)
-                vo.valueTypes.push(1);
+                vo.floats.push(1);
             break;
+        default:
+            let vus = getValuesUnits(val);
+            vo.strings.push(getBeginStr(prop));
+            let separator = getSepStr(prop);
+            for (let i = 0; i < vus.length; i++) {
+                vo.numbers.push(vus[i].value);
+                vo.units.push(vus[i].unit);
+                vo.increments.push(vus[i].increment);
+                vo.floats.push(1);
+            }
+            for (let i = 1; i < vo.numbers.length; i++) {
+                vo.strings.push(separator);
+            }
+            vo.strings.push(getEndStr(prop));
     }
+    console.log(vo);
     if (targetType === "dom" && is.valueOne(prop)) {
         if (val == void 0)
             val = 1;
@@ -165,9 +195,16 @@ export function normalizeTween(tw, context) {
     if (from.numbers.length !== to.numbers.length) {
         let shorter = from.numbers.length > to.numbers.length ? to : from;
         let longer = shorter === from ? to : from;
+        let diff = longer.numbers.length - shorter.numbers.length;
         if (is.propColor(prop)) {
             shorter.numbers.push(1);
             shorter.strings = longer.strings;
+        }
+        else {
+            let one_zero = is.valueOne(prop) ? 1 : 0;
+            for (let i = 0; i < diff; i++) {
+                shorter.numbers.push(one_zero);
+            }
         }
     }
     for (let i = 0; i < from.units.length; i++) {
