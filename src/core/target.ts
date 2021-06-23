@@ -4,7 +4,7 @@ import {TargetType} from "../types";
 
 export default class Target {
 
-    target: any;
+    el: any;
     type: TargetType;
     tweenable:any;
     style: CSSStyleDeclaration;
@@ -16,27 +16,27 @@ export default class Target {
 
     constructor(target: any, context: Context) {
 
-        this.target = target;
+        this.el = target;
         this.context = context;
         this.init();
     }
 
     init() {
-        this.type = is.dom(this.target)? "dom" : "obj";
+        this.type = is.dom(this.el)? "dom" : "obj";
         if (this.type === "dom") {
-            this.style = this.target.style;
+            this.style = this.el.style;
             // this.cssTxt = this.style.cssText;
             this.tweenable = this.style;
-            this.computedStyle = window.getComputedStyle(this.target);
+            this.computedStyle = window.getComputedStyle(this.el);
         } else {
-            this.tweenable = this.target;
+            this.tweenable = this.el;
         }
     }
 
     getExistingValue(prop: any): any {
         let res: any;
         if (this.type === "obj" || is.propDirect(prop)) {
-            return this.target[prop];
+            return this.el[prop];
         } else {
             if (is.propTransform(prop))
                 prop = "transform";
@@ -62,7 +62,7 @@ export default class Target {
         if (this.type === "dom") {
             this.style[prop] = val;
         } else {
-            this.target[prop] = val;
+            this.el[prop] = val;
         }
     }
 

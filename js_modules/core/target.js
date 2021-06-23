@@ -2,25 +2,25 @@ import { is } from "../util/regex";
 export default class Target {
     constructor(target, context) {
         this.pos = 0;
-        this.target = target;
+        this.el = target;
         this.context = context;
         this.init();
     }
     init() {
-        this.type = is.dom(this.target) ? "dom" : "obj";
+        this.type = is.dom(this.el) ? "dom" : "obj";
         if (this.type === "dom") {
-            this.style = this.target.style;
+            this.style = this.el.style;
             this.tweenable = this.style;
-            this.computedStyle = window.getComputedStyle(this.target);
+            this.computedStyle = window.getComputedStyle(this.el);
         }
         else {
-            this.tweenable = this.target;
+            this.tweenable = this.el;
         }
     }
     getExistingValue(prop) {
         let res;
         if (this.type === "obj" || is.propDirect(prop)) {
-            return this.target[prop];
+            return this.el[prop];
         }
         else {
             if (is.propTransform(prop))
@@ -44,7 +44,7 @@ export default class Target {
             this.style[prop] = val;
         }
         else {
-            this.target[prop] = val;
+            this.el[prop] = val;
         }
     }
 }

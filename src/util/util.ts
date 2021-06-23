@@ -180,17 +180,19 @@ export function unwrapValues(prop: string, val: any): any {
 export function getVo(targetType: TargetType, prop: any, val: any) {
 
     let vo = new Vo();
-    vo.targetType = targetType;
-    vo.tweenType = getTweenType(targetType, prop);
-    vo.prop = prop;
-    vo.isNumber = targetType === "obj";
     let propType = getPropType(prop);
+
+    // vo.targetType = targetType;
+    // vo.tweenType = getTweenType(targetType, prop);
+    // vo.prop = prop;
+    // vo.isNumber = targetType === "obj";
     // console.log(targetType, prop, val);
 
     if (targetType === "dom" && is.valueOne(prop)) {
         if (val == void 0)
             val = 1;
     }
+
 
     switch (propType) {
 
@@ -212,11 +214,11 @@ export function getVo(targetType: TargetType, prop: any, val: any) {
                 color = toRgbStr(colorMatch[0]);
                 val = val.replace(colorMatch[0], color);
             }
-            vo.values = getNumbers(val);
-            for (let i = 0; i < vo.values.length; i++) {
+            vo.numbers = getNumbers(val);
+            for (let i = 0; i < vo.numbers.length; i++) {
                 vo.units.push("");
             }
-            vo.strBegin = vo.values.length === 4 ? "rgba" : "rgb";
+            // vo.strBegin = vo.values.length === 4 ? "rgba" : "rgb";
             break;
 
         case "dropShadow":
@@ -226,22 +228,22 @@ export function getVo(targetType: TargetType, prop: any, val: any) {
             val = val.replace(rgb, "");
             let pa: ValueUnit[] = getValuesUnits(val);
             for (let i = 0; i < pa.length; i++) {
-                vo.values.push(pa[i].value);
+                vo.numbers.push(pa[i].value);
                 vo.units.push(pa[i].unit);
                 vo.increments.push(pa[i].increment);
             }
             let rgbs = toRgb(rgb);
             /// First 3 items are offset-x, offset-y and blur-radius. The other 3 or 4 - rgb(a) values.
-            vo.values = vo.values.concat(...rgbs);
+            vo.numbers = vo.numbers.concat(...rgbs);
             // console.log(vo.values)
             break;
 
         case "matrix":
             if (!val) {
-                vo.values = [1, 0, 0, 1, 0, 0];
+                vo.numbers = [1, 0, 0, 1, 0, 0];
                 vo.units = ["", "", "", "", "", ""];
             } else {
-                vo.values = getNumbers(val);
+                vo.numbers = getNumbers(val);
                 vo.units = ["", "", "", "", "", ""];
             }
             break;
@@ -252,7 +254,7 @@ export function getVo(targetType: TargetType, prop: any, val: any) {
 
             //console.log(vus)
             for (let i = 0; i < vus.length; i++) {
-                vo.values.push(vus[i].value);
+                vo.numbers.push(vus[i].value);
                 let unit = targetType === "dom" ? vus[i].unit : null;
                 vo.units.push(unit);
                 vo.increments.push(vus[i].increment);
@@ -272,27 +274,28 @@ function getVoFromStr(str: string): Vo {
 }
 
 /**
- * Normalizes From and To Vos.
- * @param from {Vo}
- * @param to {Vo}
+ * Normalizes Tween.
+ * @param tw {Tween}
  * @param context {Context}
  */
-export function normalizeVos(from: Vo, to: Vo, context: Context) {
+export function normalizeTween(tw:Tween, context: Context) {
 
-    const prop = from.prop;
+    const prop = tw.prop;
+    const from = tw.from;
+    const to = tw.to;
     if (prop === "drop-shadow") {
-        if (from.values.length > to.values.length)
-            to.values.push(1);
-        else if (from.values.length < to.values.length)
-            from.values.push(1);
+        if (tw.from.numbers.length > to.numbers.length)
+            to.numbers.push(1);
+        else if (from.numbers.length < to.numbers.length)
+            from.numbers.push(1);
     }
 
     let longer = to.units.length > from.units.length? to : from;
     let shorter = longer === from? to : from;
     for (let i = 0; i < longer.units.length - shorter.units.length; i++) {
         shorter.units.push(null);
-        let v = is.valueOne(to.prop) ? 1 : 0;
-        shorter.values.push(v);
+        let v = is.valueOne(tw.prop) ? 1 : 0;
+        shorter.numbers.push(v);
     }
 
     // console.log(from.units, to.units);
@@ -302,31 +305,31 @@ export function normalizeVos(from: Vo, to: Vo, context: Context) {
         let uFrom = from.units[i];
         let uTo = to.units[i];
         let incr = to.increments[i];
-        if (!from.isNumber) {
-            if (!uFrom) uFrom = from.units[i] = getDefaultUnit(from.prop);
+        if (!tw.isNum) {
+            if (!uFrom) uFrom = from.units[i] = getDefaultUnit(tw.prop);
             if (!uTo) uTo = to.units[i] = uFrom;
             if (uFrom && uFrom !== uTo) {
                 //TODO: Add logic to deal with translate(XYZ) percentages!
-                if (is.propTransform(from.prop) && (uFrom === "%" && uTo !== "%" || uFrom !== "%" && uTo === "%")) {
+                if (is.propTransform(tw.prop) && (uFrom === "%" && uTo !== "%" || uFrom !== "%" && uTo === "%")) {
                     //console.log("% conversion!")
                 } else {
-                    from.values[i] = Context.convertUnits(from.values[i], uFrom, uTo, context.units);
+                    from.numbers[i] = Context.convertUnits(from.numbers[i], uFrom, uTo, context.units);
                 }
             }
         }
 
         // console.log(incr)
         if (incr === "-") {
-            to.values[i] = from.values[i] - to.values[i];
+            to.numbers[i] = from.numbers[i] - to.numbers[i];
         } else if (incr === "+") {
-            to.values[i] += from.values[i];
+            to.numbers[i] += from.numbers[i];
         } else if (incr === "*") {
-            to.values[i] *= from.values[i];
+            to.numbers[i] *= from.numbers[i];
         } else if (incr === "/") {
-            to.values[i] /= from.values[i];
+            to.numbers[i] /= from.numbers[i];
         }
 
-        to.diffVals.push(to.values[i] - from.values[i]);
+        //tw.diffVals.push(to.values[i] - from.values[i]);
 
     }
     // console.log(from.units, to.units);
@@ -348,9 +351,9 @@ export function strToMap(str: string): Map<string, Tween> {
 
         let part = arr[i];
         let vo = getVoFromStr(part);
-        vo.keepOriginal = true;
-        vo.keepStr = part;
-        //*
+        // vo.keepOriginal = true;
+        // vo.keepStr = part;
+        /*
         if (is.propDual(vo.prop)) {
             let prop = part.match(regProp)[0];
             let propX = prop + "X";
@@ -384,9 +387,9 @@ export function strToMap(str: string): Map<string, Tween> {
         }
         //*/
 
-        // let tw = new Tween(null, "transform", vo.prop, null, null, 0, 0, 0);
-        // tw.from = vo;
-        // res.set(vo.prop, tw);
+        let tw = new Tween( "transform", "prop", null, null, 0, 0, 0);
+        tw.from = vo;
+        res.set(tw.prop, tw);
 
     }
     // console.log(res)

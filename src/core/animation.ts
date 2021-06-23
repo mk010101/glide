@@ -1,6 +1,6 @@
 import Target from "./target";
 import Dispatcher from "./dispatcher";
-import {getPropType, getTweenType, getVo, minMax, normalizeVos, print, strToMap, unwrapValues} from "../util/util";
+import {getPropType, getTweenType, getVo, minMax, normalizeTween, print, strToMap, unwrapValues} from "../util/util";
 import {Keyframe} from "./keyframe";
 import {Tween} from "./tween";
 import {Evt} from "./events";
@@ -139,7 +139,7 @@ export class Animation extends Dispatcher {
             let kf = this.keyframes[i];
             for (let j = kf.tgs.length - 1; j >= 0; j--) {
                 const tg = kf.tgs[j];
-                if (tg.target.target === target) {
+                if (tg.target.el === target) {
                     kf.tgs.splice(j, 1);
                 }
             }
@@ -205,7 +205,7 @@ export class Animation extends Dispatcher {
 
 
     static _render(tgs: TweenGroup[], time: number, dir: number) {
-
+        /*
         for (let i = 0, k = tgs.length; i < k; i++) {
 
             const tg = tgs[i];
@@ -218,7 +218,7 @@ export class Animation extends Dispatcher {
 
             for (let j = 0, f = tg.tweens.length; j < f; j++) {
                 const tween = tg.tweens[j];
-                const twType = tween.type;
+                const twType = tween.twType;
 
 
                 let elapsed = minMax(time - tween.start - tween.delay, 0, tween.duration) / tween.duration;
@@ -310,6 +310,7 @@ export class Animation extends Dispatcher {
 
 
         }
+        */
     }
 
 
@@ -399,8 +400,8 @@ export class Animation extends Dispatcher {
         }
 
         let delay = options.delay || 0;
-        let tw = new Tween(target, twType, prop, fromVal, toVal, dur, delay, 0);
-        if (twType === "direct") tw.tweenable = target.target;
+        let tw = new Tween(twType, prop, fromVal, toVal, dur, delay, 0);
+        if (twType === "direct") tw.tweenable = target.el;
 
         if (options.stagger) {
             let del = target.pos * options.stagger;
@@ -430,6 +431,8 @@ export class Animation extends Dispatcher {
 
     static _initTweens(kf: Keyframe) {
 
+
+
         for (let i = 0; i < kf.tgs.length; i++) {
 
             const tg = kf.tgs[i];
@@ -449,31 +452,31 @@ export class Animation extends Dispatcher {
                 const tw = tg.tweens[j];
 
                 let from: Vo;
-                let to: Vo = getVo(tw.targetType, tw.prop, tw.toVal);
+                let to: Vo = getVo(tg.target.type, tw.prop, tw.toVal);
 
-                if (tw.target.type === "dom") {
+                if (tg.target.type === "dom") {
 
-                    switch (tw.type) {
+                    switch (tw.twType) {
 
                         case "css":
                         case "color":
                         case "direct":
-                            if (tw.fromVal) from = getVo(tw.targetType, tw.prop, tw.fromVal);
+                            if (tw.fromVal) from = getVo(tg.target.type, tw.prop, tw.fromVal);
                             else
-                                from = getVo(tw.targetType, tw.prop, tw.target.getExistingValue(tw.prop));
+                                from = getVo(tg.target.type, tw.prop, tg.target.getExistingValue(tw.prop));
                             break;
 
                         case "transform":
                         case "filter":
 
-                            if (tw.type === "transform" && !transChecked) {
-                                transOldTweens = strToMap(tw.target.getExistingValue("transform"));
+                            if (tw.twType === "transform" && !transChecked) {
+                                transOldTweens = strToMap(tg.target.getExistingValue("transform"));
                                 transTweens = new Map<string, Tween>();
                                 transChecked = true;
                                 oldTweens = transOldTweens;
                                 newTweens = transTweens;
-                            } else if (tw.type === "filter" && !filterChecked) {
-                                filterOldTweens = strToMap(tw.target.getExistingValue("filter"));
+                            } else if (tw.twType === "filter" && !filterChecked) {
+                                filterOldTweens = strToMap(tg.target.getExistingValue("filter"));
                                 filterTweens = new Map<string, Tween>();
                                 filterChecked = true;
                                 oldTweens = filterOldTweens;
@@ -486,7 +489,7 @@ export class Animation extends Dispatcher {
                                 if (oldTweens && oldTweens.has(tw.prop)) {
                                     // console.log(tw.prop)
                                     from = oldTweens.get(tw.prop).from;
-                                    from.keepOriginal = false;
+                                    //from.keepOriginal = false;
                                 } else {
                                     from = from = getVo("dom", tw.prop, tw.fromVal);
                                 }
@@ -497,14 +500,14 @@ export class Animation extends Dispatcher {
 
                     }
                 } else {
-                    if (!tw.fromVal) tw.fromVal = tw.target.getExistingValue(tw.prop);
+                    if (!tw.fromVal) tw.fromVal = tg.target.getExistingValue(tw.prop);
                     from = getVo("obj", tw.prop, tw.fromVal);
                 }
 
                 tw.from = from;
                 tw.to = to;
                 // console.log(from, to)
-                normalizeVos(from, to, tw.target.context);
+                normalizeTween(tw, tg.target.context);
             }
 
             if (transOldTweens) {
@@ -514,7 +517,7 @@ export class Animation extends Dispatcher {
                 // console.log(transOldTweens)
 
                 for (let j = tg.tweens.length - 1; j >= 0; j--) {
-                    if (tg.tweens[j].type === "transform") {
+                    if (tg.tweens[j].twType === "transform") {
                         tg.tweens.splice(j, 1);
                     }
                 }

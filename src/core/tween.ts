@@ -5,11 +5,11 @@ import Target from "./target";
 import {getPropType} from "../util/util";
 
 export class Tween {
-    target:Target;
+    // target:Target;
     tweenable: any = null;
-    type: TweenType = null;
+    twType: TweenType = null;
     propType:PropType;
-    targetType:TargetType = null;
+    // targetType:TargetType = null;
     prop: any = "";
     duration: number = 0.0;
     delay = 0.0;
@@ -19,12 +19,16 @@ export class Tween {
     toVal:any = null;
     from: Vo = null;
     to: Vo = null;
-    computed: Vo = null;
     ease: Function = quadInOut;
     initialized = false;
-    // pos = 0;
+    isNum = false;
 
-    constructor(target: Target,
+    nums:number[] = [];
+    strings:string[] = [];
+
+    // computed: Vo = new Vo();
+
+    constructor(
                 twType: TweenType,
                 prop: any,
                 fromVal:any,
@@ -33,10 +37,10 @@ export class Tween {
                 delay: number,
                 start: number) {
 
-        this.target = target;
-        this.tweenable = target?.tweenable;
-        this.targetType = target?.type;
-        this.type = twType;
+        // this.target = target;
+        // this.tweenable = target?.tweenable;
+        // this.targetType = target?.type;
+        this.twType = twType;
         this.prop = prop;
         this.duration = duration;
         this.fromVal = fromVal;

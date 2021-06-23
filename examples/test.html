@@ -79,7 +79,7 @@
 
         let stage = document.querySelector(".stage");
 
-        const num = 10;
+        const num = 1;
 
         let str = "";
         for (let i = 0; i < num; i++) {
@@ -135,7 +135,7 @@
                     // opacity: .5,
                     // left: "150px",
                     // left: 50,
-                    left: "15rem",
+                    // left: "15rem",
                     // left: "+=13%",
                     // top: "50%",
                     // top: {value:"50%", duration:600},
@@ -183,11 +183,13 @@
                     // paused: true,
                     // keep: true
                 })
-                // .to(500, {left:"10%"}, {stagger:30})
-                // .call((params) => {console.log("called!", params)}, 123, 334)
-                .to(500, {top: 150})
-                .to(500, {rotate:"90", bg:"#89a4bd"})
-                .on("progress", ()=> {updRange(a.runningTime)})
+            // .to(500, {left:"10%"}, {stagger:30})
+            // .call((params) => {console.log("called!", params)}, 123, 334)
+            // .to(500, {top: 150})
+            // .to(500, {rotate:"90", bg:"#89a4bd"})
+                .on("progress", () => {
+                    updRange(a.runningTime)
+                })
                 .on('end', () => {
                     console.log(a);
                     // console.log(a.keyframes[0].tweens[0]);
@@ -211,6 +213,7 @@
                 let val = parseInt(r.value);
                 a.seek(val);
             });
+
             function updRange(v) {
                 r.value = v.toString();
             }
@@ -223,6 +226,23 @@
         /* ==============================================++++=================++++++++==========+++++++++++=============
             TESTS
          =============================================================================================================*/
+
+        const reg = /[^\d.+=]+|[-+=.\d]+/g;
+
+        console.log("rgb-a(250, 15, 34, .3)".match(reg))
+
+
+
+        let nums = [255, 5, 120, .4];
+        let strs = ["rgba(", ", ", ", ", ", ", ")"];
+        function mergeArrs(numA, strA) {
+            let str = strA[0];
+            for (let i = 1; i < strA.length; i++) {
+                str += numA[i-1] + strA[i];
+            }
+            console.log(str);
+        }
+        // mergeArrs(nums, strs);
 
 
         // let oo = Object.assign(el.style,{transform:"scale(1,1)"});

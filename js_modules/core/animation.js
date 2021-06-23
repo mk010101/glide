@@ -1,6 +1,6 @@
 import Target from "./target";
 import Dispatcher from "./dispatcher";
-import { getPropType, getTweenType, getVo, minMax, normalizeVos, strToMap, unwrapValues } from "../util/util";
+import { getPropType, getTweenType, getVo, minMax, normalizeTween, strToMap, unwrapValues } from "../util/util";
 import { Keyframe } from "./keyframe";
 import { Tween } from "./tween";
 import { Evt } from "./events";
@@ -105,7 +105,7 @@ export class Animation extends Dispatcher {
             let kf = this.keyframes[i];
             for (let j = kf.tgs.length - 1; j >= 0; j--) {
                 const tg = kf.tgs[j];
-                if (tg.target.target === target) {
+                if (tg.target.el === target) {
                     kf.tgs.splice(j, 1);
                 }
             }
@@ -155,91 +155,6 @@ export class Animation extends Dispatcher {
         this._seeking = false;
     }
     static _render(tgs, time, dir) {
-        for (let i = 0, k = tgs.length; i < k; i++) {
-            const tg = tgs[i];
-            const tweenable = tg.tweenable;
-            let transformsStr = "";
-            let filtersStr = "";
-            for (let j = 0, f = tg.tweens.length; j < f; j++) {
-                const tween = tg.tweens[j];
-                const twType = tween.type;
-                let elapsed = minMax(time - tween.start - tween.delay, 0, tween.duration) / tween.duration;
-                if (elapsed === 0 && dir === 1)
-                    return;
-                let eased = isNaN(elapsed) ? 1 : tween.ease(elapsed);
-                let from = tween.from;
-                let to = tween.to;
-                let tweenable = tween.tweenable;
-                let prop = tween.prop;
-                const isNum = from.isNumber;
-                switch (twType) {
-                    case "css":
-                        if (isNum) {
-                            tweenable[prop] = from.values[0] + eased * (to.values[0] - tween.from.values[0]);
-                        }
-                        else {
-                            let str = "";
-                            for (let j = 0; j < from.values.length; j++) {
-                                let val = from.values[j] + eased * (to.values[j] - tween.from.values[j]);
-                                str += `${val}${to.units[j]} `;
-                            }
-                            tweenable[prop] = str;
-                        }
-                        break;
-                    case "color":
-                        let r = ~~(from.values[0] + eased * to.diffVals[0]);
-                        let g = ~~(from.values[1] + eased * to.diffVals[1]);
-                        let b = ~~(from.values[2] + eased * to.diffVals[2]);
-                        let a = (from.values.length === 4) ? ", " + (from.values[3] + eased * to.diffVals[3]) : "";
-                        tweenable[prop] = `${to.strBegin}(${r}, ${g}, ${b}${a})`;
-                        break;
-                    case "transform":
-                        if (from.keepOriginal) {
-                            transformsStr += from.keepStr + " ";
-                        }
-                        else {
-                            transformsStr += `${to.prop}(`;
-                            for (let j = 0; j < from.values.length; j++) {
-                                let val = from.values[j] + eased * (to.values[j] - tween.from.values[j]);
-                                let sep = j < to.values.length - 1 ? ", " : "";
-                                transformsStr += `${val}${to.units[j]}${sep}`;
-                            }
-                            transformsStr += ") ";
-                        }
-                        break;
-                    case "filter":
-                        if (prop === "drop-shadow" && !from.keepOriginal) {
-                            let x = from.values[0] + eased * to.diffVals[0];
-                            let y = from.values[1] + eased * to.diffVals[1];
-                            let brad = from.values[2] + eased * to.diffVals[2];
-                            let r = ~~(from.values[3] + eased * to.diffVals[3]);
-                            let g = ~~(from.values[4] + eased * to.diffVals[4]);
-                            let b = ~~(from.values[5] + eased * to.diffVals[5]);
-                            let a = (from.values.length === 7) ? ", " + (from.values[6] + eased * (to.values[6] - from.values[6])) : "";
-                            let pref = (from.values.length === 7) ? "rgba" : "rgb";
-                            filtersStr += `drop-shadow(${x}${to.units[0]} ${y}${to.units[1]} ${brad}${to.units[2]} `;
-                            filtersStr += `${pref}(${r}, ${g}, ${b}${a}))`;
-                        }
-                        else if (from.keepOriginal) {
-                            filtersStr += from.keepStr + " ";
-                        }
-                        else {
-                            let v = from.values[0] + eased * to.diffVals[0];
-                            filtersStr += `${to.prop}(${v}${to.units[0]}) `;
-                        }
-                        break;
-                    case "direct":
-                        tweenable[prop] = from.values[0] + eased * to.diffVals[0];
-                        break;
-                }
-            }
-            if (transformsStr) {
-                tweenable.transform = transformsStr;
-            }
-            if (filtersStr) {
-                tweenable.filter = filtersStr;
-            }
-        }
     }
     static _getTargets(targets, options) {
         if (typeof targets === "string") {
@@ -311,9 +226,9 @@ export class Animation extends Dispatcher {
             toVal = val;
         }
         let delay = options.delay || 0;
-        let tw = new Tween(target, twType, prop, fromVal, toVal, dur, delay, 0);
+        let tw = new Tween(twType, prop, fromVal, toVal, dur, delay, 0);
         if (twType === "direct")
-            tw.tweenable = target.target;
+            tw.tweenable = target.el;
         if (options.stagger) {
             let del = target.pos * options.stagger;
             tw.start = del;
@@ -353,28 +268,28 @@ export class Animation extends Dispatcher {
             for (let j = 0; j < tg.tweens.length; j++) {
                 const tw = tg.tweens[j];
                 let from;
-                let to = getVo(tw.targetType, tw.prop, tw.toVal);
-                if (tw.target.type === "dom") {
-                    switch (tw.type) {
+                let to = getVo(tg.target.type, tw.prop, tw.toVal);
+                if (tg.target.type === "dom") {
+                    switch (tw.twType) {
                         case "css":
                         case "color":
                         case "direct":
                             if (tw.fromVal)
-                                from = getVo(tw.targetType, tw.prop, tw.fromVal);
+                                from = getVo(tg.target.type, tw.prop, tw.fromVal);
                             else
-                                from = getVo(tw.targetType, tw.prop, tw.target.getExistingValue(tw.prop));
+                                from = getVo(tg.target.type, tw.prop, tg.target.getExistingValue(tw.prop));
                             break;
                         case "transform":
                         case "filter":
-                            if (tw.type === "transform" && !transChecked) {
-                                transOldTweens = strToMap(tw.target.getExistingValue("transform"));
+                            if (tw.twType === "transform" && !transChecked) {
+                                transOldTweens = strToMap(tg.target.getExistingValue("transform"));
                                 transTweens = new Map();
                                 transChecked = true;
                                 oldTweens = transOldTweens;
                                 newTweens = transTweens;
                             }
-                            else if (tw.type === "filter" && !filterChecked) {
-                                filterOldTweens = strToMap(tw.target.getExistingValue("filter"));
+                            else if (tw.twType === "filter" && !filterChecked) {
+                                filterOldTweens = strToMap(tg.target.getExistingValue("filter"));
                                 filterTweens = new Map();
                                 filterChecked = true;
                                 oldTweens = filterOldTweens;
@@ -386,7 +301,6 @@ export class Animation extends Dispatcher {
                             else {
                                 if (oldTweens && oldTweens.has(tw.prop)) {
                                     from = oldTweens.get(tw.prop).from;
-                                    from.keepOriginal = false;
                                 }
                                 else {
                                     from = from = getVo("dom", tw.prop, tw.fromVal);
@@ -398,19 +312,19 @@ export class Animation extends Dispatcher {
                 }
                 else {
                     if (!tw.fromVal)
-                        tw.fromVal = tw.target.getExistingValue(tw.prop);
+                        tw.fromVal = tg.target.getExistingValue(tw.prop);
                     from = getVo("obj", tw.prop, tw.fromVal);
                 }
                 tw.from = from;
                 tw.to = to;
-                normalizeVos(from, to, tw.target.context);
+                normalizeTween(tw, tg.target.context);
             }
             if (transOldTweens) {
                 transTweens.forEach((v, k) => {
                     transOldTweens.set(k, v);
                 });
                 for (let j = tg.tweens.length - 1; j >= 0; j--) {
-                    if (tg.tweens[j].type === "transform") {
+                    if (tg.tweens[j].twType === "transform") {
                         tg.tweens.splice(j, 1);
                     }
                 }
