@@ -287,14 +287,14 @@ export function normalizeVos(from: Vo, to: Vo, context: Context) {
             from.values.push(1);
     }
 
-    if (to.units.length > from.units.length) {
-        let diff = to.units.length - from.units.length;
-        for (let i = 0; i < diff; i++) {
-            from.units.push(null);
-            let v = is.valueOne(to.prop) ? 1 : 0;
-            from.values.push(v);
-        }
+    let longer = to.units.length > from.units.length? to : from;
+    let shorter = longer === from? to : from;
+    for (let i = 0; i < longer.units.length - shorter.units.length; i++) {
+        shorter.units.push(null);
+        let v = is.valueOne(to.prop) ? 1 : 0;
+        shorter.values.push(v);
     }
+
     // console.log(from.units, to.units);
     // console.log(from.values, to.values);
 

@@ -55,17 +55,53 @@ export class Animation extends Dispatcher {
         this.time += t * this.dir;
         this.currentTime += t;
         this.runningTime += t;
+        this.dispatch(Evt.progress, null);
         const tgs = this.currentKf.tgs;
-        for (let i = 0; i < tgs.length; i++) {
+        Animation._render(tgs, this.time, this.dir);
+        if (this.currentTime >= this.currentKf.totalDuration) {
+            if (this.currentKf.callFunc) {
+                this.currentKf.callFunc(this.currentKf.callParams);
+            }
+            if (this.dir > 0 && this.keyframes.length > this.num + 1) {
+                this.num++;
+                this.time = 0;
+                this.currentKf = this.keyframes[this.num];
+            }
+            else if (this.dir < 0 && this.num > 0) {
+                this.num--;
+                this.currentKf = this.keyframes[this.num];
+                this.time = this.currentKf.totalDuration;
+            }
+            else {
+                this.playedTimes++;
+                if (this.playedTimes < this.repeat) {
+                    if (this.loop) {
+                        this.dir *= -1;
+                    }
+                    else {
+                        this.reset();
+                        this.currentKf = this.keyframes[0];
+                    }
+                }
+                else {
+                    this.status = this.status = this.keep ? 0 : -1;
+                    this.dispatch(Evt.end, null);
+                }
+            }
+            this.currentTime = 0;
+        }
+    }
+    static _render(tgs, time, dir) {
+        for (let i = 0, k = tgs.length; i < k; i++) {
             const tg = tgs[i];
             const tweenable = tg.tweenable;
             let transformsStr = "";
             let filtersStr = "";
-            for (let j = 0; j < tg.tweens.length; j++) {
+            for (let j = 0, f = tg.tweens.length; j < f; j++) {
                 const tween = tg.tweens[j];
                 const twType = tween.type;
-                let elapsed = minMax(this.time - tween.start - tween.delay, 0, tween.duration) / tween.duration;
-                if (elapsed === 0 && this.dir === 1)
+                let elapsed = minMax(time - tween.start - tween.delay, 0, tween.duration) / tween.duration;
+                if (elapsed === 0 && dir === 1)
                     return;
                 let eased = isNaN(elapsed) ? 1 : tween.ease(elapsed);
                 let from = tween.from;
@@ -141,39 +177,6 @@ export class Animation extends Dispatcher {
                 tweenable.filter = filtersStr;
             }
         }
-        this.dispatch(Evt.progress, null);
-        if (this.currentTime >= this.currentKf.totalDuration) {
-            if (this.currentKf.callFunc) {
-                this.currentKf.callFunc(this.currentKf.callParams);
-            }
-            if (this.dir > 0 && this.keyframes.length > this.num + 1) {
-                this.num++;
-                this.time = 0;
-                this.currentKf = this.keyframes[this.num];
-            }
-            else if (this.dir < 0 && this.num > 0) {
-                this.num--;
-                this.currentKf = this.keyframes[this.num];
-                this.time = this.currentKf.totalDuration;
-            }
-            else {
-                this.playedTimes++;
-                if (this.playedTimes < this.repeat) {
-                    if (this.loop) {
-                        this.dir *= -1;
-                    }
-                    else {
-                        this.reset();
-                        this.currentKf = this.keyframes[0];
-                    }
-                }
-                else {
-                    this.status = this.status = this.keep ? 0 : -1;
-                    this.dispatch(Evt.end, null);
-                }
-            }
-            this.currentTime = 0;
-        }
     }
     call(func, ...params) {
         let kf = new Keyframe();
@@ -181,10 +184,6 @@ export class Animation extends Dispatcher {
         kf.callParams = params;
         this.keyframes.push(kf);
         return this;
-    }
-    reset() {
-        this.time = 0;
-        this.num = 0;
     }
     remove(target) {
         for (let i = this.keyframes.length - 1; i >= 0; i--) {
@@ -200,18 +199,24 @@ export class Animation extends Dispatcher {
             }
         }
     }
+    reset() {
+    }
     stop() {
+        this.status = 0;
         this.num = 0;
         this.currentKf = this.keyframes[0];
         this.currentTime = 0;
+        this.runningTime = 0;
         this.playedTimes = 0;
         this.dir = 1;
         this.time = 0;
     }
     seek(ms) {
         ms = minMax(ms, 0, this.totalDuration);
+        this.dir = ms > this.currentTime ? 1 : -1;
+        this.time = ms > this.currentTime ? 0 : ms;
         this.seeking = true;
-        this.stop();
+        this.status = 0;
         while (ms >= 0) {
             this.update(10);
             ms -= 10;

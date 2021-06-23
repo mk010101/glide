@@ -153,8 +153,8 @@
                     // saturate: 20,
                     // sepia: 90,
                     // translateX: "4rem",
-                    // x: "270px",
-                    x: {value: "12rem", ease: "bounceOut", duration: 1200},
+                    x: "270px",
+                    // x: {value: "12rem", ease: "bounceOut", duration: 1200},
                     // y: 50,
                     // y: "+=20",
                     // translateY: 50,
@@ -162,7 +162,7 @@
                     // scale: 1.5
                     // x: 120,
                     // rotate: {value: "2rad", duration: 1000},
-                    rotate: -45,
+                    // rotate: -45,
                     // scaleX: -1,
                     // scale: ".75, .75",
                     // matrix: "(1, 0, 0, 1, 30, 10)",
@@ -185,8 +185,9 @@
                 })
                 // .to(500, {left:"10%"}, {stagger:30})
                 // .call((params) => {console.log("called!", params)}, 123, 334)
-                .to(500, {top: 150})
-                // .to(500, {rotate:"+=50"})
+                // .to(500, {top: 150})
+                .to(500, {rotate:"90", bg:"#335599"})
+                .on("progress", ()=> {updRange(a.runningTime)})
                 .on('end', () => {
                     console.log(a);
                     // console.log(a.keyframes[0].tweens[0]);
@@ -195,9 +196,11 @@
                 });
 
             setTimeout(() => {
-                // a.seek(900)
+                // a.stop();
+                // a.reset();
+                a.seek(0)
                 // a.remove(document.querySelector(".el"))
-            }, 300);
+            }, 1200);
 
             const r = document.createElement("input");
             r.type = "range";
@@ -208,6 +211,9 @@
                 let val = parseInt(r.value);
                 a.seek(val);
             });
+            function updRange(v) {
+                // r.value = v.toString();
+            }
         }
 
 
