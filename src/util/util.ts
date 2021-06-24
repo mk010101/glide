@@ -245,6 +245,7 @@ export function getVo(targetType: TargetType, prop: any, val: any) {
 
     }
 
+    // print(vo)
     // console.log(vo)
 
 
@@ -332,7 +333,12 @@ export function getVo(targetType: TargetType, prop: any, val: any) {
  */
 export function normalizeTween(tw: Tween, context: Context) {
 
+
     const prop = tw.prop;
+
+    //TODO: Need to look into implementing complex values.
+    if (prop === "background") return;
+
     const from = tw.from;
     const to = tw.to;
     const twType = tw.twType;
@@ -345,9 +351,7 @@ export function normalizeTween(tw: Tween, context: Context) {
         let diff = longer.numbers.length - shorter.numbers.length;
         shorter.strings = longer.strings;
 
-        /// Other ---------------------
 
-        //let one_zero = is.valueOne(prop) ? 1 : 0;
         for (let i = 0; i < diff; i++) {
 
             if (shorter === from) {

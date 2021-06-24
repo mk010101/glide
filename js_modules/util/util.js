@@ -180,6 +180,8 @@ export function getVo(targetType, prop, val) {
 }
 export function normalizeTween(tw, context) {
     const prop = tw.prop;
+    if (prop === "background")
+        return;
     const from = tw.from;
     const to = tw.to;
     const twType = tw.twType;
