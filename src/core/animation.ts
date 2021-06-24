@@ -497,8 +497,7 @@ export class Animation extends Dispatcher {
 
                     switch (tw.twType) {
 
-                        case "css":
-                        case "color":
+                        case "other":
                         case "direct":
                             if (tw.fromVal) from = getVo(tg.target.type, tw.prop, tw.fromVal);
                             else

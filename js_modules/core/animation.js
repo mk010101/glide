@@ -300,8 +300,7 @@ export class Animation extends Dispatcher {
                 let to = getVo(tg.target.type, tw.prop, tw.toVal);
                 if (tg.target.type === "dom") {
                     switch (tw.twType) {
-                        case "css":
-                        case "color":
+                        case "other":
                         case "direct":
                             if (tw.fromVal)
                                 from = getVo(tg.target.type, tw.prop, tw.fromVal);

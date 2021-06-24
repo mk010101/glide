@@ -4,6 +4,7 @@ import {Vo} from "../core/vo";
 import {toRgb, toRgbStr} from "./color";
 import Context from "../core/context";
 import {Tween} from "../core/tween";
+import target from "../core/target";
 
 
 export function minMax(val: number, min: number, max: number): number {
@@ -33,12 +34,10 @@ export function getTweenType(targetType: any, prop: any): TweenType {
         return "transform";
     else if (is.propFilter(prop))
         return "filter";
-    else if (is.propColor(prop))
-        return "color";
     else if (is.propDirect(prop))
         return "direct";
 
-    return "css";
+    return "other";
 }
 
 export function getValueType(val: any = null): ValueType {
@@ -170,19 +169,19 @@ export function unwrapValues(prop: string, val: any): any {
     }
 }
 
-function getBeginStr(prop:string) {
+function getBeginStr(prop: string) {
     if (is.propTransform(prop) || is.propFilter(prop))
         return "(";
     return "";
 }
 
-function getEndStr(prop:string) {
+function getEndStr(prop: string) {
     if (is.propTransform(prop) || is.propFilter(prop))
         return ")";
     return "";
 }
 
-function getSepStr(prop:string) {
+function getSepStr(prop: string) {
     if (is.propTransform(prop) || is.propFilter(prop))
         return ", ";
     return " ";
@@ -203,6 +202,7 @@ export function getVo(targetType: TargetType, prop: any, val: any) {
 
     if (is.number(val)) {
         vo.numbers = [val];
+        vo.units = [null];
         return vo;
     }
 
@@ -238,13 +238,8 @@ export function getVo(targetType: TargetType, prop: any, val: any) {
 
     }
 
-    console.log(vo)
+    // console.log(vo)
 
-
-    if (targetType === "dom" && is.valueOne(prop)) {
-        if (val == void 0)
-            val = 1;
-    }
 
     /*
 
@@ -338,32 +333,63 @@ export function normalizeTween(tw: Tween, context: Context) {
     const prop = tw.prop;
     const from = tw.from;
     const to = tw.to;
+    const twType = tw.twType;
+    const propType = getPropType(prop);
+    const defaultUnit = getDefaultUnit(prop);
 
     if (from.numbers.length !== to.numbers.length) {
         let shorter: Vo = from.numbers.length > to.numbers.length ? to : from;
         let longer: Vo = shorter === from ? to : from;
         let diff = longer.numbers.length - shorter.numbers.length;
+        shorter.strings = longer.strings;
 
-        if (is.propColor(prop)) {
-            shorter.numbers.push(1);
-            shorter.strings = longer.strings;
-        } else {
-            let one_zero = is.valueOne(prop)? 1 : 0;
-            for (let i = 0; i < diff; i++) {
-                shorter.numbers.push(one_zero);
-                // shorter.numbers.push(one_zero);
+        /// Other ---------------------
+
+        //let one_zero = is.valueOne(prop) ? 1 : 0;
+        for (let i = 0; i < diff; i++) {
+
+            if (shorter === from) {
+                shorter.units.push(shorter.units[0]);
+            } else {
+                shorter.units.push(null);
             }
+
+            switch (propType) {
+
+                case "color":
+                    shorter.numbers.push(1);
+                    break;
+
+                case "transform":
+
+                    break;
+
+                case "other":
+                    shorter.numbers.push(shorter.numbers[0]);
+                    break;
+
+            }
+
+            //shorter.numbers.push(one_zero);
+            //shorter.units.push(null);
         }
 
-    }
-
-    for (let i = 0; i < from.units.length; i++) {
-
 
     }
 
+    for (let i = 0; i < to.numbers.length; i++) {
 
-    // console.log(tw)
+        if (to.units[i] == (void 0)) to.units[i] = from.units[i];
+
+        if (from.units[i] !== to.units[i]) {
+            from.numbers[i] = Context.convertUnits(from.numbers[i], from.units[i], to.units[i], context.units);
+        }
+
+
+    }
+
+
+    console.log(from, to)
 
     /*
     if (prop === "drop-shadow") {
@@ -416,8 +442,7 @@ export function normalizeTween(tw: Tween, context: Context) {
 
     }
      */
-    // console.log(from.units, to.units);
-    // console.log(from.values, to.values);
+
 }
 
 

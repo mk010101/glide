@@ -1,6 +1,7 @@
 import { getObjType, is, regColorVal, regNums, regProp, regStrValues, regTypes, regValues, regVUs } from "./regex";
 import { Vo } from "../core/vo";
 import { toRgbStr } from "./color";
+import Context from "../core/context";
 import { Tween } from "../core/tween";
 export function minMax(val, min, max) {
     return Math.min(Math.max(val, min), max);
@@ -20,11 +21,9 @@ export function getTweenType(targetType, prop) {
         return "transform";
     else if (is.propFilter(prop))
         return "filter";
-    else if (is.propColor(prop))
-        return "color";
     else if (is.propDirect(prop))
         return "direct";
-    return "css";
+    return "other";
 }
 export function getValueType(val = null) {
     let t = getObjType(val).match(regTypes)[0];
@@ -145,6 +144,7 @@ export function getVo(targetType, prop, val) {
     let propType = getPropType(prop);
     if (is.number(val)) {
         vo.numbers = [val];
+        vo.units = [null];
         return vo;
     }
     switch (propType) {
@@ -176,11 +176,6 @@ export function getVo(targetType, prop, val) {
             }
             vo.strings.push(getEndStr(prop));
     }
-    console.log(vo);
-    if (targetType === "dom" && is.valueOne(prop)) {
-        if (val == void 0)
-            val = 1;
-    }
     return vo;
 }
 function getVoFromStr(str) {
@@ -192,23 +187,41 @@ export function normalizeTween(tw, context) {
     const prop = tw.prop;
     const from = tw.from;
     const to = tw.to;
+    const twType = tw.twType;
+    const propType = getPropType(prop);
+    const defaultUnit = getDefaultUnit(prop);
     if (from.numbers.length !== to.numbers.length) {
         let shorter = from.numbers.length > to.numbers.length ? to : from;
         let longer = shorter === from ? to : from;
         let diff = longer.numbers.length - shorter.numbers.length;
-        if (is.propColor(prop)) {
-            shorter.numbers.push(1);
-            shorter.strings = longer.strings;
-        }
-        else {
-            let one_zero = is.valueOne(prop) ? 1 : 0;
-            for (let i = 0; i < diff; i++) {
-                shorter.numbers.push(one_zero);
+        shorter.strings = longer.strings;
+        for (let i = 0; i < diff; i++) {
+            if (shorter === from) {
+                shorter.units.push(shorter.units[0]);
+            }
+            else {
+                shorter.units.push(null);
+            }
+            switch (propType) {
+                case "color":
+                    shorter.numbers.push(1);
+                    break;
+                case "transform":
+                    break;
+                case "other":
+                    shorter.numbers.push(shorter.numbers[0]);
+                    break;
             }
         }
     }
-    for (let i = 0; i < from.units.length; i++) {
+    for (let i = 0; i < to.numbers.length; i++) {
+        if (to.units[i] == (void 0))
+            to.units[i] = from.units[i];
+        if (from.units[i] !== to.units[i]) {
+            from.numbers[i] = Context.convertUnits(from.numbers[i], from.units[i], to.units[i], context.units);
+        }
     }
+    console.log(from, to);
 }
 export function strToMap(str) {
     let res = new Map();

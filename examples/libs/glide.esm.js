@@ -579,11 +579,9 @@ function getTweenType(targetType, prop) {
         return "transform";
     else if (is.propFilter(prop))
         return "filter";
-    else if (is.propColor(prop))
-        return "color";
     else if (is.propDirect(prop))
         return "direct";
-    return "css";
+    return "other";
 }
 function getValueType(val = null) {
     let t = getObjType(val).match(regTypes)[0];
@@ -605,6 +603,15 @@ function getPropType(prop) {
     else if (is.propMatrix(prop))
         return "matrix";
     return "other";
+}
+function getDefaultUnit(prop) {
+    if (is.unitDegrees(prop))
+        return "deg";
+    else if (is.unitPercent(prop))
+        return "%";
+    else if (is.unitless(prop))
+        return "";
+    return "px";
 }
 function getValueUnit(val) {
     const increment = val.match(/-=|\+=|\*=|\/=/g);
@@ -695,6 +702,7 @@ function getVo(targetType, prop, val) {
     let propType = getPropType(prop);
     if (is.number(val)) {
         vo.numbers = [val];
+        vo.units = [null];
         return vo;
     }
     switch (propType) {
@@ -726,11 +734,6 @@ function getVo(targetType, prop, val) {
             }
             vo.strings.push(getEndStr(prop));
     }
-    console.log(vo);
-    if (targetType === "dom" && is.valueOne(prop)) {
-        if (val == void 0)
-            val = 1;
-    }
     return vo;
 }
 function getVoFromStr(str) {
@@ -742,23 +745,41 @@ function normalizeTween(tw, context) {
     const prop = tw.prop;
     const from = tw.from;
     const to = tw.to;
+    tw.twType;
+    const propType = getPropType(prop);
+    getDefaultUnit(prop);
     if (from.numbers.length !== to.numbers.length) {
         let shorter = from.numbers.length > to.numbers.length ? to : from;
         let longer = shorter === from ? to : from;
         let diff = longer.numbers.length - shorter.numbers.length;
-        if (is.propColor(prop)) {
-            shorter.numbers.push(1);
-            shorter.strings = longer.strings;
-        }
-        else {
-            let one_zero = is.valueOne(prop) ? 1 : 0;
-            for (let i = 0; i < diff; i++) {
-                shorter.numbers.push(one_zero);
+        shorter.strings = longer.strings;
+        for (let i = 0; i < diff; i++) {
+            if (shorter === from) {
+                shorter.units.push(shorter.units[0]);
+            }
+            else {
+                shorter.units.push(null);
+            }
+            switch (propType) {
+                case "color":
+                    shorter.numbers.push(1);
+                    break;
+                case "transform":
+                    break;
+                case "other":
+                    shorter.numbers.push(shorter.numbers[0]);
+                    break;
             }
         }
     }
-    for (let i = 0; i < from.units.length; i++) {
+    for (let i = 0; i < to.numbers.length; i++) {
+        if (to.units[i] == (void 0))
+            to.units[i] = from.units[i];
+        if (from.units[i] !== to.units[i]) {
+            from.numbers[i] = Context.convertUnits(from.numbers[i], from.units[i], to.units[i], context.units);
+        }
     }
+    console.log(from, to);
 }
 function strToMap(str) {
     let res = new Map();
@@ -1095,8 +1116,7 @@ class Animation extends Dispatcher {
                 let to = getVo(tg.target.type, tw.prop, tw.toVal);
                 if (tg.target.type === "dom") {
                     switch (tw.twType) {
-                        case "css":
-                        case "color":
+                        case "other":
                         case "direct":
                             if (tw.fromVal)
                                 from = getVo(tg.target.type, tw.prop, tw.fromVal);
