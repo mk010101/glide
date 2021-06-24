@@ -124,6 +124,7 @@ export function getValuesUnits(val: any): ValueUnit[] {
     }
 
     let arr = val.match(regVUs);
+
     for (let i = 0; i < arr.length; i++) {
         vus.push(getValueUnit(arr[i]));
     }
@@ -221,11 +222,12 @@ export function getVo(targetType: TargetType, prop: any, val: any) {
             vo.increments.push(null);
             vo.units.push("");
         }
-
+        vo.strings[vo.strings.length-1] += " ";
     }
 
     if(val) {
         const vus = getValuesUnits(val);
+        // vo.strings.push(...val.split(regVUs));
         for (let i = 0; i < vus.length; i++) {
             vo.numbers.push(vus[i].value);
             vo.units.push(vus[i].unit);
@@ -233,41 +235,13 @@ export function getVo(targetType: TargetType, prop: any, val: any) {
             vo.floats.push(1);
         }
         vo.strings.push(...val.split(regVUs));
-        vo.strings[0] = getBeginStr(prop);
-        vo.strings[vo.strings.length-1] = getEndStr(prop);
 
-    }
-
-    switch (propType) {
-
-
-        case "color":
-            /*
-            vo.numbers = getNumbers(val);
-            vo.strings = val.split(regNums);
-            vo.floats.push(0, 0, 0);
-            if (vo.numbers.length === 4) vo.floats.push(1);
-            for (let i = 0; i < vo.numbers.length; i++) {
-                vo.increments.push(null);
-            }
-            break;
-             */
-
-        default:
-            break
-            let vus: ValueUnit[] = getValuesUnits(val);
-            vo.strings.push(getBeginStr(prop));
-            let separator = getSepStr(prop);
-            for (let i = 0; i < vus.length; i++) {
-                vo.numbers.push(vus[i].value);
-                vo.units.push(vus[i].unit);
-                vo.increments.push(vus[i].increment);
-                vo.floats.push(1);
-            }
-            for (let i = 1; i < vo.numbers.length; i++) {
-                vo.strings.push(separator);
-            }
-            vo.strings.push(getEndStr(prop));
+        if (is.propTransform(prop) || is.propFilter(prop)){
+            vo.strings[0] = prop + "(";
+            vo.strings[vo.strings.length-1] = ")";
+        }
+        // vo.strings[0] = getBeginStr(prop);
+        // vo.strings[vo.strings.length-1] = getEndStr(prop);
 
     }
 

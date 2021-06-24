@@ -160,6 +160,7 @@ export function getVo(targetType, prop, val) {
             vo.increments.push(null);
             vo.units.push("");
         }
+        vo.strings[vo.strings.length - 1] += " ";
     }
     if (val) {
         const vus = getValuesUnits(val);
@@ -170,26 +171,10 @@ export function getVo(targetType, prop, val) {
             vo.floats.push(1);
         }
         vo.strings.push(...val.split(regVUs));
-        vo.strings[0] = getBeginStr(prop);
-        vo.strings[vo.strings.length - 1] = getEndStr(prop);
-    }
-    switch (propType) {
-        case "color":
-        default:
-            break;
-            let vus = getValuesUnits(val);
-            vo.strings.push(getBeginStr(prop));
-            let separator = getSepStr(prop);
-            for (let i = 0; i < vus.length; i++) {
-                vo.numbers.push(vus[i].value);
-                vo.units.push(vus[i].unit);
-                vo.increments.push(vus[i].increment);
-                vo.floats.push(1);
-            }
-            for (let i = 1; i < vo.numbers.length; i++) {
-                vo.strings.push(separator);
-            }
-            vo.strings.push(getEndStr(prop));
+        if (is.propTransform(prop) || is.propFilter(prop)) {
+            vo.strings[0] = prop + "(";
+            vo.strings[vo.strings.length - 1] = ")";
+        }
     }
     return vo;
 }

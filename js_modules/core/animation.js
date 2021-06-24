@@ -159,6 +159,8 @@ export class Animation extends Dispatcher {
         for (let i = 1; i < to.strings.length; i++) {
             let k = i - 1;
             let val = from.numbers[k] + t * (to.numbers[k] - from.numbers[k]);
+            if (isNaN(val))
+                val = "";
             let unit = to.units[k] ? to.units[k] : "";
             if (to.floats[k] === 0)
                 val = ~~val;

@@ -71,7 +71,7 @@
         }
     }
 
-    const regVUs = /[-+=.\w%]+/g;
+    const regVUs = /[-+*=]*[.\d]+[a-z%]*/g;
     const regStrValues = /(([a-z].*?)\(.*?\))(?=\s([a-z].*?)\(.*?\)|\s*$)/gi;
     const regColorVal = /([rgbahsl]+\([,%a-z \d.-]+\))|#[0-9A-F]{6}/gi;
     const regProp = /^[-\w]+[^( ]/gi;
@@ -660,16 +660,6 @@
         let nums = val.match(/[-.\d]+/g);
         return nums.map((v) => parseFloat(v));
     }
-    function getBeginStr(prop) {
-        if (is.propTransform(prop) || is.propFilter(prop))
-            return prop + "(";
-        return "";
-    }
-    function getEndStr(prop) {
-        if (is.propTransform(prop) || is.propFilter(prop))
-            return ")";
-        return "";
-    }
     function getVo(targetType, prop, val) {
         let vo = new Vo();
         getPropType(prop);
@@ -691,6 +681,7 @@
                 vo.increments.push(null);
                 vo.units.push("");
             }
+            vo.strings[vo.strings.length - 1] += " ";
         }
         if (val) {
             const vus = getValuesUnits(val);
@@ -701,8 +692,10 @@
                 vo.floats.push(1);
             }
             vo.strings.push(...val.split(regVUs));
-            vo.strings[0] = getBeginStr(prop);
-            vo.strings[vo.strings.length - 1] = getEndStr(prop);
+            if (is.propTransform(prop) || is.propFilter(prop)) {
+                vo.strings[0] = prop + "(";
+                vo.strings[vo.strings.length - 1] = ")";
+            }
         }
         return vo;
     }
@@ -966,6 +959,8 @@
             for (let i = 1; i < to.strings.length; i++) {
                 let k = i - 1;
                 let val = from.numbers[k] + t * (to.numbers[k] - from.numbers[k]);
+                if (isNaN(val))
+                    val = "";
                 let unit = to.units[k] ? to.units[k] : "";
                 if (to.floats[k] === 0)
                     val = ~~val;

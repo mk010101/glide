@@ -207,7 +207,8 @@ export class Animation extends Dispatcher {
         let str = to.strings[0];
         for (let i = 1; i < to.strings.length; i++) {
             let k = i-1;
-            let val:number = from.numbers[k] + t * (to.numbers[k] - from.numbers[k]);
+            let val:any = from.numbers[k] + t * (to.numbers[k] - from.numbers[k]);
+            if (isNaN(val)) val = "";
             let unit = to.units[k]? to.units[k] : "";
             if (to.floats[k] === 0) val = ~~val;
             str += `${val}${unit}${to.strings[i]}`;

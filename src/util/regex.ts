@@ -1,7 +1,8 @@
 
 // export const regValues = /[-%\w]+[-\d.]*/gi;
 export const regValues = /[-%\w]+[-\d.]*/gi;
-export const regVUs = /[-+=.\w%]+/g;
+// export const regVUs = /[-+=.\w%]+/g;
+export const regVUs = /[-+*=]*[.\d]+[a-z%]*/g;
 export const regStrValues = /(([a-z].*?)\(.*?\))(?=\s([a-z].*?)\(.*?\)|\s*$)/gi;
 export const regColorVal = /([rgbahsl]+\([,%a-z \d.-]+\))|#[0-9A-F]{6}/gi;
 export const regProp = /^[-\w]+[^( ]/gi;
