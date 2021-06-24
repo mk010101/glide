@@ -1,4 +1,5 @@
 
+// export const regValues = /[-%\w]+[-\d.]*/gi;
 export const regValues = /[-%\w]+[-\d.]*/gi;
 export const regVUs = /[-+=.\w%]+/g;
 export const regStrValues = /(([a-z].*?)\(.*?\))(?=\s([a-z].*?)\(.*?\)|\s*$)/gi;

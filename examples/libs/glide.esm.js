@@ -664,14 +664,9 @@ function getEndStr(prop) {
         return ")";
     return "";
 }
-function getSepStr(prop) {
-    if (is.propTransform(prop) || is.propFilter(prop))
-        return ", ";
-    return " ";
-}
 function getVo(targetType, prop, val) {
     let vo = new Vo();
-    let propType = getPropType(prop);
+    getPropType(prop);
     if (is.number(val)) {
         vo.numbers = [val];
         vo.units = [null];
@@ -680,38 +675,28 @@ function getVo(targetType, prop, val) {
     }
     if (is.string(val) && is.valueColor(val)) {
         let colorMatch = val.match(regColorVal);
-        if (colorMatch) {
-            let color;
-            color = toRgbStr(colorMatch[0]);
-            val = val.replace(colorMatch, "");
-            val = color + " " + val;
+        let color;
+        color = toRgbStr(colorMatch[0]);
+        val = val.replace(colorMatch, "");
+        vo.numbers = getNumbers(color);
+        vo.strings = color.split(regNums);
+        vo.floats.push(0, 0, 0);
+        for (let i = 0; i < vo.numbers.length; i++) {
+            vo.increments.push(null);
+            vo.units.push("");
         }
     }
-    switch (propType) {
-        case "color":
-            vo.numbers = getNumbers(val);
-            vo.strings = val.split(regNums);
-            vo.floats.push(0, 0, 0);
-            if (vo.numbers.length === 4)
-                vo.floats.push(1);
-            for (let i = 0; i < vo.numbers.length; i++) {
-                vo.increments.push(null);
-            }
-            break;
-        default:
-            let vus = getValuesUnits(val);
-            vo.strings.push(getBeginStr(prop));
-            let separator = getSepStr(prop);
-            for (let i = 0; i < vus.length; i++) {
-                vo.numbers.push(vus[i].value);
-                vo.units.push(vus[i].unit);
-                vo.increments.push(vus[i].increment);
-                vo.floats.push(1);
-            }
-            for (let i = 1; i < vo.numbers.length; i++) {
-                vo.strings.push(separator);
-            }
-            vo.strings.push(getEndStr(prop));
+    if (val) {
+        const vus = getValuesUnits(val);
+        for (let i = 0; i < vus.length; i++) {
+            vo.numbers.push(vus[i].value);
+            vo.units.push(vus[i].unit);
+            vo.increments.push(vus[i].increment);
+            vo.floats.push(1);
+        }
+        vo.strings.push(...val.split(regVUs));
+        vo.strings[0] = getBeginStr(prop);
+        vo.strings[vo.strings.length - 1] = getEndStr(prop);
     }
     return vo;
 }

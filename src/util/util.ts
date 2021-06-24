@@ -207,22 +207,42 @@ export function getVo(targetType: TargetType, prop: any, val: any) {
         return vo;
     }
 
-    if(is.string(val) && is.valueColor(val)) {
+    if (is.string(val) && is.valueColor(val)) {
+
         let colorMatch = val.match(regColorVal);
-        if (colorMatch) {
-            let color: string;
-            color = toRgbStr(colorMatch[0]);
-            val = val.replace(colorMatch, "");
-            val = color + " " + val;
+        let color: string;
+        color = toRgbStr(colorMatch[0]);
+        val = val.replace(colorMatch, "");
+
+        vo.numbers = getNumbers(color);
+        vo.strings = color.split(regNums);
+        vo.floats.push(0, 0, 0);
+        for (let i = 0; i < vo.numbers.length; i++) {
+            vo.increments.push(null);
+            vo.units.push("");
         }
-        // console.log(val.match(/[a-z(]+|[-+%=.\w]+|[)]+/gi))
-        // console.log(val)
+
+    }
+
+    if(val) {
+        const vus = getValuesUnits(val);
+        for (let i = 0; i < vus.length; i++) {
+            vo.numbers.push(vus[i].value);
+            vo.units.push(vus[i].unit);
+            vo.increments.push(vus[i].increment);
+            vo.floats.push(1);
+        }
+        vo.strings.push(...val.split(regVUs));
+        vo.strings[0] = getBeginStr(prop);
+        vo.strings[vo.strings.length-1] = getEndStr(prop);
+
     }
 
     switch (propType) {
 
 
         case "color":
+            /*
             vo.numbers = getNumbers(val);
             vo.strings = val.split(regNums);
             vo.floats.push(0, 0, 0);
@@ -231,8 +251,10 @@ export function getVo(targetType: TargetType, prop: any, val: any) {
                 vo.increments.push(null);
             }
             break;
+             */
 
         default:
+            break
             let vus: ValueUnit[] = getValuesUnits(val);
             vo.strings.push(getBeginStr(prop));
             let separator = getSepStr(prop);
@@ -357,8 +379,8 @@ export function normalizeTween(tw: Tween, context: Context) {
             if (shorter === from) {
                 shorter.units.push(shorter.units[0]);
             } else {
-                to.units.push(to.units[to.units.length-1]);
-                to.increments.push(to.increments[to.increments.length-1]);
+                to.units.push(to.units[to.units.length - 1]);
+                to.increments.push(to.increments[to.increments.length - 1]);
             }
 
             switch (propType) {
@@ -472,7 +494,7 @@ export function normalizeTween(tw: Tween, context: Context) {
 }
 
 
-export function strToMap(str: string, twType:TweenType): Map<string, Tween> {
+export function strToMap(str: string, twType: TweenType): Map<string, Tween> {
 
     let res: Map<string, Tween> = new Map();
 

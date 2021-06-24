@@ -150,7 +150,7 @@
                     // width: "5%",
                     // height: "10%",
                     // "drop-shadow": "6px 6px 3px #330033",
-                    dropShadow: "rgba(20,50,150, .6) -6px 6px 3px",
+                    // dropShadow: "rgba(20,50,150, .6) -6px 6px 3px",
                     // invert: 90,
                     // blur: 3,
                     // grayscale: 80,
@@ -170,7 +170,7 @@
                     // rotate: {value: "2rad", duration: 1000},
                     // rotate: -45,
                     // scaleX: -1,
-                    // scale: ".75, .75",
+                    // scale: "1.75, 1.75",
                     // matrix: "(1, 0, 0, 1, 30, 10)",
                     // transformOrigin: "0 -100"
                     // backgroundColor: "#ff6c41",
@@ -182,7 +182,7 @@
                     //borderColor: "rgba(153,215,255,0.8)",
                     // borderWidth: 4,
                     // borderWidth: "+=4px",
-                    border: "1px solid #ff0055"
+                    // border: "1px solid #ff0055"
                 }, {
                     delay: 500,
                     // repeat: 2,
@@ -236,26 +236,29 @@
             TESTS
          =============================================================================================================*/
 
-        const val = "rgb(200, 0, 15) 1px solid";
-        // const val = "hue-rotate(-=30px, 10%)";
-        // const val = "rgba(20, 50, 150, 0.6) /=6px 6% -3rem ";
-        // const val = "rgb(255, 0, 0) 1px solid ";
-        // const val = "rgba(170, 191, 64, 0.7) none repeat scroll /=10% 0% / auto padding-box border-box";
+        function tmp_vals_units_strings() {
+            const val = "rgb(200, 0, 15) 1px solid";
+            // const val = "hue-rotate(-=30px, 10%)";
+            // const val = "rgba(20, 50, 150, 0.6) /=6px 6% -3rem ";
+            // const val = "rgb(255, 0, 0) 1px solid ";
+            // const val = "rgba(170, 191, 64, 0.7) none repeat scroll /=10% 0% / auto padding-box border-box";
 
+            const strArr = val.split(/[-+=*/]*[.\d]+[%a-z]*/gi); /// [string]
+            const ivuArr = val.match(/[-=+/]*[.\d]+[%a-z]*/gi); /// [increment-value-unit]
+            // let numsArr = val.match(/[-]*[.\d]+/gi);
 
-        const strArr = val.split(/[-+=*/]*[.\d]+[%a-z]*/gi); /// [string]
-        const ivuArr = val.match(/[-=+/]*[.\d]+[%a-z]*/gi); /// [increment-value-unit]
-        // let numsArr = val.match(/[-]*[.\d]+/gi);
-
-        let ss = strArr[0];
-        for (let i = 1; i < strArr.length; i++) {
-            // let num = i <= numArr.length? numArr[i-1] : "";
-            // ss += `${num}${strArr[i]} `
+            let ss = strArr[0];
+            for (let i = 1; i < strArr.length; i++) {
+                // let num = i <= numArr.length? numArr[i-1] : "";
+                // ss += `${num}${strArr[i]} `
+            }
+            console.log(val);
+            console.log(strArr);
+            console.log(ivuArr);
+            // console.log(numsArr);
         }
-        console.log(val);
-        console.log(strArr);
-        console.log(ivuArr);
-        // console.log(numsArr);
+
+
 
 
 
