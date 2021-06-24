@@ -13,7 +13,8 @@ export class Tween {
         this.from = null;
         this.to = null;
         this.ease = quadInOut;
-        this.isNum = false;
+        this.keepOld = false;
+        this.oldValue = "";
         this.twType = twType;
         this.prop = prop;
         this.duration = duration;

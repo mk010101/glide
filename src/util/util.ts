@@ -171,7 +171,7 @@ export function unwrapValues(prop: string, val: any): any {
 
 function getBeginStr(prop: string) {
     if (is.propTransform(prop) || is.propFilter(prop))
-        return "(";
+        return prop + "(";
     return "";
 }
 
@@ -317,11 +317,6 @@ export function getVo(targetType: TargetType, prop: any, val: any) {
 
 }
 
-function getVoFromStr(str: string): Vo {
-    let prop = str.match(regProp)[0];
-    str = str.replace(prop, "");
-    return getVo("dom", prop, str);
-}
 
 /**
  * Normalizes Tween.
@@ -377,6 +372,8 @@ export function normalizeTween(tw: Tween, context: Context) {
 
     }
 
+    if (from.strings.length > to.strings.length) to.strings = from.strings;
+
     for (let i = 0; i < to.numbers.length; i++) {
 
         if (to.units[i] == (void 0)) to.units[i] = from.units[i];
@@ -389,7 +386,7 @@ export function normalizeTween(tw: Tween, context: Context) {
     }
 
 
-    console.log(from, to)
+    // console.log(from, to)
 
     /*
     if (prop === "drop-shadow") {
@@ -446,7 +443,7 @@ export function normalizeTween(tw: Tween, context: Context) {
 }
 
 
-export function strToMap(str: string): Map<string, Tween> {
+export function strToMap(str: string, twType:TweenType): Map<string, Tween> {
 
     let res: Map<string, Tween> = new Map();
 
@@ -459,46 +456,19 @@ export function strToMap(str: string): Map<string, Tween> {
 
 
         let part = arr[i];
-        let vo = getVoFromStr(part);
-        // vo.keepOriginal = true;
-        // vo.keepStr = part;
-        /*
-        if (is.propDual(vo.prop)) {
-            let prop = part.match(regProp)[0];
-            let propX = prop + "X";
-            let propY = prop + "Y";
-            let part2 = part.replace(prop, "");
-            let vus = part2.match(regValues);
-            if (vus.length === 1) vus.push(is.valueOne(prop)? "1" : "0");
 
-            let vox = getVo("dom", propX, vus[0]);
-            vox.keepOriginal = true;
-            vox.keepStr = `${propX}(${vus[0]})`;
+        let prop = part.match(regProp)[0];
+        part = part.replace(prop, "");
+        let vo = getVo("dom", prop, part);
 
-            let voy = getVo("dom", propY, vus[1]);
-            voy.keepOriginal = true;
-            voy.keepStr = `${propY}(${vus[1]})`;
-
-            let twx = new Tween(null, "transform", propX, null, null, 0, 0, 0);
-            twx.from = vox;
-            res.set(propX, twx);
-
-            let twy = new Tween(null, "transform", propY, null, null, 0, 0, 0);
-            twy.from = voy;
-            res.set(propY, twy);
-
-            //console.log(vo.prop, vo.values)
-            // let res = unwrapValues(vo.prop, vo.values);
-        } else {
-            let tw = new Tween(null, "transform", vo.prop, null, null, 0, 0, 0);
-            tw.from = vo;
-            res.set(vo.prop, tw);
-        }
-        //*/
-
-        let tw = new Tween("transform", "prop", null, null, 0, 0, 0);
+        let tw = new Tween(twType, prop, null, null, 0, 0, 0);
         tw.from = vo;
+        tw.keepOld = true;
+        tw.oldValue = prop + part;
         res.set(tw.prop, tw);
+
+        // console.log(tw)
+
 
     }
     // console.log(res)

@@ -239,8 +239,19 @@ export class Animation extends Dispatcher {
                 let to: Vo = tween.to;
                 let tweenable = tween.tweenable;
                 let prop = tween.prop;
-                // const isNum = from.isNumber;
-                tg.target.tweenable[prop] = Animation._getRenderStr(from, to, eased);
+
+                switch (twType) {
+
+                    case "transform":
+
+                        break;
+
+                        case "other":
+                            tg.target.tweenable[prop] = Animation._getRenderStr(from, to, eased);
+                            break;
+
+                }
+
             }
         }
 
@@ -386,7 +397,7 @@ export class Animation extends Dispatcher {
             let prop: any = keys[i];
             let val: any = params[prop];
 
-            //*
+            /*
             // If value is like scale(2) or translate(20px 5rem), unwrap it.
             if (target.type === "dom" && is.propDual(prop)) {
                 let res = unwrapValues(prop, val);
@@ -398,8 +409,8 @@ export class Animation extends Dispatcher {
             }
             //*/
 
-            // let tw = Animation._getTween(target, prop, val, duration, options);
-            // tg.tweens.push(tw);
+            let tw = Animation._getTween(target, prop, val, duration, options);
+            tg.tweens.push(tw);
 
 
         }
@@ -470,8 +481,6 @@ export class Animation extends Dispatcher {
 
     static _initTweens(kf: Keyframe) {
 
-
-
         for (let i = 0; i < kf.tgs.length; i++) {
 
             const tg = kf.tgs[i];
@@ -508,13 +517,14 @@ export class Animation extends Dispatcher {
                         case "filter":
 
                             if (tw.twType === "transform" && !transChecked) {
-                                transOldTweens = strToMap(tg.target.getExistingValue("transform"));
+                                transOldTweens = strToMap(tg.target.getExistingValue("transform"), "transform");
+                                // console.log(transOldTweens)
                                 transTweens = new Map<string, Tween>();
                                 transChecked = true;
                                 oldTweens = transOldTweens;
                                 newTweens = transTweens;
                             } else if (tw.twType === "filter" && !filterChecked) {
-                                filterOldTweens = strToMap(tg.target.getExistingValue("filter"));
+                                filterOldTweens = strToMap(tg.target.getExistingValue("filter"), "filter");
                                 filterTweens = new Map<string, Tween>();
                                 filterChecked = true;
                                 oldTweens = filterOldTweens;
@@ -527,7 +537,7 @@ export class Animation extends Dispatcher {
                                 if (oldTweens && oldTweens.has(tw.prop)) {
                                     // console.log(tw.prop)
                                     from = oldTweens.get(tw.prop).from;
-                                    //from.keepOriginal = false;
+                                    tw.keepOld = false;
                                 } else {
                                     from = from = getVo("dom", tw.prop, tw.fromVal);
                                 }

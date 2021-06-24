@@ -104,7 +104,7 @@
 
 
         // el.style.transform = strTransform;
-        // el.style.transform = "scale(.8, .7) translate(50px) rotate(20deg)";
+        el.style.transform = "scale(.8, .7) translateX(50px) rotate(20deg)";
         // el.style.transform = "translate(30%, 50px)";
         // el.style.transform = "scale(2) translate(50px, 50px)";
         // el.style.transform = "translate(50px, 50px) scale(2)    ";
@@ -155,7 +155,7 @@
                     // saturate: 20,
                     // sepia: 90,
                     // translateX: "4rem",
-                    // x: "270px",
+                    x: "270px",
                     // x: {value: "12rem", ease: "bounceOut", duration: 1200},
                     // y: 50,
                     // y: "+=20",
@@ -172,12 +172,12 @@
                     // backgroundColor: "#ff6c41",
                     // backgroundColor: "hsla(15deg, 100% 50%, .5)",
                     //color: "rgba(153,215,255,0.8)",
-                    // background: "hsla(15deg, 100% 50%, .5)"
+                    // background: "hsla(15deg, 100% 50%, .5)",
                     //bg: "hsla(15deg, 100% 50%, .5)",
                     // bg: "#339922",
                     //borderColor: "rgba(153,215,255,0.8)",
                     // borderWidth: 4,
-                    borderWidth: ".5rem 3px",
+                    // borderWidth: ".5rem 3px",
                 }, {
                     delay: 500,
                     // repeat: 2,
@@ -195,8 +195,8 @@
                     updRange(a.runningTime)
                 })
                 .on('end', () => {
-                    console.log(a);
-                    // console.log(a.keyframes[0].tweens[0]);
+                    // console.log(a);
+                    console.log(a.keyframes[0].tgs[0].tweens);
                     console.log("end", (performance.now() - t0));
                     // console.log(window.getComputedStyle(el).transform);
                 });

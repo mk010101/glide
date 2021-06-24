@@ -126,7 +126,7 @@ export function unwrapValues(prop, val) {
 }
 function getBeginStr(prop) {
     if (is.propTransform(prop) || is.propFilter(prop))
-        return "(";
+        return prop + "(";
     return "";
 }
 function getEndStr(prop) {
@@ -178,11 +178,6 @@ export function getVo(targetType, prop, val) {
     }
     return vo;
 }
-function getVoFromStr(str) {
-    let prop = str.match(regProp)[0];
-    str = str.replace(prop, "");
-    return getVo("dom", prop, str);
-}
 export function normalizeTween(tw, context) {
     const prop = tw.prop;
     const from = tw.from;
@@ -214,6 +209,8 @@ export function normalizeTween(tw, context) {
             }
         }
     }
+    if (from.strings.length > to.strings.length)
+        to.strings = from.strings;
     for (let i = 0; i < to.numbers.length; i++) {
         if (to.units[i] == (void 0))
             to.units[i] = from.units[i];
@@ -221,9 +218,8 @@ export function normalizeTween(tw, context) {
             from.numbers[i] = Context.convertUnits(from.numbers[i], from.units[i], to.units[i], context.units);
         }
     }
-    console.log(from, to);
 }
-export function strToMap(str) {
+export function strToMap(str, twType) {
     let res = new Map();
     if (!str || str === "" || str === "none")
         return null;
@@ -232,9 +228,13 @@ export function strToMap(str) {
         return null;
     for (let i = 0; i < arr.length; i++) {
         let part = arr[i];
-        let vo = getVoFromStr(part);
-        let tw = new Tween("transform", "prop", null, null, 0, 0, 0);
+        let prop = part.match(regProp)[0];
+        part = part.replace(prop, "");
+        let vo = getVo("dom", prop, part);
+        let tw = new Tween(twType, prop, null, null, 0, 0, 0);
         tw.from = vo;
+        tw.keepOld = true;
+        tw.oldValue = prop + part;
         res.set(tw.prop, tw);
     }
     return res;

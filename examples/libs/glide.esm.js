@@ -65,7 +65,6 @@ class Context {
     }
 }
 
-const regValues = /[-%\w]+[-\d.]*/gi;
 const regVUs = /[-+=.\w%]+/g;
 const regStrValues = /(([a-z].*?)\(.*?\))(?=\s([a-z].*?)\(.*?\)|\s*$)/gi;
 const regColorVal = /([rgbahsl]+\([,%a-z \d.-]+\))|#[0-9A-F]{6}/gi;
@@ -557,7 +556,8 @@ class Tween {
         this.from = null;
         this.to = null;
         this.ease = quadInOut;
-        this.isNum = false;
+        this.keepOld = false;
+        this.oldValue = "";
         this.twType = twType;
         this.prop = prop;
         this.duration = duration;
@@ -654,37 +654,9 @@ function getNumbers(val) {
     let nums = val.match(/[-.\d]+/g);
     return nums.map((v) => parseFloat(v));
 }
-function unwrapValues(prop, val) {
-    const propX = prop + "X";
-    const propY = prop + "Y";
-    if (is.number(val)) {
-        return [
-            { prop: propX, val: val },
-            { prop: propY, val: val }
-        ];
-    }
-    else if (is.string(val)) {
-        let res = val.match(regValues);
-        if (res.length === 1) {
-            res.push(is.valueOne(prop) ? "1" : "0");
-        }
-        return [
-            { prop: propX, val: res[0] },
-            { prop: propY, val: res[1] }
-        ];
-    }
-    else if (is.array(val)) {
-        if (val.lengh === 1)
-            val.push(val[0]);
-        return [
-            { prop: propX, val: val[0] },
-            { prop: propY, val: val[1] }
-        ];
-    }
-}
 function getBeginStr(prop) {
     if (is.propTransform(prop) || is.propFilter(prop))
-        return "(";
+        return prop + "(";
     return "";
 }
 function getEndStr(prop) {
@@ -736,11 +708,6 @@ function getVo(targetType, prop, val) {
     }
     return vo;
 }
-function getVoFromStr(str) {
-    let prop = str.match(regProp)[0];
-    str = str.replace(prop, "");
-    return getVo("dom", prop, str);
-}
 function normalizeTween(tw, context) {
     const prop = tw.prop;
     const from = tw.from;
@@ -772,6 +739,8 @@ function normalizeTween(tw, context) {
             }
         }
     }
+    if (from.strings.length > to.strings.length)
+        to.strings = from.strings;
     for (let i = 0; i < to.numbers.length; i++) {
         if (to.units[i] == (void 0))
             to.units[i] = from.units[i];
@@ -779,9 +748,8 @@ function normalizeTween(tw, context) {
             from.numbers[i] = Context.convertUnits(from.numbers[i], from.units[i], to.units[i], context.units);
         }
     }
-    console.log(from, to);
 }
-function strToMap(str) {
+function strToMap(str, twType) {
     let res = new Map();
     if (!str || str === "" || str === "none")
         return null;
@@ -790,9 +758,13 @@ function strToMap(str) {
         return null;
     for (let i = 0; i < arr.length; i++) {
         let part = arr[i];
-        let vo = getVoFromStr(part);
-        let tw = new Tween("transform", "prop", null, null, 0, 0, 0);
+        let prop = part.match(regProp)[0];
+        part = part.replace(prop, "");
+        let vo = getVo("dom", prop, part);
+        let tw = new Tween(twType, prop, null, null, 0, 0, 0);
         tw.from = vo;
+        tw.keepOld = true;
+        tw.oldValue = prop + part;
         res.set(tw.prop, tw);
     }
     return res;
@@ -989,7 +961,7 @@ class Animation extends Dispatcher {
             const tg = tgs[i];
             for (let j = 0, f = tg.tweens.length; j < f; j++) {
                 const tween = tg.tweens[j];
-                tween.twType;
+                const twType = tween.twType;
                 let elapsed = minMax(time - tween.start - tween.delay, 0, tween.duration) / tween.duration;
                 if (elapsed === 0 && dir === 1)
                     return;
@@ -998,7 +970,13 @@ class Animation extends Dispatcher {
                 let to = tween.to;
                 tween.tweenable;
                 let prop = tween.prop;
-                tg.target.tweenable[prop] = Animation._getRenderStr(from, to, eased);
+                switch (twType) {
+                    case "transform":
+                        break;
+                    case "other":
+                        tg.target.tweenable[prop] = Animation._getRenderStr(from, to, eased);
+                        break;
+                }
             }
         }
     }
@@ -1028,15 +1006,8 @@ class Animation extends Dispatcher {
         for (let i = 0; i < keys.length; i++) {
             let prop = keys[i];
             let val = params[prop];
-            if (target.type === "dom" && is.propDual(prop)) {
-                let res = unwrapValues(prop, val);
-                tg.tweens.push(Animation._getTween(target, res[0].prop, res[0].val, duration, options));
-                tg.tweens.push(Animation._getTween(target, res[1].prop, res[1].val, duration, options));
-            }
-            else {
-                let tw = Animation._getTween(target, prop, val, duration, options);
-                tg.tweens.push(tw);
-            }
+            let tw = Animation._getTween(target, prop, val, duration, options);
+            tg.tweens.push(tw);
         }
         return tg;
     }
@@ -1126,14 +1097,14 @@ class Animation extends Dispatcher {
                         case "transform":
                         case "filter":
                             if (tw.twType === "transform" && !transChecked) {
-                                transOldTweens = strToMap(tg.target.getExistingValue("transform"));
+                                transOldTweens = strToMap(tg.target.getExistingValue("transform"), "transform");
                                 transTweens = new Map();
                                 transChecked = true;
                                 oldTweens = transOldTweens;
                                 newTweens = transTweens;
                             }
                             else if (tw.twType === "filter" && !filterChecked) {
-                                filterOldTweens = strToMap(tg.target.getExistingValue("filter"));
+                                filterOldTweens = strToMap(tg.target.getExistingValue("filter"), "filter");
                                 filterTweens = new Map();
                                 filterChecked = true;
                                 oldTweens = filterOldTweens;
@@ -1145,6 +1116,7 @@ class Animation extends Dispatcher {
                             else {
                                 if (oldTweens && oldTweens.has(tw.prop)) {
                                     from = oldTweens.get(tw.prop).from;
+                                    tw.keepOld = false;
                                 }
                                 else {
                                     from = from = getVo("dom", tw.prop, tw.fromVal);
