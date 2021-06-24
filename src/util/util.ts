@@ -203,6 +203,7 @@ export function getVo(targetType: TargetType, prop: any, val: any) {
     if (is.number(val)) {
         vo.numbers = [val];
         vo.units = [null];
+        vo.increments = [null];
         return vo;
     }
 
@@ -219,6 +220,9 @@ export function getVo(targetType: TargetType, prop: any, val: any) {
             vo.strings = val.split(regNums);
             vo.floats.push(0, 0, 0);
             if (vo.numbers.length === 4) vo.floats.push(1);
+            for (let i = 0; i < vo.numbers.length; i++) {
+                vo.increments.push(null);
+            }
             break;
 
         default:
@@ -346,7 +350,8 @@ export function normalizeTween(tw: Tween, context: Context) {
             if (shorter === from) {
                 shorter.units.push(shorter.units[0]);
             } else {
-                shorter.units.push(null);
+                to.units.push(to.units[to.units.length-1]);
+                to.increments.push(to.increments[to.increments.length-1]);
             }
 
             switch (propType) {
@@ -376,10 +381,27 @@ export function normalizeTween(tw: Tween, context: Context) {
 
     for (let i = 0; i < to.numbers.length; i++) {
 
-        if (to.units[i] == (void 0)) to.units[i] = from.units[i];
+        if (to.units[i] == (void 0)) {
+            to.units[i] = from.units[i];
+        }
 
         if (from.units[i] !== to.units[i]) {
             from.numbers[i] = Context.convertUnits(from.numbers[i], from.units[i], to.units[i], context.units);
+        }
+
+        if (to.units[i] == (void 0)) {
+            to.units[i] = defaultUnit;
+        }
+
+        let incr = to.increments[i];
+        if (incr === "-") {
+            to.numbers[i] = from.numbers[i] - to.numbers[i];
+        } else if (incr === "+") {
+            to.numbers[i] += from.numbers[i];
+        } else if (incr === "*") {
+            to.numbers[i] *= from.numbers[i];
+        } else if (incr === "/") {
+            to.numbers[i] /= from.numbers[i];
         }
 
 

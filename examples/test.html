@@ -118,13 +118,14 @@
         // el.style.top = "20px";
         // el.style.left = "50px";
         // el.style.borderWidth = "1px 4px 6px ";
-        // el.style.borderWidth = "1px .2rem 4px";
+        // el.style.borderWidth = "10px .2rem 4px";
 
 
         // console.log(strFilter.match(regFilters));
         // console.log(el.style.filter.match(regFilters));
         //console.log(el.style.filter);
         // console.log(el.style.margin);
+        // console.log(el.style.borderWidth);
 
         // console.log(window.getComputedStyle(el).background);
         // console.log(window.getComputedStyle(el).transform);
@@ -155,8 +156,9 @@
                     // saturate: 20,
                     // sepia: 90,
                     // translateX: "4rem",
-                    x: "270px",
-                    // x: {value: "12rem", ease: "bounceOut", duration: 1200},
+                    // x: "270px",
+                    // x: "+=270px",
+                    x: {value: "12rem", ease: "bounceOut", duration: 1200},
                     // y: 50,
                     // y: "+=20",
                     // translateY: 50,
@@ -164,7 +166,7 @@
                     // scale: 1.5
                     // x: 120,
                     // rotate: {value: "2rad", duration: 1000},
-                    // rotate: -45,
+                    rotate: -45,
                     // scaleX: -1,
                     // scale: ".75, .75",
                     // matrix: "(1, 0, 0, 1, 30, 10)",
@@ -177,7 +179,7 @@
                     // bg: "#339922",
                     //borderColor: "rgba(153,215,255,0.8)",
                     // borderWidth: 4,
-                    // borderWidth: ".5rem 3px",
+                    // borderWidth: "+=4px",
                 }, {
                     delay: 500,
                     // repeat: 2,

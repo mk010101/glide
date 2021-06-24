@@ -206,9 +206,10 @@ export class Animation extends Dispatcher {
     static _getRenderStr(from:Vo, to:Vo, t:number) {
         let str = to.strings[0];
         for (let i = 1; i < to.strings.length; i++) {
-            let val:number = from.numbers[i-1] + t * (to.numbers[i-1] - from.numbers[i-1]);
-            let unit = to.units[i-1]? to.units[i-1] : "";
-            if (to.floats[i-1] === 0) val = ~~val;
+            let k = i-1;
+            let val:number = from.numbers[k] + t * (to.numbers[k] - from.numbers[k]);
+            let unit = to.units[k]? to.units[k] : "";
+            if (to.floats[k] === 0) val = ~~val;
             str += `${val}${unit}${to.strings[i]}`;
         }
         // console.log(str)
@@ -251,7 +252,7 @@ export class Animation extends Dispatcher {
                         break;
 
                         case "other":
-                            tg.target.tweenable[prop] = Animation._getRenderStr(from, to, eased);
+                            tweenable[prop] = Animation._getRenderStr(from, to, eased);
                             break;
 
                 }
@@ -459,7 +460,11 @@ export class Animation extends Dispatcher {
 
         let delay = options.delay || 0;
         let tw = new Tween(twType, prop, fromVal, toVal, dur, delay, 0);
-        if (twType === "direct") tw.tweenable = target.el;
+        if (twType === "direct") {
+            tw.tweenable = target.el;
+        } else {
+            tw.tweenable = target.tweenable;
+        }
 
         if (options.stagger) {
             let del = target.pos * options.stagger;

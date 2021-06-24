@@ -1,15 +1,12 @@
-import {PropType, TargetType, TweenType} from "../types";
+import {PropType, TweenType} from "../types";
 import {quadInOut} from "../util/ease";
 import {Vo} from "./vo";
-import Target from "./target";
-import {getPropType} from "../util/util";
+
 
 export class Tween {
-    // target:Target;
     tweenable: any = null;
     twType: TweenType = null;
     propType:PropType;
-    // targetType:TargetType = null;
     prop: any = "";
     duration: number = 0.0;
     delay = 0.0;
@@ -33,9 +30,7 @@ export class Tween {
                 delay: number,
                 start: number) {
 
-        // this.target = target;
-        // this.tweenable = target?.tweenable;
-        // this.targetType = target?.type;
+
         this.twType = twType;
         this.prop = prop;
         this.duration = duration;

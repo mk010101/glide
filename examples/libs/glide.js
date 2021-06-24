@@ -681,6 +681,7 @@
         if (is.number(val)) {
             vo.numbers = [val];
             vo.units = [null];
+            vo.increments = [null];
             return vo;
         }
         switch (propType) {
@@ -696,6 +697,9 @@
                 vo.floats.push(0, 0, 0);
                 if (vo.numbers.length === 4)
                     vo.floats.push(1);
+                for (let i = 0; i < vo.numbers.length; i++) {
+                    vo.increments.push(null);
+                }
                 break;
             default:
                 let vus = getValuesUnits(val);
@@ -720,7 +724,7 @@
         const to = tw.to;
         tw.twType;
         const propType = getPropType(prop);
-        getDefaultUnit(prop);
+        const defaultUnit = getDefaultUnit(prop);
         if (from.numbers.length !== to.numbers.length) {
             let shorter = from.numbers.length > to.numbers.length ? to : from;
             let longer = shorter === from ? to : from;
@@ -731,7 +735,8 @@
                     shorter.units.push(shorter.units[0]);
                 }
                 else {
-                    shorter.units.push(null);
+                    to.units.push(to.units[to.units.length - 1]);
+                    to.increments.push(to.increments[to.increments.length - 1]);
                 }
                 switch (propType) {
                     case "color":
@@ -748,10 +753,27 @@
         if (from.strings.length > to.strings.length)
             to.strings = from.strings;
         for (let i = 0; i < to.numbers.length; i++) {
-            if (to.units[i] == (void 0))
+            if (to.units[i] == (void 0)) {
                 to.units[i] = from.units[i];
+            }
             if (from.units[i] !== to.units[i]) {
                 from.numbers[i] = Context.convertUnits(from.numbers[i], from.units[i], to.units[i], context.units);
+            }
+            if (to.units[i] == (void 0)) {
+                to.units[i] = defaultUnit;
+            }
+            let incr = to.increments[i];
+            if (incr === "-") {
+                to.numbers[i] = from.numbers[i] - to.numbers[i];
+            }
+            else if (incr === "+") {
+                to.numbers[i] += from.numbers[i];
+            }
+            else if (incr === "*") {
+                to.numbers[i] *= from.numbers[i];
+            }
+            else if (incr === "/") {
+                to.numbers[i] /= from.numbers[i];
             }
         }
     }
@@ -954,9 +976,10 @@
         static _getRenderStr(from, to, t) {
             let str = to.strings[0];
             for (let i = 1; i < to.strings.length; i++) {
-                let val = from.numbers[i - 1] + t * (to.numbers[i - 1] - from.numbers[i - 1]);
-                let unit = to.units[i - 1] ? to.units[i - 1] : "";
-                if (to.floats[i - 1] === 0)
+                let k = i - 1;
+                let val = from.numbers[k] + t * (to.numbers[k] - from.numbers[k]);
+                let unit = to.units[k] ? to.units[k] : "";
+                if (to.floats[k] === 0)
                     val = ~~val;
                 str += `${val}${unit}${to.strings[i]}`;
             }
@@ -975,7 +998,7 @@
                     let eased = isNaN(elapsed) ? 1 : tween.ease(elapsed);
                     let from = tween.from;
                     let to = tween.to;
-                    tween.tweenable;
+                    let tweenable = tween.tweenable;
                     let prop = tween.prop;
                     switch (twType) {
                         case "transform":
@@ -987,7 +1010,7 @@
                             }
                             break;
                         case "other":
-                            tg.target.tweenable[prop] = Animation._getRenderStr(from, to, eased);
+                            tweenable[prop] = Animation._getRenderStr(from, to, eased);
                             break;
                     }
                 }
@@ -1059,8 +1082,12 @@
             }
             let delay = options.delay || 0;
             let tw = new Tween(twType, prop, fromVal, toVal, dur, delay, 0);
-            if (twType === "direct")
+            if (twType === "direct") {
                 tw.tweenable = target.el;
+            }
+            else {
+                tw.tweenable = target.tweenable;
+            }
             if (options.stagger) {
                 let del = target.pos * options.stagger;
                 tw.start = del;
