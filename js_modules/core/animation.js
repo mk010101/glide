@@ -168,7 +168,7 @@ export class Animation extends Dispatcher {
     static _render(tgs, time, dir) {
         for (let i = 0, k = tgs.length; i < k; i++) {
             const tg = tgs[i];
-            let transformsStr = "";
+            let transStr = "";
             let filtersStr = "";
             for (let j = 0, f = tg.tweens.length; j < f; j++) {
                 const tween = tg.tweens[j];
@@ -183,11 +183,20 @@ export class Animation extends Dispatcher {
                 let prop = tween.prop;
                 switch (twType) {
                     case "transform":
+                        if (tween.keepOld) {
+                            transStr += tween.oldValue + " ";
+                        }
+                        else {
+                            transStr += Animation._getRenderStr(from, to, eased) + " ";
+                        }
                         break;
                     case "other":
                         tg.target.tweenable[prop] = Animation._getRenderStr(from, to, eased);
                         break;
                 }
+            }
+            if (transStr) {
+                tg.target.tweenable.transform = transStr;
             }
         }
     }

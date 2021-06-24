@@ -224,7 +224,7 @@ export class Animation extends Dispatcher {
             // const type = tg.type;
             // let obj:any = {};
 
-            let transformsStr = "";
+            let transStr = "";
             let filtersStr = "";
 
             for (let j = 0, f = tg.tweens.length; j < f; j++) {
@@ -243,7 +243,11 @@ export class Animation extends Dispatcher {
                 switch (twType) {
 
                     case "transform":
-
+                        if (tween.keepOld) {
+                            transStr += tween.oldValue + " ";
+                        } else {
+                            transStr += Animation._getRenderStr(from, to, eased) + " ";
+                        }
                         break;
 
                         case "other":
@@ -252,6 +256,10 @@ export class Animation extends Dispatcher {
 
                 }
 
+            }
+
+            if (transStr) {
+                tg.target.tweenable.transform = transStr;
             }
         }
 
