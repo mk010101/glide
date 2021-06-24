@@ -684,14 +684,18 @@
             vo.increments = [null];
             return vo;
         }
+        if (is.string(val) && is.valueColor(val)) {
+            let colorMatch = val.match(regColorVal);
+            if (colorMatch) {
+                let color;
+                color = toRgbStr(colorMatch[0]);
+                val = val.replace(colorMatch, "");
+                val = color + " " + val;
+            }
+            console.log(val.match(/[-+=.\w%]+/g));
+        }
         switch (propType) {
             case "color":
-                let colorMatch = val.match(regColorVal);
-                let color;
-                if (colorMatch) {
-                    color = toRgbStr(colorMatch[0]);
-                    val = val.replace(colorMatch[0], color);
-                }
                 vo.numbers = getNumbers(val);
                 vo.strings = val.split(regNums);
                 vo.floats.push(0, 0, 0);
