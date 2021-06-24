@@ -215,7 +215,8 @@ export function getVo(targetType: TargetType, prop: any, val: any) {
             val = val.replace(colorMatch, "");
             val = color + " " + val;
         }
-        console.log(val.match(/[-+=.\w%]+/g))
+        // console.log(val.match(/[a-z(]+|[-+%=.\w]+|[)]+/gi))
+        // console.log(val)
     }
 
     switch (propType) {

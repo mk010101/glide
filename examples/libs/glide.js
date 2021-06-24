@@ -692,7 +692,6 @@
                 val = val.replace(colorMatch, "");
                 val = color + " " + val;
             }
-            console.log(val.match(/[-+=.\w%]+/g));
         }
         switch (propType) {
             case "color":
