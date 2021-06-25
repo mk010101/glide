@@ -55,6 +55,11 @@ export function getDefaultUnit(prop) {
         return "";
     return "px";
 }
+export function getDefaultValue(prop) {
+    if (is.valueOne(prop))
+        return 1;
+    return 0;
+}
 export function getValueUnit(val) {
     const increment = val.match(/-=|\+=|\*=|\/=/g);
     if (increment)
@@ -155,10 +160,11 @@ export function getVo(targetType, prop, val) {
         val = val.replace(colorMatch, "");
         vo.numbers = getNumbers(color);
         vo.strings = color.split(regNums);
-        vo.floats.push(0, 0, 0);
         for (let i = 0; i < vo.numbers.length; i++) {
             vo.increments.push(null);
             vo.units.push("");
+            let float = i < 3 ? 0 : 1;
+            vo.floats.push(float);
         }
         vo.strings[vo.strings.length - 1] += " ";
     }
@@ -171,6 +177,10 @@ export function getVo(targetType, prop, val) {
             vo.floats.push(1);
         }
         vo.strings.push(...val.split(regVUs));
+        for (let i = 0; i < vo.strings.length; i++) {
+            if (vo.strings[i] === "")
+                vo.strings[i] = " ";
+        }
         if (is.propTransform(prop) || is.propFilter(prop)) {
             vo.strings[0] = prop + "(";
             vo.strings[vo.strings.length - 1] = ")";
@@ -187,6 +197,14 @@ export function normalizeTween(tw, context) {
     const twType = tw.twType;
     const propType = getPropType(prop);
     const defaultUnit = getDefaultUnit(prop);
+    const defaultValue = getDefaultValue(prop);
+    if (from.numbers.length === 0) {
+        from.floats = to.floats.concat();
+        from.units = to.units.concat();
+        for (let i = 0; i < to.numbers.length; i++) {
+            from.numbers.push(defaultValue);
+        }
+    }
     if (from.numbers.length !== to.numbers.length) {
         let shorter = from.numbers.length > to.numbers.length ? to : from;
         let longer = shorter === from ? to : from;

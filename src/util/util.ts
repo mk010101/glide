@@ -85,6 +85,14 @@ export function getDefaultUnit(prop: string): string {
     return "px";
 }
 
+
+export function getDefaultValue(prop: string): number {
+    if (is.valueOne(prop))
+        return 1;
+    return 0;
+}
+
+
 /**
  * Returns an object with parsed value, unit and increment
  * @param val
@@ -211,19 +219,22 @@ export function getVo(targetType: TargetType, prop: any, val: any) {
     if (is.string(val) && is.valueColor(val)) {
 
         let colorMatch = val.match(regColorVal);
+
         let color: string;
         color = toRgbStr(colorMatch[0]);
         val = val.replace(colorMatch, "");
 
         vo.numbers = getNumbers(color);
         vo.strings = color.split(regNums);
-        vo.floats.push(0, 0, 0);
         for (let i = 0; i < vo.numbers.length; i++) {
             vo.increments.push(null);
             vo.units.push("");
+            let float = i < 3? 0 :1;
+            vo.floats.push(float);
         }
         vo.strings[vo.strings.length-1] += " ";
     }
+    // print(vo)
 
     if(val) {
         const vus = getValuesUnits(val);
@@ -235,6 +246,9 @@ export function getVo(targetType: TargetType, prop: any, val: any) {
             vo.floats.push(1);
         }
         vo.strings.push(...val.split(regVUs));
+        for (let i = 0; i < vo.strings.length; i++) {
+            if (vo.strings[i] === "") vo.strings[i] = " ";
+        }
 
         if (is.propTransform(prop) || is.propFilter(prop)){
             vo.strings[0] = prop + "(";
@@ -344,6 +358,17 @@ export function normalizeTween(tw: Tween, context: Context) {
     const twType = tw.twType;
     const propType = getPropType(prop);
     const defaultUnit = getDefaultUnit(prop);
+    const defaultValue = getDefaultValue(prop);
+
+    if (from.numbers.length === 0) {
+
+        from.floats = to.floats.concat();
+        from.units = to.units.concat();
+
+        for (let i = 0; i < to.numbers.length; i++) {
+            from.numbers.push(defaultValue);
+        }
+    }
 
     if (from.numbers.length !== to.numbers.length) {
         let shorter: Vo = from.numbers.length > to.numbers.length ? to : from;

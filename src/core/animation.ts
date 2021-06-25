@@ -4,7 +4,7 @@ import {getPropType, getTweenType, getVo, minMax, normalizeTween, print, strToMa
 import {Keyframe} from "./keyframe";
 import {Tween} from "./tween";
 import {Evt} from "./events";
-import {Value} from "../types";
+import {TweenType, Value} from "../types";
 import {TweenGroup, Vo} from "./vo";
 import {is} from "../util/regex";
 import * as $Ease from "../util/ease";
@@ -29,7 +29,7 @@ export class Animation extends Dispatcher {
     _pos: number = 0;
     _currentKf: Keyframe;
     _seeking = false;
-    _preSeekState:number = 1;
+    _preSeekState: number = 1;
     _dir = 1;
 
     constructor(targets: any, duration: number, params: any, options: any = {}) {
@@ -124,7 +124,6 @@ export class Animation extends Dispatcher {
     }
 
 
-
     call(func: Function, ...params: any) {
         let kf = new Keyframe();
         kf.callFunc = func;
@@ -152,7 +151,7 @@ export class Animation extends Dispatcher {
 
     reset() {
         this.stop();
-        for (let i = this.keyframes.length-1; i >= 0 ; i--) {
+        for (let i = this.keyframes.length - 1; i >= 0; i--) {
             const tgs = this.keyframes[i].tgs;
             if (this.keyframes[i].initialized) {
                 for (let j = 0; j < tgs.length; j++) {
@@ -203,13 +202,13 @@ export class Animation extends Dispatcher {
         STATIC METHODS
      =================================================================================================================*/
 
-    static _getRenderStr(from:Vo, to:Vo, t:number) {
+    static _getRenderStr(from: Vo, to: Vo, t: number) {
         let str = to.strings[0];
         for (let i = 1; i < to.strings.length; i++) {
-            let k = i-1;
-            let val:any = from.numbers[k] + t * (to.numbers[k] - from.numbers[k]);
+            let k = i - 1;
+            let val: any = from.numbers[k] + t * (to.numbers[k] - from.numbers[k]);
             if (isNaN(val)) val = "";
-            let unit = to.units[k]? to.units[k] : "";
+            let unit = to.units[k] ? to.units[k] : "";
             if (to.floats[k] === 0) val = ~~val;
             str += `${val}${unit}${to.strings[i]}`;
         }
@@ -242,6 +241,7 @@ export class Animation extends Dispatcher {
                 let tweenable = tween.tweenable;
                 let prop = tween.prop;
 
+
                 switch (twType) {
 
                     case "transform":
@@ -252,17 +252,27 @@ export class Animation extends Dispatcher {
                         }
                         break;
 
-                        case "other":
-                            tweenable[prop] = Animation._getRenderStr(from, to, eased);
-                            break;
+                    case "filter":
+                        if (tween.keepOld) {
+                            filtersStr += tween.oldValue + " ";
+                        } else {
+                            filtersStr += Animation._getRenderStr(from, to, eased) + " ";
+                        }
+                        break;
+
+                    case "other":
+                        tweenable[prop] = Animation._getRenderStr(from, to, eased);
+                        break;
 
                 }
 
             }
 
-            if (transStr) {
+            if (transStr)
                 tg.target.tweenable.transform = transStr;
-            }
+            if (filtersStr)
+                tg.target.tweenable.filter = transStr;
+
         }
 
         /*
@@ -572,26 +582,30 @@ export class Animation extends Dispatcher {
                 normalizeTween(tw, tg.target.context);
             }
 
-            if (transOldTweens) {
-                transTweens.forEach((v, k) => {
-                    transOldTweens.set(k, v);
-                });
-                // console.log(transOldTweens)
-
-                for (let j = tg.tweens.length - 1; j >= 0; j--) {
-                    if (tg.tweens[j].twType === "transform") {
-                        tg.tweens.splice(j, 1);
-                    }
-                }
-
-                transOldTweens.forEach((v) => {
-                    tg.tweens.push(v)
-                });
-
-            }
+            if (transOldTweens) Animation._arrangeMaps(transOldTweens, transTweens, tg, "transform");
+            if (filterOldTweens) Animation._arrangeMaps(filterOldTweens, filterTweens, tg, "filter");
 
         }
 
+    }
+
+
+    static _arrangeMaps(oldM: Map<string, Tween>, newM: Map<string, Tween>, tg:TweenGroup, prop:TweenType) {
+
+        newM.forEach((v, k) => {
+            oldM.set(k, v);
+        });
+        // console.log(transOldTweens)
+
+        for (let j = tg.tweens.length - 1; j >= 0; j--) {
+            if (tg.tweens[j].twType === prop) {
+                tg.tweens.splice(j, 1);
+            }
+        }
+
+        oldM.forEach((v) => {
+            tg.tweens.push(v)
+        });
     }
 
 

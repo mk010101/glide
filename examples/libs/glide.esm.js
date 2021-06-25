@@ -613,6 +613,11 @@ function getDefaultUnit(prop) {
         return "";
     return "px";
 }
+function getDefaultValue(prop) {
+    if (is.valueOne(prop))
+        return 1;
+    return 0;
+}
 function getValueUnit(val) {
     const increment = val.match(/-=|\+=|\*=|\/=/g);
     if (increment)
@@ -670,10 +675,11 @@ function getVo(targetType, prop, val) {
         val = val.replace(colorMatch, "");
         vo.numbers = getNumbers(color);
         vo.strings = color.split(regNums);
-        vo.floats.push(0, 0, 0);
         for (let i = 0; i < vo.numbers.length; i++) {
             vo.increments.push(null);
             vo.units.push("");
+            let float = i < 3 ? 0 : 1;
+            vo.floats.push(float);
         }
         vo.strings[vo.strings.length - 1] += " ";
     }
@@ -686,6 +692,10 @@ function getVo(targetType, prop, val) {
             vo.floats.push(1);
         }
         vo.strings.push(...val.split(regVUs));
+        for (let i = 0; i < vo.strings.length; i++) {
+            if (vo.strings[i] === "")
+                vo.strings[i] = " ";
+        }
         if (is.propTransform(prop) || is.propFilter(prop)) {
             vo.strings[0] = prop + "(";
             vo.strings[vo.strings.length - 1] = ")";
@@ -702,6 +712,14 @@ function normalizeTween(tw, context) {
     tw.twType;
     const propType = getPropType(prop);
     const defaultUnit = getDefaultUnit(prop);
+    const defaultValue = getDefaultValue(prop);
+    if (from.numbers.length === 0) {
+        from.floats = to.floats.concat();
+        from.units = to.units.concat();
+        for (let i = 0; i < to.numbers.length; i++) {
+            from.numbers.push(defaultValue);
+        }
+    }
     if (from.numbers.length !== to.numbers.length) {
         let shorter = from.numbers.length > to.numbers.length ? to : from;
         let longer = shorter === from ? to : from;
@@ -968,6 +986,7 @@ class Animation extends Dispatcher {
         for (let i = 0, k = tgs.length; i < k; i++) {
             const tg = tgs[i];
             let transStr = "";
+            let filtersStr = "";
             for (let j = 0, f = tg.tweens.length; j < f; j++) {
                 const tween = tg.tweens[j];
                 const twType = tween.twType;
@@ -988,14 +1007,23 @@ class Animation extends Dispatcher {
                             transStr += Animation._getRenderStr(from, to, eased) + " ";
                         }
                         break;
+                    case "filter":
+                        if (tween.keepOld) {
+                            filtersStr += tween.oldValue + " ";
+                        }
+                        else {
+                            filtersStr += Animation._getRenderStr(from, to, eased) + " ";
+                        }
+                        break;
                     case "other":
                         tweenable[prop] = Animation._getRenderStr(from, to, eased);
                         break;
                 }
             }
-            if (transStr) {
+            if (transStr)
                 tg.target.tweenable.transform = transStr;
-            }
+            if (filtersStr)
+                tg.target.tweenable.filter = transStr;
         }
     }
     static _getTargets(targets, options) {
@@ -1157,20 +1185,24 @@ class Animation extends Dispatcher {
                 tw.to = to;
                 normalizeTween(tw, tg.target.context);
             }
-            if (transOldTweens) {
-                transTweens.forEach((v, k) => {
-                    transOldTweens.set(k, v);
-                });
-                for (let j = tg.tweens.length - 1; j >= 0; j--) {
-                    if (tg.tweens[j].twType === "transform") {
-                        tg.tweens.splice(j, 1);
-                    }
-                }
-                transOldTweens.forEach((v) => {
-                    tg.tweens.push(v);
-                });
+            if (transOldTweens)
+                Animation._arrangeMaps(transOldTweens, transTweens, tg, "transform");
+            if (filterOldTweens)
+                Animation._arrangeMaps(filterOldTweens, filterTweens, tg, "filter");
+        }
+    }
+    static _arrangeMaps(oldM, newM, tg, prop) {
+        newM.forEach((v, k) => {
+            oldM.set(k, v);
+        });
+        for (let j = tg.tweens.length - 1; j >= 0; j--) {
+            if (tg.tweens[j].twType === prop) {
+                tg.tweens.splice(j, 1);
             }
         }
+        oldM.forEach((v) => {
+            tg.tweens.push(v);
+        });
     }
 }
 

@@ -110,6 +110,7 @@
         // el.style.transform = "translate(50px, 50px) scale(2)    ";
         // el.style.filter = strFilter;
         // el.style.filter = "drop-shadow(#333333 -2px -2px 4px)";
+        // el.style.filter = "drop-shadow(rgba(51, 0, 51) 6px 6px 3px) ";
         // el.style.filter = "drop-shadow(-2px -2px 4px #333333)";
         // el.style.filter = "drop-shadow(-2px -2px 4px rgba(10,10,10,.8))";
         // el.style.margin = strMargins;
@@ -149,7 +150,7 @@
                     // width: ["50%", 10],
                     // width: "5%",
                     // height: "10%",
-                    // "drop-shadow": "6px 6px 3px #330033",
+                    "drop-shadow": "6px 6px 3px #330033",
                     // dropShadow: "rgba(20,50,150, .6) -6px 6px 3px",
                     // invert: 90,
                     // blur: 3,
@@ -236,30 +237,113 @@
         /* ==============================================++++=================++++++++==========+++++++++++=============
             TESTS
          =============================================================================================================*/
+        const regColors = /[rgbahsl]{3,4}\([-.%0-9, degratun]+\)|#[0-9A-F]{6}/gi;
+        const regVUs = /[-+*=]*[.\d]+[a-z%]*/gi;
+        const regNumsUnits = /[-=.*\d]+|[a-z%]*/gi;
 
-        function tmp_vals_units_strings() {
-            const val = "rgb(200, 0, 15) 1px solid";
+        function tmp() {
+
+
+
+            /*
+            const reg = new RegExp(''
+                + /([-a-z]+\([-%.\d, a-z]+[)]+)|(#[a-f0-9]+)/.source // Color
+                // + /|([-a-z]+\([-=*.%,\d a-z]+\))/.source // Transforms-like syntax
+                // + /|([\d ]+[-a-z ]*)/.source //
+            ,"gi");
+            */
+
+            // const val = "drop-shadow(rgba(20,50,150, .6) -6px 6px 3px)";
+            const val = "translate(200%, 15, .7rem, 15turn)";
+            // const val = "rgb(200, 0, 15)";
+            // const val = "rgb(200, 0, 15) 1px solid";
+            // const val = "linear-gradient(#ff0000, rgb(0, 150, 155))";
             // const val = "hue-rotate(-=30px, 10%)";
             // const val = "rgba(20, 50, 150, 0.6) /=6px 6% -3rem ";
             // const val = "rgb(255, 0, 0) 1px solid ";
-            // const val = "rgba(170, 191, 64, 0.7) none repeat scroll /=10% 0% / auto padding-box border-box";
+            // const val = "blur(1px) brightness(0.6) hsla(100deg, 50%, 75%, 0.87) rgba(155, 10, 204, .8) drop-shadow(-2px -2px 4px #333333) hue-rotate(-20deg)";
+            // const val = "rgba(170, 191, 64, 0.7) 2px -2px hue-rotate(-=30px, 10%) hsla(20deg, 50%, 90%) 3rem #ffcc00 none repeat scroll /=10% 0% / auto padding-box border-box";
 
-            const strArr = val.split(/[-+=*/]*[.\d]+[%a-z]*/gi); /// [string]
-            const ivuArr = val.match(/[-=+/]*[.\d]+[%a-z]*/gi); /// [increment-value-unit]
-            // let numsArr = val.match(/[-]*[.\d]+/gi);
-
-            let ss = strArr[0];
-            for (let i = 1; i < strArr.length; i++) {
-                // let num = i <= numArr.length? numArr[i-1] : "";
-                // ss += `${num}${strArr[i]} `
-            }
             console.log(val);
-            console.log(strArr);
-            console.log(ivuArr);
-            // console.log(numsArr);
+
+            let vo = {
+                numbers:[],
+                units:[],
+                strings:[],
+                floats:[],
+            };
+
+            let arrColors = val.match(regColors);
+            let arrCombined = [];
+            if (arrColors) {
+                let strParts = val.split(regColors);
+                // console.log(strParts)
+                console.log("colors:", arrColors);
+                arrCombined = recombineNumsAndStrings(arrColors, strParts)
+            } else {
+                arrCombined = [val]
+            }
+            console.log("combined:",arrCombined);
+            console.log("----------------------");
+
+            for (let i = 0; i < arrCombined.length; i++) {
+                let p = arrCombined[i];
+                if (p === "") continue;
+                if (p.match(regColors)) {
+                    let c = getVUs(p);
+                } else {
+                    getVUs(p);
+                }
+            }
+
+
+
+
+            // let res;
+            // while ((res = reg.exec(val)) !== null) {
+            //     console.log(res[0], reg.lastIndex);
+            // }
+
+
+        }
+        tmp();
+
+        function getVUs(str) {
+            let resNums = [];
+            let resStrings = [];
+            let res = [];
+
+            let nums = str.match(regVUs);
+            if (nums) {
+                let strings = str.split(regVUs);
+                for (let i = 0; i < nums.length; i++) {
+                    let nus = nums[i].match(regNumsUnits);
+                    resNums.push({
+                        number: parseFloat(nus[0]),
+                        unit: nus[1],
+                        string: ""
+                    })
+                }
+                for (let i = 0; i < strings.length; i++) {
+                    resStrings.push({
+                        number: null,
+                        unit: null,
+                        string: strings[i]
+                    })
+                }
+                res = recombineNumsAndStrings(resNums, resStrings);
+                console.log(res)
+            }
         }
 
-
+        function recombineNumsAndStrings(numArr, strArr) {
+            let res = [];
+            while (numArr.length > 0 || strArr.length > 0) {
+                if (strArr.length > 0) res.push(strArr.shift());
+                if (numArr.length > 0) res.push(numArr.shift());
+            }
+            return res;
+        }
 
 
 
