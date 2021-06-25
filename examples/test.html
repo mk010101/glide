@@ -238,12 +238,11 @@
             TESTS
          =============================================================================================================*/
         const regColors = /[rgbahsl]{3,4}\([-.%0-9, degratun]+\)|#[0-9A-F]{6}/gi;
-        const regVUs = /[-+*=]*[.\d]+[a-z%]*/gi;
+        const regVUs = /[-+*=/]*[.\d]+[a-z%]*/gi;
         const regNumsUnits = /[-=.*\d]+|[a-z%]*/gi;
-        const regNums = /[-.\d]+/g;
+        const regIncrements = /-=|\+=|\*=|\/=/g;
 
         function tmp() {
-
 
 
             /*
@@ -254,24 +253,25 @@
             ,"gi");
             */
 
+            const val = "2";
             // const val = "drop-shadow(rgba(20,50,150, .6) -6px 6px 3px)";
             // const val = "translate(200%, 15, .7rem, 15turn)";
-            const val = "rgb(200, 0, 15)";
+            // const val = "rgb(200, 0, 15)";
             // const val = "rgb(200, 0, 15) 1px solid";
-            // const val = "linear-gradient(#ff0000, rgb(0, 150, 155))";
-            // const val = "hue-rotate(-=30px, 10%)";
+            // const val = "linear-gradient(rgba(17, 18, 19, 0.124), rgb(0, 150, 155))";
+            // const val = "hue-rotate(*=30px, 10%)";
             // const val = "rgba(20, 50, 150, 0.6) /=6px 6% -3rem ";
-            // const val = "rgb(255, 0, 0) 1px solid ";
+            // const val = "rgb(255, 0, 0) 1px solid";
             // const val = "blur(1px) brightness(0.6) hsla(100deg, 50%, 75%, 0.87) rgba(155, 10, 204, .8) drop-shadow(-2px -2px 4px #333333) hue-rotate(-20deg)";
             // const val = "rgba(170, 191, 64, 0.7) 2px -2px hue-rotate(-=30px, 10%) hsla(20deg, 50%, 90%) 3rem #ffcc00 none repeat scroll /=10% 0% / auto padding-box border-box";
 
             console.log(val);
 
             let vo = {
-                numbers:[],
-                units:[],
-                strings:[],
-                floats:[],
+                numbers: [],
+                units: [],
+                strings: [],
+                floats: [],
             };
 
             let res = [];
@@ -286,7 +286,7 @@
             } else {
                 arrCombined = [val]
             }
-            console.log("combined:",arrCombined);
+            console.log("combined:", arrCombined);
             console.log("----------------------");
 
             for (let i = 0; i < arrCombined.length; i++) {
@@ -297,8 +297,6 @@
             console.log(res)
 
 
-
-
             // let res;
             // while ((res = reg.exec(val)) !== null) {
             //     console.log(res[0], reg.lastIndex);
@@ -306,6 +304,7 @@
 
 
         }
+
         tmp();
 
         function getVUs(str) {
@@ -318,6 +317,7 @@
                     string: str
                 })
             } else if (regColors.test(str)) {
+                //TODO: Convert hex|hsl -> RGB(a).
                 let cols = getVUsArr(str);
                 let count = 0;
                 for (let i = 0; i < cols.length; i++) {
@@ -345,20 +345,32 @@
             if (nums) {
                 let strings = str.split(regVUs);
                 for (let i = 0; i < nums.length; i++) {
-                    let nus = nums[i].match(regNumsUnits);
+                    let num = nums[i];
+                    let incr = null;
+                    let incrMatch = num.match(regIncrements);
+                    if (incrMatch) {
+                        incr = incrMatch[0];
+                        num = num.replace(incr, "");
+                        incr = incr.substr(0, 1);
+                    }
+                    let nus = num.match(regNumsUnits);
+
                     resNums.push({
                         number: parseFloat(nus[0]),
                         unit: nus[1],
                         string: "",
-                        float: 1
+                        float: 1,
+                        increment: incr
                     })
                 }
                 for (let i = 0; i < strings.length; i++) {
-                    resStr.push({
-                        number: null,
-                        unit: null,
-                        string: strings[i]
-                    })
+                    if(strings[i] !== "") {
+                        resStr.push({
+                            number: null,
+                            unit: null,
+                            string: strings[i]
+                        })
+                    }
                 }
             }
 
@@ -378,7 +390,6 @@
             }
             return res;
         }
-
 
 
         // let oo = Object.assign(el.style,{transform:"scale(1,1)"});
