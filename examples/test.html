@@ -240,6 +240,7 @@
         const regColors = /[rgbahsl]{3,4}\([-.%0-9, degratun]+\)|#[0-9A-F]{6}/gi;
         const regVUs = /[-+*=]*[.\d]+[a-z%]*/gi;
         const regNumsUnits = /[-=.*\d]+|[a-z%]*/gi;
+        const regNums = /[-.\d]+/g;
 
         function tmp() {
 
@@ -254,8 +255,8 @@
             */
 
             // const val = "drop-shadow(rgba(20,50,150, .6) -6px 6px 3px)";
-            const val = "translate(200%, 15, .7rem, 15turn)";
-            // const val = "rgb(200, 0, 15)";
+            // const val = "translate(200%, 15, .7rem, 15turn)";
+            const val = "rgb(200, 0, 15)";
             // const val = "rgb(200, 0, 15) 1px solid";
             // const val = "linear-gradient(#ff0000, rgb(0, 150, 155))";
             // const val = "hue-rotate(-=30px, 10%)";
@@ -273,6 +274,8 @@
                 floats:[],
             };
 
+            let res = [];
+
             let arrColors = val.match(regColors);
             let arrCombined = [];
             if (arrColors) {
@@ -289,12 +292,9 @@
             for (let i = 0; i < arrCombined.length; i++) {
                 let p = arrCombined[i];
                 if (p === "") continue;
-                if (p.match(regColors)) {
-                    let c = getVUs(p);
-                } else {
-                    getVUs(p);
-                }
+                res.push(...getVUs(p));
             }
+            console.log(res)
 
 
 
@@ -309,8 +309,36 @@
         tmp();
 
         function getVUs(str) {
+            let res = [];
+
+            if (!regVUs.test(str) && !regColors.test(str)) {
+                res.push({
+                    number: null,
+                    unit: null,
+                    string: str
+                })
+            } else if (regColors.test(str)) {
+                let cols = getVUsArr(str);
+                let count = 0;
+                for (let i = 0; i < cols.length; i++) {
+                    if (count < 3 && cols[i].number != (void 0)) {
+                        cols[i].float = 0;
+                        count++;
+                    }
+                    res.push(cols[i]);
+                }
+
+            } else {
+                let others = getVUsArr(str);
+                res.push(...others);
+            }
+            return res;
+        }
+
+        function getVUsArr(str) {
+
             let resNums = [];
-            let resStrings = [];
+            let resStr = [];
             let res = [];
 
             let nums = str.match(regVUs);
@@ -321,19 +349,25 @@
                     resNums.push({
                         number: parseFloat(nus[0]),
                         unit: nus[1],
-                        string: ""
+                        string: "",
+                        float: 1
                     })
                 }
                 for (let i = 0; i < strings.length; i++) {
-                    resStrings.push({
+                    resStr.push({
                         number: null,
                         unit: null,
                         string: strings[i]
                     })
                 }
-                res = recombineNumsAndStrings(resNums, resStrings);
-                console.log(res)
             }
+
+            while (resNums.length > 0 || resStr.length > 0) {
+                if (resStr.length > 0) res.push(resStr.shift());
+                if (resNums.length > 0) res.push(resNums.shift());
+            }
+            return res;
+
         }
 
         function recombineNumsAndStrings(numArr, strArr) {
