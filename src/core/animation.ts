@@ -202,9 +202,22 @@ export class Animation extends Dispatcher {
         STATIC METHODS
      =================================================================================================================*/
 
-    static _getRenderStr(from: Vo[], to: Vo[], t: number) {
+    static _getRenderStr(froms: Vo[], tos: Vo[], t: number) {
         let str = "";
-
+        let from:Vo;
+        let to:Vo;
+        for (let i = 0; i < tos.length; i++) {
+            from = froms[i];
+            to = tos[i];
+            if (to.isNum) {
+                let val: any = from.number + t * (to.number - from.number);
+                if (to.float === 0) val = ~~val;
+                str += val + to.unit;
+            } else {
+                str += to.string;
+            }
+        }
+        console.log(str);
         return str;
     }
 

@@ -8,7 +8,7 @@ export class Vo {
     unit: string = "";
     increment: string = null;
     string: string;
-    isNum:boolean = true;
+    isNum:boolean = false;
 
 }
 

@@ -213,15 +213,17 @@ function getSepStr(prop: string) {
  * @param prop
  * @param val
  */
-export function getVo(targetType: TargetType, prop: any, val: any):Vo[] {
+export function getVo(targetType: TargetType, prop: any, val: any): Vo[] {
 
-    let res:Vo[] = [];
+    let res: Vo[] = [];
     let propType = getPropType(prop);
 
-
-    if (is.number(val)) {
-
-
+    if (val === undefined) {
+        return [new Vo()];
+    } else if (is.number(val)) {
+        let vo = new Vo();
+        vo.number = val;
+        return [vo];
     }
 
     let arrColors = val.match(regColors);
@@ -252,7 +254,7 @@ export function getVo(targetType: TargetType, prop: any, val: any):Vo[] {
 
 }
 
-function getVUs(str:string) {
+function getVUs(str: string) {
     let res = [];
 
     if (!regVUs.test(str) && !regColors.test(str)) {
@@ -279,11 +281,11 @@ function getVUs(str:string) {
     return res;
 }
 
-function getVUsArr(str:string):Vo[] {
+function getVUsArr(str: string): Vo[] {
 
-    let resNums:Vo[] = [];
-    let resStr:Vo[] = [];
-    let res:Vo[] = [];
+    let resNums: Vo[] = [];
+    let resStr: Vo[] = [];
+    let res: Vo[] = [];
 
     let nums = str.match(regVUs);
     // console.log(nums)
@@ -326,7 +328,7 @@ function getVUsArr(str:string):Vo[] {
 
 }
 
-function recombineNumsAndStrings(numArr:any, strArr:any) {
+function recombineNumsAndStrings(numArr: any, strArr: any) {
     let res = [];
     while (numArr.length > 0 || strArr.length > 0) {
         if (strArr.length > 0) res.push(strArr.shift());

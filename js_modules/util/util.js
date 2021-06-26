@@ -148,7 +148,13 @@ function getSepStr(prop) {
 export function getVo(targetType, prop, val) {
     let res = [];
     let propType = getPropType(prop);
-    if (is.number(val)) {
+    if (val === undefined) {
+        return [new Vo()];
+    }
+    else if (is.number(val)) {
+        let vo = new Vo();
+        vo.number = val;
+        return [vo];
     }
     let arrColors = val.match(regColors);
     let arrCombined = [];

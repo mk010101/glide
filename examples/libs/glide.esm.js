@@ -263,7 +263,7 @@ class Vo {
         this.number = undefined;
         this.unit = "";
         this.increment = null;
-        this.isNum = true;
+        this.isNum = false;
     }
 }
 class TweenGroup {
@@ -611,7 +611,14 @@ function getDefaultValue(prop) {
 function getVo(targetType, prop, val) {
     let res = [];
     getPropType(prop);
-    if (is.number(val)) ;
+    if (val === undefined) {
+        return [new Vo()];
+    }
+    else if (is.number(val)) {
+        let vo = new Vo();
+        vo.number = val;
+        return [vo];
+    }
     let arrColors = val.match(regColors);
     let arrCombined = [];
     if (arrColors) {
@@ -915,8 +922,24 @@ class Animation extends Dispatcher {
         this.status = this._preSeekState;
         this._seeking = false;
     }
-    static _getRenderStr(from, to, t) {
+    static _getRenderStr(froms, tos, t) {
         let str = "";
+        let from;
+        let to;
+        for (let i = 0; i < tos.length; i++) {
+            from = froms[i];
+            to = tos[i];
+            if (to.isNum) {
+                let val = from.number + t * (to.number - from.number);
+                if (to.float === 0)
+                    val = ~~val;
+                str += val + to.unit;
+            }
+            else {
+                str += to.string;
+            }
+        }
+        console.log(str);
         return str;
     }
     static _render(tgs, time, dir) {

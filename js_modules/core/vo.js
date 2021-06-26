@@ -4,7 +4,7 @@ export class Vo {
         this.number = undefined;
         this.unit = "";
         this.increment = null;
-        this.isNum = true;
+        this.isNum = false;
     }
 }
 export class TweenGroup {

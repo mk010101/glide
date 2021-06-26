@@ -154,8 +154,24 @@ export class Animation extends Dispatcher {
         this.status = this._preSeekState;
         this._seeking = false;
     }
-    static _getRenderStr(from, to, t) {
+    static _getRenderStr(froms, tos, t) {
         let str = "";
+        let from;
+        let to;
+        for (let i = 0; i < tos.length; i++) {
+            from = froms[i];
+            to = tos[i];
+            if (to.isNum) {
+                let val = from.number + t * (to.number - from.number);
+                if (to.float === 0)
+                    val = ~~val;
+                str += val + to.unit;
+            }
+            else {
+                str += to.string;
+            }
+        }
+        console.log(str);
         return str;
     }
     static _render(tgs, time, dir) {
