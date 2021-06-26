@@ -71,12 +71,12 @@
         }
     }
 
-    const regVUs = /[-+*=]*[.\d]+[a-z%]*/g;
     const regStrValues = /(([a-z].*?)\(.*?\))(?=\s([a-z].*?)\(.*?\)|\s*$)/gi;
-    const regColorVal = /([rgbahsl]+\([,%a-z \d.-]+\))|#[0-9A-F]{6}/gi;
     const regProp = /^[-\w]+[^( ]/gi;
-    const regTypes = /Null|Number|String|Object|Array/g;
-    const regNums = /[-.\d]+/g;
+    const regColors = /[rgbahsl]{3,4}\([-.%0-9, degratun]+\)|#[0-9A-F]{6}/gi;
+    const regVUs = /[-+*=/]*[.\d]+[a-z%]*/gi;
+    const regNumsUnits = /[-=.*\d]+|[a-z%]*/gi;
+    const regIncrements = /-=|\+=|\*=|\/=/g;
     function getObjType(val) {
         return Object.prototype.toString.call(val);
     }
@@ -265,11 +265,11 @@
 
     class Vo {
         constructor() {
-            this.floats = [];
-            this.numbers = [];
-            this.units = [];
-            this.increments = [];
-            this.strings = [];
+            this.float = 1;
+            this.number = undefined;
+            this.unit = "";
+            this.increment = null;
+            this.isNum = true;
         }
     }
     class TweenGroup {
@@ -278,81 +278,6 @@
             this.tweens = [];
             this.target = target;
         }
-    }
-
-    function toRgb(val) {
-        if (is.hex(val)) {
-            return hexToRGB(val);
-        }
-        else if (is.hsl(val)) {
-            return hslToRgb(val);
-        }
-        else if (is.rgb(val)) {
-            let res = val.match(/[-.\d]+/g);
-            return res.map((v) => parseFloat(v));
-        }
-    }
-    function toRgbStr(val) {
-        let res = toRgb(val);
-        let str = res.length === 4 ? "rgba" : "rgb";
-        return `${str}(${res.join(", ")})`;
-    }
-    function hexToRGB(hex) {
-        hex = hex.replace(/^#/, "");
-        let bigint;
-        return [(bigint = parseInt(hex, 16)) >> 16 & 255, bigint >> 8 & 255, bigint & 255];
-    }
-    function hslToRgb(hsl) {
-        let [sh, ss, sl, sa] = hsl.match(/[-.\d]+/g);
-        let h = parseFloat(sh);
-        let s = parseFloat(ss);
-        let l = parseFloat(sl);
-        let a;
-        if (sa)
-            a = parseFloat(sa);
-        s /= 100;
-        l /= 100;
-        let C = (1 - Math.abs(2 * l - 1)) * s;
-        let hue = h / 60;
-        let X = C * (1 - Math.abs(hue % 2 - 1));
-        let r = 0;
-        let g = 0;
-        let b = 0;
-        if (hue >= 0 && hue < 1) {
-            r = C;
-            g = X;
-        }
-        else if (hue >= 1 && hue < 2) {
-            r = X;
-            g = C;
-        }
-        else if (hue >= 2 && hue < 3) {
-            g = C;
-            b = X;
-        }
-        else if (hue >= 3 && hue < 4) {
-            g = X;
-            b = C;
-        }
-        else if (hue >= 4 && hue < 5) {
-            r = X;
-            b = C;
-        }
-        else {
-            r = C;
-            b = X;
-        }
-        let m = l - C / 2;
-        r += m;
-        g += m;
-        b += m;
-        r *= 255.0;
-        g *= 255.0;
-        b *= 255.0;
-        let arr = [Math.round(r), Math.round(g), Math.round(b)];
-        if (a)
-            arr.push(a);
-        return arr;
     }
 
     function powerInOut(pow) {
@@ -589,18 +514,6 @@
             return "direct";
         return "other";
     }
-    function getValueType(val = null) {
-        let t = getObjType(val).match(regTypes)[0];
-        switch (t) {
-            case "Null":
-                return "null";
-            case "Number":
-                return "number";
-            case "String":
-                return "string";
-        }
-        return;
-    }
     function getPropType(prop) {
         if (is.propDropShadow(prop))
             return "dropShadow";
@@ -624,159 +537,116 @@
             return 1;
         return 0;
     }
-    function getValueUnit(val) {
-        const increment = val.match(/-=|\+=|\*=|\/=/g);
-        if (increment)
-            increment[0] = increment[0].replace("=", "");
-        val = val.replace("-=", "");
-        const v = val.match(/[-.\d]+|[%\w]+/g);
-        if (v.length === 1)
-            v.push(null);
-        return {
-            value: parseFloat(v[0]),
-            unit: v.length === 1 ? "" : v[1],
-            increment: increment ? increment[0] : null
-        };
-    }
-    function getValuesUnits(val) {
-        let vus = [];
-        let vtype = getValueType(val);
-        if (vtype === "null") {
-            return [{
-                    value: 0,
-                    unit: null,
-                    increment: null
-                }];
-        }
-        else if (vtype === "number") {
-            return [{
-                    value: val,
-                    unit: null,
-                    increment: null
-                }];
-        }
-        let arr = val.match(regVUs);
-        for (let i = 0; i < arr.length; i++) {
-            vus.push(getValueUnit(arr[i]));
-        }
-        return vus;
-    }
-    function getNumbers(val) {
-        let nums = val.match(/[-.\d]+/g);
-        return nums.map((v) => parseFloat(v));
-    }
     function getVo(targetType, prop, val) {
-        let vo = new Vo();
+        let res = [];
         getPropType(prop);
-        if (is.number(val)) {
-            vo.numbers = [val];
-            vo.units = [null];
-            vo.increments = [null];
-            return vo;
+        if (is.number(val)) ;
+        let arrColors = val.match(regColors);
+        let arrCombined = [];
+        if (arrColors) {
+            let strParts = val.split(regColors);
+            arrCombined = recombineNumsAndStrings(arrColors, strParts);
         }
-        if (is.string(val) && is.valueColor(val)) {
-            let colorMatch = val.match(regColorVal);
-            let color;
-            color = toRgbStr(colorMatch[0]);
-            val = val.replace(colorMatch, "");
-            vo.numbers = getNumbers(color);
-            vo.strings = color.split(regNums);
-            for (let i = 0; i < vo.numbers.length; i++) {
-                vo.increments.push(null);
-                vo.units.push("");
-                let float = i < 3 ? 0 : 1;
-                vo.floats.push(float);
-            }
-            vo.strings[vo.strings.length - 1] += " ";
+        else {
+            arrCombined = [val];
         }
-        if (val) {
-            const vus = getValuesUnits(val);
-            for (let i = 0; i < vus.length; i++) {
-                vo.numbers.push(vus[i].value);
-                vo.units.push(vus[i].unit);
-                vo.increments.push(vus[i].increment);
-                vo.floats.push(1);
-            }
-            vo.strings.push(...val.split(regVUs));
-            for (let i = 0; i < vo.strings.length; i++) {
-                if (vo.strings[i] === "")
-                    vo.strings[i] = " ";
-            }
-            if (is.propTransform(prop) || is.propFilter(prop)) {
-                vo.strings[0] = prop + "(";
-                vo.strings[vo.strings.length - 1] = ")";
+        for (let i = 0; i < arrCombined.length; i++) {
+            let p = arrCombined[i];
+            if (p === "")
+                continue;
+            res.push(...getVUs(p));
+        }
+        for (let i = 0; i < res.length; i++) {
+            if (res[i].number == (void 0) && res[i].string === "")
+                res.splice(i, 1);
+        }
+        console.log(res);
+        return res;
+    }
+    function getVUs(str) {
+        let res = [];
+        if (!regVUs.test(str) && !regColors.test(str)) {
+            let vo = new Vo();
+            vo.string = str;
+            res.push(vo);
+        }
+        else if (regColors.test(str)) {
+            let cols = getVUsArr(str);
+            let count = 0;
+            for (let i = 0; i < cols.length; i++) {
+                if (count < 3 && cols[i].number != (void 0)) {
+                    cols[i].float = 0;
+                    count++;
+                }
+                res.push(cols[i]);
             }
         }
-        return vo;
+        else {
+            let others = getVUsArr(str);
+            res.push(...others);
+        }
+        return res;
+    }
+    function getVUsArr(str) {
+        let resNums = [];
+        let resStr = [];
+        let res = [];
+        let nums = str.match(regVUs);
+        if (nums) {
+            let strings = str.split(regVUs);
+            for (let i = 0; i < nums.length; i++) {
+                let num = nums[i];
+                let incr = null;
+                let incrMatch = num.match(regIncrements);
+                if (incrMatch) {
+                    incr = incrMatch[0];
+                    num = num.replace(incr, "");
+                    incr = incr.substr(0, 1);
+                }
+                let nus = num.match(regNumsUnits);
+                let voNum = new Vo();
+                voNum.number = parseFloat(nus[0]);
+                voNum.unit = nus[1];
+                voNum.string = "";
+                voNum.increment = incr;
+                voNum.float = 1;
+                voNum.isNum = true;
+                resNums.push(voNum);
+            }
+            for (let i = 0; i < strings.length; i++) {
+                let voStr = new Vo();
+                voStr.string = strings[i];
+                resStr.push(voStr);
+            }
+        }
+        while (resNums.length > 0 || resStr.length > 0) {
+            if (resStr.length > 0)
+                res.push(resStr.shift());
+            if (resNums.length > 0)
+                res.push(resNums.shift());
+        }
+        return res;
+    }
+    function recombineNumsAndStrings(numArr, strArr) {
+        let res = [];
+        while (numArr.length > 0 || strArr.length > 0) {
+            if (strArr.length > 0)
+                res.push(strArr.shift());
+            if (numArr.length > 0)
+                res.push(numArr.shift());
+        }
+        return res;
     }
     function normalizeTween(tw, context) {
         const prop = tw.prop;
         if (prop === "background")
             return;
-        const from = tw.from;
-        const to = tw.to;
+        tw.from;
+        tw.to;
         tw.twType;
-        const propType = getPropType(prop);
-        const defaultUnit = getDefaultUnit(prop);
-        const defaultValue = getDefaultValue(prop);
-        if (from.numbers.length === 0) {
-            from.floats = to.floats.concat();
-            from.units = to.units.concat();
-            for (let i = 0; i < to.numbers.length; i++) {
-                from.numbers.push(defaultValue);
-            }
-        }
-        if (from.numbers.length !== to.numbers.length) {
-            let shorter = from.numbers.length > to.numbers.length ? to : from;
-            let longer = shorter === from ? to : from;
-            let diff = longer.numbers.length - shorter.numbers.length;
-            shorter.strings = longer.strings;
-            for (let i = 0; i < diff; i++) {
-                if (shorter === from) {
-                    shorter.units.push(shorter.units[0]);
-                }
-                else {
-                    to.units.push(to.units[to.units.length - 1]);
-                    to.increments.push(to.increments[to.increments.length - 1]);
-                }
-                switch (propType) {
-                    case "color":
-                        shorter.numbers.push(1);
-                        break;
-                    case "transform":
-                        break;
-                    case "other":
-                        shorter.numbers.push(shorter.numbers[0]);
-                        break;
-                }
-            }
-        }
-        if (from.strings.length > to.strings.length)
-            to.strings = from.strings;
-        for (let i = 0; i < to.numbers.length; i++) {
-            if (to.units[i] == (void 0)) {
-                to.units[i] = from.units[i];
-            }
-            if (from.units[i] !== to.units[i]) {
-                from.numbers[i] = Context.convertUnits(from.numbers[i], from.units[i], to.units[i], context.units);
-            }
-            if (to.units[i] == (void 0)) {
-                to.units[i] = defaultUnit;
-            }
-            let incr = to.increments[i];
-            if (incr === "-") {
-                to.numbers[i] = from.numbers[i] - to.numbers[i];
-            }
-            else if (incr === "+") {
-                to.numbers[i] += from.numbers[i];
-            }
-            else if (incr === "*") {
-                to.numbers[i] *= from.numbers[i];
-            }
-            else if (incr === "/") {
-                to.numbers[i] /= from.numbers[i];
-            }
-        }
+        getPropType(prop);
+        getDefaultUnit(prop);
+        getDefaultValue(prop);
     }
     function strToMap(str, twType) {
         let res = new Map();
@@ -789,9 +659,8 @@
             let part = arr[i];
             let prop = part.match(regProp)[0];
             part = part.replace(prop, "");
-            let vo = getVo("dom", prop, part);
+            getVo("dom", prop, part);
             let tw = new Tween(twType, prop, null, null, 0, 0, 0);
-            tw.from = vo;
             tw.keepOld = true;
             tw.oldValue = prop + part;
             res.set(tw.prop, tw);
@@ -975,17 +844,7 @@
             this._seeking = false;
         }
         static _getRenderStr(from, to, t) {
-            let str = to.strings[0];
-            for (let i = 1; i < to.strings.length; i++) {
-                let k = i - 1;
-                let val = from.numbers[k] + t * (to.numbers[k] - from.numbers[k]);
-                if (isNaN(val))
-                    val = "";
-                let unit = to.units[k] ? to.units[k] : "";
-                if (to.floats[k] === 0)
-                    val = ~~val;
-                str += `${val}${unit}${to.strings[i]}`;
-            }
+            let str = "";
             return str;
         }
         static _render(tgs, time, dir) {

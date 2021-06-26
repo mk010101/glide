@@ -202,17 +202,9 @@ export class Animation extends Dispatcher {
         STATIC METHODS
      =================================================================================================================*/
 
-    static _getRenderStr(from: Vo, to: Vo, t: number) {
-        let str = to.strings[0];
-        for (let i = 1; i < to.strings.length; i++) {
-            let k = i - 1;
-            let val: any = from.numbers[k] + t * (to.numbers[k] - from.numbers[k]);
-            if (isNaN(val)) val = "";
-            let unit = to.units[k] ? to.units[k] : "";
-            if (to.floats[k] === 0) val = ~~val;
-            str += `${val}${unit}${to.strings[i]}`;
-        }
-        // console.log(str)
+    static _getRenderStr(from: Vo[], to: Vo[], t: number) {
+        let str = "";
+
         return str;
     }
 
@@ -236,8 +228,8 @@ export class Animation extends Dispatcher {
                 let elapsed = minMax(time - tween.start - tween.delay, 0, tween.duration) / tween.duration;
                 if (elapsed === 0 && dir === 1) return;
                 let eased = isNaN(elapsed) ? 1 : tween.ease(elapsed);
-                let from: Vo = tween.from;
-                let to: Vo = tween.to;
+                let from: Vo[] = tween.from;
+                let to: Vo[] = tween.to;
                 let tweenable = tween.tweenable;
                 let prop = tween.prop;
 
@@ -523,8 +515,8 @@ export class Animation extends Dispatcher {
             for (let j = 0; j < tg.tweens.length; j++) {
                 const tw = tg.tweens[j];
 
-                let from: Vo;
-                let to: Vo = getVo(tg.target.type, tw.prop, tw.toVal);
+                let from: Vo[];
+                let to: Vo[] = getVo(tg.target.type, tw.prop, tw.toVal);
 
                 if (tg.target.type === "dom") {
 

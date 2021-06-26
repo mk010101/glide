@@ -14,8 +14,8 @@ export class Tween {
     totalDuration = 0.0;
     fromVal:any = null;
     toVal:any = null;
-    from: Vo = null;
-    to: Vo = null;
+    from: Vo[] = null;
+    to: Vo[] = null;
     ease: Function = quadInOut;
 
     keepOld = false;

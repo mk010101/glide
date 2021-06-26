@@ -1,10 +1,10 @@
 export class Vo {
     constructor() {
-        this.floats = [];
-        this.numbers = [];
-        this.units = [];
-        this.increments = [];
-        this.strings = [];
+        this.float = 1;
+        this.number = undefined;
+        this.unit = "";
+        this.increment = null;
+        this.isNum = true;
     }
 }
 export class TweenGroup {

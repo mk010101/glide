@@ -141,7 +141,7 @@
                     // opacity: .5,
                     // left: "150px",
                     // left: 50,
-                    // left: "15rem",
+                    left: "15rem",
                     // left: "+=13%",
                     // top: "50%",
                     // top: {value:"50%", duration:600},
@@ -150,7 +150,7 @@
                     // width: ["50%", 10],
                     // width: "5%",
                     // height: "10%",
-                    "drop-shadow": "6px 6px 3px #330033",
+                    // "drop-shadow": "6px 6px 3px #330033",
                     // dropShadow: "rgba(20,50,150, .6) -6px 6px 3px",
                     // invert: 90,
                     // blur: 3,
@@ -242,7 +242,7 @@
         const regNumsUnits = /[-=.*\d]+|[a-z%]*/gi;
         const regIncrements = /-=|\+=|\*=|\/=/g;
 
-        function tmp() {
+        function getVos() {
 
 
             /*
@@ -270,6 +270,7 @@
             console.log(val);
 
 
+
             let res = [];
 
             let arrColors = val.match(regColors);
@@ -293,7 +294,7 @@
                     res.splice(i, 1);
             }
 
-            console.log(res)
+            // console.log(res)
 
             let combStr = "";
             for (let i = 0; i < res.length; i++) {
@@ -304,12 +305,12 @@
                     combStr += p.string;
 
             }
-            console.log(combStr);
+            // console.log(combStr);
 
 
         }
 
-        tmp();
+        getVos();
 
         function getVUs(str) {
             let res = [];

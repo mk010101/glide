@@ -155,17 +155,7 @@ export class Animation extends Dispatcher {
         this._seeking = false;
     }
     static _getRenderStr(from, to, t) {
-        let str = to.strings[0];
-        for (let i = 1; i < to.strings.length; i++) {
-            let k = i - 1;
-            let val = from.numbers[k] + t * (to.numbers[k] - from.numbers[k]);
-            if (isNaN(val))
-                val = "";
-            let unit = to.units[k] ? to.units[k] : "";
-            if (to.floats[k] === 0)
-                val = ~~val;
-            str += `${val}${unit}${to.strings[i]}`;
-        }
+        let str = "";
         return str;
     }
     static _render(tgs, time, dir) {

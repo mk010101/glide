@@ -1,7 +1,5 @@
-import { getObjType, is, regColorVal, regNums, regProp, regStrValues, regTypes, regValues, regVUs } from "./regex";
+import { getObjType, is, regColors, regIncrements, regNumsUnits, regProp, regStrValues, regTypes, regValues, regVUs } from "./regex";
 import { Vo } from "../core/vo";
-import { toRgbStr } from "./color";
-import Context from "../core/context";
 import { Tween } from "../core/tween";
 export function minMax(val, min, max) {
     return Math.min(Math.max(val, min), max);
@@ -145,48 +143,105 @@ function getSepStr(prop) {
     return " ";
 }
 export function getVo(targetType, prop, val) {
-    let vo = new Vo();
+    let res = [];
     let propType = getPropType(prop);
     if (is.number(val)) {
-        vo.numbers = [val];
-        vo.units = [null];
-        vo.increments = [null];
-        return vo;
     }
-    if (is.string(val) && is.valueColor(val)) {
-        let colorMatch = val.match(regColorVal);
-        let color;
-        color = toRgbStr(colorMatch[0]);
-        val = val.replace(colorMatch, "");
-        vo.numbers = getNumbers(color);
-        vo.strings = color.split(regNums);
-        for (let i = 0; i < vo.numbers.length; i++) {
-            vo.increments.push(null);
-            vo.units.push("");
-            let float = i < 3 ? 0 : 1;
-            vo.floats.push(float);
-        }
-        vo.strings[vo.strings.length - 1] += " ";
+    let arrColors = val.match(regColors);
+    let arrCombined = [];
+    if (arrColors) {
+        let strParts = val.split(regColors);
+        arrCombined = recombineNumsAndStrings(arrColors, strParts);
     }
-    if (val) {
-        const vus = getValuesUnits(val);
-        for (let i = 0; i < vus.length; i++) {
-            vo.numbers.push(vus[i].value);
-            vo.units.push(vus[i].unit);
-            vo.increments.push(vus[i].increment);
-            vo.floats.push(1);
-        }
-        vo.strings.push(...val.split(regVUs));
-        for (let i = 0; i < vo.strings.length; i++) {
-            if (vo.strings[i] === "")
-                vo.strings[i] = " ";
-        }
-        if (is.propTransform(prop) || is.propFilter(prop)) {
-            vo.strings[0] = prop + "(";
-            vo.strings[vo.strings.length - 1] = ")";
+    else {
+        arrCombined = [val];
+    }
+    for (let i = 0; i < arrCombined.length; i++) {
+        let p = arrCombined[i];
+        if (p === "")
+            continue;
+        res.push(...getVUs(p));
+    }
+    for (let i = 0; i < res.length; i++) {
+        if (res[i].number == (void 0) && res[i].string === "")
+            res.splice(i, 1);
+    }
+    console.log(res);
+    return res;
+}
+function getVUs(str) {
+    let res = [];
+    if (!regVUs.test(str) && !regColors.test(str)) {
+        let vo = new Vo();
+        vo.string = str;
+        res.push(vo);
+    }
+    else if (regColors.test(str)) {
+        let cols = getVUsArr(str);
+        let count = 0;
+        for (let i = 0; i < cols.length; i++) {
+            if (count < 3 && cols[i].number != (void 0)) {
+                cols[i].float = 0;
+                count++;
+            }
+            res.push(cols[i]);
         }
     }
-    return vo;
+    else {
+        let others = getVUsArr(str);
+        res.push(...others);
+    }
+    return res;
+}
+function getVUsArr(str) {
+    let resNums = [];
+    let resStr = [];
+    let res = [];
+    let nums = str.match(regVUs);
+    if (nums) {
+        let strings = str.split(regVUs);
+        for (let i = 0; i < nums.length; i++) {
+            let num = nums[i];
+            let incr = null;
+            let incrMatch = num.match(regIncrements);
+            if (incrMatch) {
+                incr = incrMatch[0];
+                num = num.replace(incr, "");
+                incr = incr.substr(0, 1);
+            }
+            let nus = num.match(regNumsUnits);
+            let voNum = new Vo();
+            voNum.number = parseFloat(nus[0]);
+            voNum.unit = nus[1];
+            voNum.string = "";
+            voNum.increment = incr;
+            voNum.float = 1;
+            voNum.isNum = true;
+            resNums.push(voNum);
+        }
+        for (let i = 0; i < strings.length; i++) {
+            let voStr = new Vo();
+            voStr.string = strings[i];
+            resStr.push(voStr);
+        }
+    }
+    while (resNums.length > 0 || resStr.length > 0) {
+        if (resStr.length > 0)
+            res.push(resStr.shift());
+        if (resNums.length > 0)
+            res.push(resNums.shift());
+    }
+    return res;
+}
+function recombineNumsAndStrings(numArr, strArr) {
+    let res = [];
+    while (numArr.length > 0 || strArr.length > 0) {
+        if (strArr.length > 0)
+            res.push(strArr.shift());
+        if (numArr.length > 0)
+            res.push(numArr.shift());
+    }
+    return res;
 }
 export function normalizeTween(tw, context) {
     const prop = tw.prop;
@@ -198,64 +253,6 @@ export function normalizeTween(tw, context) {
     const propType = getPropType(prop);
     const defaultUnit = getDefaultUnit(prop);
     const defaultValue = getDefaultValue(prop);
-    if (from.numbers.length === 0) {
-        from.floats = to.floats.concat();
-        from.units = to.units.concat();
-        for (let i = 0; i < to.numbers.length; i++) {
-            from.numbers.push(defaultValue);
-        }
-    }
-    if (from.numbers.length !== to.numbers.length) {
-        let shorter = from.numbers.length > to.numbers.length ? to : from;
-        let longer = shorter === from ? to : from;
-        let diff = longer.numbers.length - shorter.numbers.length;
-        shorter.strings = longer.strings;
-        for (let i = 0; i < diff; i++) {
-            if (shorter === from) {
-                shorter.units.push(shorter.units[0]);
-            }
-            else {
-                to.units.push(to.units[to.units.length - 1]);
-                to.increments.push(to.increments[to.increments.length - 1]);
-            }
-            switch (propType) {
-                case "color":
-                    shorter.numbers.push(1);
-                    break;
-                case "transform":
-                    break;
-                case "other":
-                    shorter.numbers.push(shorter.numbers[0]);
-                    break;
-            }
-        }
-    }
-    if (from.strings.length > to.strings.length)
-        to.strings = from.strings;
-    for (let i = 0; i < to.numbers.length; i++) {
-        if (to.units[i] == (void 0)) {
-            to.units[i] = from.units[i];
-        }
-        if (from.units[i] !== to.units[i]) {
-            from.numbers[i] = Context.convertUnits(from.numbers[i], from.units[i], to.units[i], context.units);
-        }
-        if (to.units[i] == (void 0)) {
-            to.units[i] = defaultUnit;
-        }
-        let incr = to.increments[i];
-        if (incr === "-") {
-            to.numbers[i] = from.numbers[i] - to.numbers[i];
-        }
-        else if (incr === "+") {
-            to.numbers[i] += from.numbers[i];
-        }
-        else if (incr === "*") {
-            to.numbers[i] *= from.numbers[i];
-        }
-        else if (incr === "/") {
-            to.numbers[i] /= from.numbers[i];
-        }
-    }
 }
 export function strToMap(str, twType) {
     let res = new Map();
@@ -270,7 +267,6 @@ export function strToMap(str, twType) {
         part = part.replace(prop, "");
         let vo = getVo("dom", prop, part);
         let tw = new Tween(twType, prop, null, null, 0, 0, 0);
-        tw.from = vo;
         tw.keepOld = true;
         tw.oldValue = prop + part;
         res.set(tw.prop, tw);
