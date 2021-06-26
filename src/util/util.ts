@@ -248,7 +248,16 @@ export function getVo(targetType: TargetType, prop: any, val: any): Vo[] {
         }
     }
 
-    // console.log(res);
+    if (propType === "transform" || propType === "filter") {
+        let begin = new Vo();
+        let end = new Vo();
+        begin.string = prop + "(";
+        end.string = ")";
+        res.unshift(begin);
+        res.push(end);
+    }
+
+    console.log(res);
 
     return res;
 
@@ -351,34 +360,39 @@ export function normalizeTween(tw: Tween, context: Context) {
     //TODO: Need to look into implementing complex values.
     if (prop === "background") return;
 
-    const from = tw.from;
-    const to = tw.to;
+    let froms = tw.from;
+    let tos = tw.to;
     const twType = tw.twType;
     const propType = getPropType(prop);
     const defaultUnit = getDefaultUnit(prop);
     const defaultValue = getDefaultValue(prop);
 
-    /*
-    if (from.length === 0) {
 
-        from.floats = to.floats.concat();
-        from.units = to.units.concat();
-
-        for (let i = 0; i < to.numbers.length; i++) {
-            from.numbers.push(defaultValue);
+    if (froms.length === 1 && !froms[0].isNum) {
+        froms = [];
+        for (let i = 0; i < tos.length; i++) {
+            let vo = new Vo();
+            if (tos[i].isNum) {
+                vo.number = defaultValue;
+                vo.isNum = true;
+            }
+            vo.unit = tos[i].unit;
+            vo.float = tos[i].float;
+            vo.string = tos[i].string;
+            froms.push(vo);
         }
+        tw.from = froms;
     }
 
-    if (from.numbers.length !== to.numbers.length) {
-        let shorter: Vo = from.numbers.length > to.numbers.length ? to : from;
-        let longer: Vo = shorter === from ? to : from;
-        let diff = longer.numbers.length - shorter.numbers.length;
-        shorter.strings = longer.strings;
-
+    /*
+    if (froms.length !== tos.length) {
+        let shorter: Vo[] = froms.length > tos.length ? tos : froms;
+        let longer: Vo[] = shorter === froms ? tos : froms;
+        let diff = longer.length - shorter.length;
 
         for (let i = 0; i < diff; i++) {
 
-            if (shorter === from) {
+            if (shorter === froms) {
                 shorter.units.push(shorter.units[0]);
             } else {
                 to.units.push(to.units[to.units.length - 1]);

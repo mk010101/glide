@@ -610,7 +610,7 @@ function getDefaultValue(prop) {
 }
 function getVo(targetType, prop, val) {
     let res = [];
-    getPropType(prop);
+    let propType = getPropType(prop);
     if (val === undefined) {
         return [new Vo()];
     }
@@ -639,6 +639,15 @@ function getVo(targetType, prop, val) {
             res.splice(i, 1);
         }
     }
+    if (propType === "transform" || propType === "filter") {
+        let begin = new Vo();
+        let end = new Vo();
+        begin.string = prop + "(";
+        end.string = ")";
+        res.unshift(begin);
+        res.push(end);
+    }
+    console.log(res);
     return res;
 }
 function getVUs(str) {
@@ -720,12 +729,27 @@ function normalizeTween(tw, context) {
     const prop = tw.prop;
     if (prop === "background")
         return;
-    tw.from;
-    tw.to;
+    let froms = tw.from;
+    let tos = tw.to;
     tw.twType;
     getPropType(prop);
     getDefaultUnit(prop);
-    getDefaultValue(prop);
+    const defaultValue = getDefaultValue(prop);
+    if (froms.length === 1 && !froms[0].isNum) {
+        froms = [];
+        for (let i = 0; i < tos.length; i++) {
+            let vo = new Vo();
+            if (tos[i].isNum) {
+                vo.number = defaultValue;
+                vo.isNum = true;
+            }
+            vo.unit = tos[i].unit;
+            vo.float = tos[i].float;
+            vo.string = tos[i].string;
+            froms.push(vo);
+        }
+        tw.from = froms;
+    }
 }
 function strToMap(str, twType) {
     let res = new Map();
@@ -924,22 +948,6 @@ class Animation extends Dispatcher {
     }
     static _getRenderStr(froms, tos, t) {
         let str = "";
-        let from;
-        let to;
-        for (let i = 0; i < tos.length; i++) {
-            from = froms[i];
-            to = tos[i];
-            if (to.isNum) {
-                let val = from.number + t * (to.number - from.number);
-                if (to.float === 0)
-                    val = ~~val;
-                str += val + to.unit;
-            }
-            else {
-                str += to.string;
-            }
-        }
-        console.log(str);
         return str;
     }
     static _render(tgs, time, dir) {

@@ -176,6 +176,15 @@ export function getVo(targetType, prop, val) {
             res.splice(i, 1);
         }
     }
+    if (propType === "transform" || propType === "filter") {
+        let begin = new Vo();
+        let end = new Vo();
+        begin.string = prop + "(";
+        end.string = ")";
+        res.unshift(begin);
+        res.push(end);
+    }
+    console.log(res);
     return res;
 }
 function getVUs(str) {
@@ -257,12 +266,27 @@ export function normalizeTween(tw, context) {
     const prop = tw.prop;
     if (prop === "background")
         return;
-    const from = tw.from;
-    const to = tw.to;
+    let froms = tw.from;
+    let tos = tw.to;
     const twType = tw.twType;
     const propType = getPropType(prop);
     const defaultUnit = getDefaultUnit(prop);
     const defaultValue = getDefaultValue(prop);
+    if (froms.length === 1 && !froms[0].isNum) {
+        froms = [];
+        for (let i = 0; i < tos.length; i++) {
+            let vo = new Vo();
+            if (tos[i].isNum) {
+                vo.number = defaultValue;
+                vo.isNum = true;
+            }
+            vo.unit = tos[i].unit;
+            vo.float = tos[i].float;
+            vo.string = tos[i].string;
+            froms.push(vo);
+        }
+        tw.from = froms;
+    }
 }
 export function strToMap(str, twType) {
     let res = new Map();

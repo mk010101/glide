@@ -204,6 +204,7 @@ export class Animation extends Dispatcher {
 
     static _getRenderStr(froms: Vo[], tos: Vo[], t: number) {
         let str = "";
+        return str
         let from:Vo;
         let to:Vo;
         for (let i = 0; i < tos.length; i++) {
@@ -217,7 +218,7 @@ export class Animation extends Dispatcher {
                 str += to.string;
             }
         }
-        console.log(str);
+        // console.log(str);
         return str;
     }
 

@@ -156,6 +156,7 @@ export class Animation extends Dispatcher {
     }
     static _getRenderStr(froms, tos, t) {
         let str = "";
+        return str;
         let from;
         let to;
         for (let i = 0; i < tos.length; i++) {
@@ -171,7 +172,6 @@ export class Animation extends Dispatcher {
                 str += to.string;
             }
         }
-        console.log(str);
         return str;
     }
     static _render(tgs, time, dir) {
