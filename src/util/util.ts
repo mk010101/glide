@@ -257,23 +257,17 @@ export function getVo(targetType: TargetType, prop: any, val: any): Vo {
 
 }
 
-function getVUs(str: string) {
-    let res = [];
+function getVUs(str: string):any[] {
+    let res: any[] = [];
 
     if (!regVUs.test(str) && !regColors.test(str)) {
-        let vo = new Vo();
-        vo.string = str;
-        res.push(vo);
+        res.push(str);
+
     } else if (regColors.test(str)) {
         //TODO: Convert hex|hsl -> RGB(a).
-        str = toRgbStr(str);
         let cols = getVUsArr(str);
         let count = 0;
         for (let i = 0; i < cols.length; i++) {
-            if (count < 3 && cols[i].number != (void 0)) {
-                cols[i].float = 0;
-                count++;
-            }
             res.push(cols[i]);
         }
 
@@ -284,41 +278,23 @@ function getVUs(str: string) {
     return res;
 }
 
-function getVUsArr(str: string): Vo[] {
+function getVUsArr(str: string): any[] {
 
-    let resNums: Vo[] = [];
-    let resStr: Vo[] = [];
-    let res: Vo[] = [];
+    let resNums = [];
+    let resStr = [];
+    let res = [];
 
     let nums = str.match(regVUs);
-    // console.log(nums)
+
     if (nums) {
         let strings = str.split(regVUs);
+        // console.log(nums)
         for (let i = 0; i < nums.length; i++) {
-            let num = nums[i];
-            let incr = null;
-            let incrMatch = num.match(regIncrements);
-            if (incrMatch) {
-                incr = incrMatch[0];
-                num = num.replace(incr, "");
-                incr = incr.substr(0, 1);
-            }
-            let nus = num.match(regNumsUnits);
-
-            let voNum = new Vo();
-            voNum.number = parseFloat(nus[0]);
-            voNum.unit = nus[1];
-            voNum.string = "";
-            voNum.increment = incr;
-            voNum.float = 1;
-            voNum.isNum = true;
-            resNums.push(voNum);
+            resNums.push(nums[i])
         }
         for (let i = 0; i < strings.length; i++) {
             // if (strings[i] !== "") {
-            let voStr = new Vo();
-            voStr.string = strings[i];
-            resStr.push(voStr);
+            resStr.push(strings[i]);
             // }
         }
     }

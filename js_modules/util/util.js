@@ -1,6 +1,5 @@
-import { getObjType, is, regColors, regIncrements, regNumsUnits, regProp, regStrValues, regTypes, regValues, regVUs } from "./regex";
+import { getObjType, is, regColors, regProp, regStrValues, regTypes, regValues, regVUs } from "./regex";
 import { Vo } from "../core/vo";
-import { toRgbStr } from "./color";
 import { Tween } from "../core/tween";
 export function minMax(val, min, max) {
     return Math.min(Math.max(val, min), max);
@@ -183,19 +182,12 @@ export function getVo(targetType, prop, val) {
 function getVUs(str) {
     let res = [];
     if (!regVUs.test(str) && !regColors.test(str)) {
-        let vo = new Vo();
-        vo.string = str;
-        res.push(vo);
+        res.push(str);
     }
     else if (regColors.test(str)) {
-        str = toRgbStr(str);
         let cols = getVUsArr(str);
         let count = 0;
         for (let i = 0; i < cols.length; i++) {
-            if (count < 3 && cols[i].number != (void 0)) {
-                cols[i].float = 0;
-                count++;
-            }
             res.push(cols[i]);
         }
     }
@@ -213,28 +205,10 @@ function getVUsArr(str) {
     if (nums) {
         let strings = str.split(regVUs);
         for (let i = 0; i < nums.length; i++) {
-            let num = nums[i];
-            let incr = null;
-            let incrMatch = num.match(regIncrements);
-            if (incrMatch) {
-                incr = incrMatch[0];
-                num = num.replace(incr, "");
-                incr = incr.substr(0, 1);
-            }
-            let nus = num.match(regNumsUnits);
-            let voNum = new Vo();
-            voNum.number = parseFloat(nus[0]);
-            voNum.unit = nus[1];
-            voNum.string = "";
-            voNum.increment = incr;
-            voNum.float = 1;
-            voNum.isNum = true;
-            resNums.push(voNum);
+            resNums.push(nums[i]);
         }
         for (let i = 0; i < strings.length; i++) {
-            let voStr = new Vo();
-            voStr.string = strings[i];
-            resStr.push(voStr);
+            resStr.push(strings[i]);
         }
     }
     while (resNums.length > 0 || resStr.length > 0) {
