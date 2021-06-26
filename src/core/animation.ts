@@ -204,7 +204,7 @@ export class Animation extends Dispatcher {
 
     static _getRenderStr(froms: Vo[], tos: Vo[], t: number) {
         let str = "";
-        return str
+        // return str
         let from:Vo;
         let to:Vo;
         for (let i = 0; i < tos.length; i++) {
@@ -274,6 +274,7 @@ export class Animation extends Dispatcher {
 
             }
 
+            // console.log(transStr)
             if (transStr)
                 tg.target.tweenable.transform = transStr;
             if (filtersStr)

@@ -249,6 +249,7 @@ export function getVo(targetType: TargetType, prop: any, val: any): Vo[] {
     }
 
     if (propType === "transform" || propType === "filter") {
+        // console.log(res)
         let begin = new Vo();
         let end = new Vo();
         begin.string = prop + "(";
@@ -257,7 +258,7 @@ export function getVo(targetType: TargetType, prop: any, val: any): Vo[] {
         res.push(end);
     }
 
-    console.log(res);
+    // console.log(res);
 
     return res;
 
@@ -384,6 +385,18 @@ export function normalizeTween(tw: Tween, context: Context) {
         tw.from = froms;
     }
 
+    if (froms.length !== tos.length) {
+
+        let shorter: Vo[] = froms.length > tos.length ? tos : froms;
+        let longer: Vo[] = shorter === froms ? tos : froms;
+        let diff = longer.length - shorter.length;
+
+
+
+    }
+
+
+
     /*
     if (froms.length !== tos.length) {
         let shorter: Vo[] = froms.length > tos.length ? tos : froms;
@@ -471,17 +484,18 @@ export function strToMap(str: string, twType: TweenType): Map<string, Tween> {
 
     for (let i = 0; i < arr.length; i++) {
 
-
         let part = arr[i];
 
         let prop = part.match(regProp)[0];
         part = part.replace(prop, "");
+        part = part.replace(/[)(]+/g, "");
+        // console.log(prop, part)
         let vo = getVo("dom", prop, part);
 
         let tw = new Tween(twType, prop, null, null, 0, 0, 0);
-        //tw.from = vo;
+        tw.from = vo;
         tw.keepOld = true;
-        tw.oldValue = prop + part;
+        tw.oldValue = `${prop}(${part})`;
         res.set(tw.prop, tw);
 
         // console.log(tw)

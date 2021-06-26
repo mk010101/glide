@@ -184,7 +184,6 @@ export function getVo(targetType, prop, val) {
         res.unshift(begin);
         res.push(end);
     }
-    console.log(res);
     return res;
 }
 function getVUs(str) {
@@ -287,6 +286,11 @@ export function normalizeTween(tw, context) {
         }
         tw.from = froms;
     }
+    if (froms.length !== tos.length) {
+        let shorter = froms.length > tos.length ? tos : froms;
+        let longer = shorter === froms ? tos : froms;
+        let diff = longer.length - shorter.length;
+    }
 }
 export function strToMap(str, twType) {
     let res = new Map();
@@ -299,10 +303,12 @@ export function strToMap(str, twType) {
         let part = arr[i];
         let prop = part.match(regProp)[0];
         part = part.replace(prop, "");
+        part = part.replace(/[)(]+/g, "");
         let vo = getVo("dom", prop, part);
         let tw = new Tween(twType, prop, null, null, 0, 0, 0);
+        tw.from = vo;
         tw.keepOld = true;
-        tw.oldValue = prop + part;
+        tw.oldValue = `${prop}(${part})`;
         res.set(tw.prop, tw);
     }
     return res;

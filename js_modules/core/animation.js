@@ -156,7 +156,6 @@ export class Animation extends Dispatcher {
     }
     static _getRenderStr(froms, tos, t) {
         let str = "";
-        return str;
         let from;
         let to;
         for (let i = 0; i < tos.length; i++) {
