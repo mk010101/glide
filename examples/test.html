@@ -253,7 +253,8 @@
             ,"gi");
             */
 
-            const val = "2";
+            // const val = "2";
+            // const val = "2px";
             // const val = "drop-shadow(rgba(20,50,150, .6) -=6px 6px *=3px)";
             // const val = "translate(200%, 15, .7rem, 15turn)";
             // const val = "rgb(200, 0, 15)";
@@ -262,21 +263,12 @@
             // const val = "hue-rotate(*=30px, 10%)";
             // const val = "rgba(20, 50, 150, 0.6) /=6px 6% -3rem ";
             // const val = "rgb(255, 0, 0) 1px solid";
-            // const val = "1px 2rem solid";
+            const val = "1px 2rem solid";
             // const val = "blur(1px) brightness(0.6) hsla(100deg, 50%, 75%, 0.87) rgba(155, 10, 204, .8) drop-shadow(-2px -2px 4px #333333) hue-rotate(-20deg)";
             // const val = "rgba(170, 191, 64, 0.7) 2px -2px hue-rotate(-=30px, 10%) hsla(20deg, 50%, 90%) 3rem #ffcc00 none repeat scroll /=10% 0% / auto padding-box border-box";
 
             console.log(val);
 
-            let vo = {
-                original: null,
-                numbers: [],
-                units: [],
-                strings: [],
-                floats: [],
-                increments: [],
-            };
-            vo.original = val;
 
             let res = [];
 
@@ -295,21 +287,16 @@
                 res.push(...getVUs(p));
             }
 
+            /// Trim result
             for (let i = 0; i < res.length; i++) {
-                let vu = res[i];
-                if (vu.number != (void 0)) {
-                    vo.numbers.push(vu.number);
-                    vo.units.push(vu.unit);
-                    vo.increments.push(vu.increment);
-                } else {
-                    vo.strings.push(vu.string);
-                }
+                if (res[i].number == (void 0) && res[i].string === "")
+                    res.splice(i, 1);
             }
-            // console.log(res)
-            // console.log(vo);
 
-            let combStr = vo.strings[0];
-            for (let i = 1; i < res.length; i++) {
+            console.log(res)
+
+            let combStr = "";
+            for (let i = 0; i < res.length; i++) {
                 let p = res[i];
                 if (p.isNum)
                     combStr += `${p.number + 5}${p.unit}`;
@@ -383,13 +370,13 @@
                     })
                 }
                 for (let i = 0; i < strings.length; i++) {
-                    //if(strings[i] !== "") {
+                    // if (strings[i] !== "") {
                     resStr.push({
                         number: null,
                         unit: null,
                         string: strings[i]
                     });
-                    //}
+                    // }
                 }
             }
 
