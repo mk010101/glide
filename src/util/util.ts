@@ -189,22 +189,15 @@ export function unwrapValues(prop: string, val: any): any {
     }
 }
 
-function getBeginStr(prop: string) {
-    if (is.propTransform(prop) || is.propFilter(prop))
-        return prop + "(";
-    return "";
-}
+function getDefaultVo(prop:string = null):Vo {
 
-function getEndStr(prop: string) {
-    if (is.propTransform(prop) || is.propFilter(prop))
-        return ")";
-    return "";
-}
-
-function getSepStr(prop: string) {
-    if (is.propTransform(prop) || is.propFilter(prop))
-        return ", ";
-    return " ";
+    let val = prop? getDefaultValue(prop) : 0;
+    let vo = new Vo();
+    vo.numbers.push(val);
+    vo.strings.push(null);
+    vo.units.push(null);
+    vo.increments.push(null);
+    return vo;
 }
 
 /**
@@ -213,17 +206,17 @@ function getSepStr(prop: string) {
  * @param prop
  * @param val
  */
-export function getVo(targetType: TargetType, prop: any, val: any): Vo[] {
+export function getVo(targetType: TargetType, prop: any, val: any): Vo {
 
-    let res: Vo[] = [];
+    let res: Vo = new Vo();
     let propType = getPropType(prop);
 
     if (val === undefined) {
-        return [new Vo()];
+        return getDefaultVo(prop);
     } else if (is.number(val)) {
-        let vo = new Vo();
-        vo.number = val;
-        return [vo];
+        let vo = getDefaultVo();
+        vo.numbers = [val];
+        return vo;
     }
 
     let arrColors = val.match(regColors);

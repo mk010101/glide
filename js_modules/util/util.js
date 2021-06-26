@@ -130,31 +130,25 @@ export function unwrapValues(prop, val) {
         ];
     }
 }
-function getBeginStr(prop) {
-    if (is.propTransform(prop) || is.propFilter(prop))
-        return prop + "(";
-    return "";
-}
-function getEndStr(prop) {
-    if (is.propTransform(prop) || is.propFilter(prop))
-        return ")";
-    return "";
-}
-function getSepStr(prop) {
-    if (is.propTransform(prop) || is.propFilter(prop))
-        return ", ";
-    return " ";
+function getDefaultVo(prop = null) {
+    let val = prop ? getDefaultValue(prop) : 0;
+    let vo = new Vo();
+    vo.numbers.push(val);
+    vo.strings.push(null);
+    vo.units.push(null);
+    vo.increments.push(null);
+    return vo;
 }
 export function getVo(targetType, prop, val) {
-    let res = [];
+    let res = new Vo();
     let propType = getPropType(prop);
     if (val === undefined) {
-        return [new Vo()];
+        return getDefaultVo(prop);
     }
     else if (is.number(val)) {
-        let vo = new Vo();
-        vo.number = val;
-        return [vo];
+        let vo = getDefaultVo();
+        vo.numbers = [val];
+        return vo;
     }
     let arrColors = val.match(regColors);
     let arrCombined = [];

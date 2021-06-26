@@ -104,7 +104,7 @@
 
 
         // el.style.transform = strTransform;
-        el.style.transform = "scale(.8, .7) translateX(50px) rotate(20deg)";
+        // el.style.transform = "scale(.8, .7) translateX(50px) rotate(20deg)";
         // el.style.transform = "translate(30%, 50px)";
         // el.style.transform = "scale(2) translate(50px, 50px)";
         // el.style.transform = "translate(50px, 50px) scale(2)    ";
@@ -237,6 +237,125 @@
         /* ==============================================++++=================++++++++==========+++++++++++=============
             TESTS
          =============================================================================================================*/
+        const regColors = /[rgbahsl]{3,4}\([-.%0-9, degratun]+\)|#[0-9A-F]{6}/gi;
+        const regVUs = /[-+*=/]*[.\d]+[a-z%]*/gi;
+        const regNumsUnits = /[-=.*\d]+|[a-z%]*/gi;
+        const regIncrements = /-=|\+=|\*=|\/=/g;
+
+        function getVos() {
+
+
+            // const val = "2";
+            // const val = "2px";
+            const val = "drop-shadow(rgba(20,50,150, .6) -=6px 6px *=3px)";
+            // const val = "translate(200%, 15, .7rem, 15turn)";
+            // const val = "rgb(200, 0, 15)";
+            // const val = "rgb(200, 0, 15) 1px solid";
+            // const val = "linear-gradient(rgba(17, 18, 19, 0.124), rgb(0, 150, 155))";
+            // const val = "hue-rotate(*=30px, 10%)";
+            // const val = "rgba(20, 50, 150, 0.6) /=6px 6% -3rem ";
+            // const val = "rgb(255, 0, 0) 1px solid";
+            // const val = "1px 2rem solid";
+            // const val = "blur(1px) brightness(0.6) hsla(100deg, 50%, 75%, 0.87) rgba(155, 10, 204, .8) drop-shadow(-2px -2px 4px #333333) hue-rotate(-20deg)";
+            // const val = "rgba(170, 191, 64, 0.7) 2px -2px hue-rotate(-=30px, 10%) hsla(20deg, 50%, 90%) 3rem #ffcc00 none repeat scroll /=10% 0% / auto padding-box border-box";
+
+            console.log(val);
+
+            let vo = {
+                numbers:[],
+                units:[],
+                increments:[],
+                strings:[],
+                floats:[],
+            };
+
+            let res = [];
+
+            let arrColors = val.match(regColors);
+            let arrCombined = [];
+            if (arrColors) {
+                let strParts = val.split(regColors);
+                arrCombined = recombineNumsAndStrings(arrColors, strParts)
+            } else {
+                arrCombined = [val]
+            }
+            //console.log(arrCombined)
+
+            for (let i = 0; i < arrCombined.length; i++) {
+                let p = arrCombined[i];
+                if (p === "") continue;
+                getVUs(p, vo);
+                res.push(...getVUs(p));
+            }
+
+            // Trim result
+            for (let i = res.length-1; i >= 0; i--) {
+                if (res[i] === "")  res.splice(i, 1);
+            }
+            console.log(res)
+
+        }
+
+        getVos();
+
+        function getVUs(str) {
+            let res = [];
+
+            if (!regVUs.test(str) && !regColors.test(str)) {
+               res.push(str);
+
+            } else if (regColors.test(str)) {
+                //TODO: Convert hex|hsl -> RGB(a).
+                let cols = getVUsArr(str);
+                let count = 0;
+                for (let i = 0; i < cols.length; i++) {
+                    res.push(cols[i]);
+                }
+
+            } else {
+                let others = getVUsArr(str);
+                res.push(...others);
+            }
+            return res;
+        }
+
+        function getVUsArr(str) {
+
+            let resNums = [];
+            let resStr = [];
+            let res = [];
+
+            let nums = str.match(regVUs);
+
+            if (nums) {
+                let strings = str.split(regVUs);
+                // console.log(nums)
+                for (let i = 0; i < nums.length; i++) {
+                    resNums.push(nums[i])
+                }
+                for (let i = 0; i < strings.length; i++) {
+                    // if (strings[i] !== "") {
+                    resStr.push(strings[i]);
+                    // }
+                }
+            }
+
+            while (resNums.length > 0 || resStr.length > 0) {
+                if (resStr.length > 0) res.push(resStr.shift());
+                if (resNums.length > 0) res.push(resNums.shift());
+            }
+            return res;
+
+        }
+
+        function recombineNumsAndStrings(numArr, strArr) {
+            let res = [];
+            while (numArr.length > 0 || strArr.length > 0) {
+                if (strArr.length > 0) res.push(strArr.shift());
+                if (numArr.length > 0) res.push(numArr.shift());
+            }
+            return res;
+        }
 
 
         // let oo = Object.assign(el.style,{transform:"scale(1,1)"});

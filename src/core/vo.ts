@@ -3,12 +3,12 @@ import Target from "./target";
 
 export class Vo {
 
-    float: number = 1;/// float:1, int:0
-    number: number = undefined;
-    unit: string = "";
-    increment: string = null;
-    string: string;
-    isNum:boolean = false;
+    floats: number[] = [];/// float:1, int:0
+    numbers: number[] = [];
+    units: string[] = [];
+    increments: string[] = [];
+    strings: string[] = [];
+    // isNum:boolean = false;
 
 }
 
