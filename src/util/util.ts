@@ -68,14 +68,14 @@ export function getValueType(val: any = null): ValueType {
 
 export function getPropType(prop: string): PropType {
 
-    if (is.propDropShadow(prop))
-        return "dropShadow";
+    if (is.propTransform(prop))
+        return "transform";
     else if (is.propColor(prop))
         return "color";
+    else if (is.propFilter(prop))
+        return "filter";
     else if (is.propMatrix(prop))
         return "matrix";
-
-
     return "other";
 
 }
@@ -241,13 +241,12 @@ export function getVo(targetType: TargetType, prop: any, val: any):Vo[] {
 
     /// Trim result
     for (let i = 0; i < res.length; i++) {
-        if (res[i].number == (void 0) && res[i].string === "")
+        if (res[i].number == (void 0) && res[i].string === "") {
             res.splice(i, 1);
+        }
     }
 
-    console.log(res)
-
-
+    // console.log(res);
 
     return res;
 
@@ -262,6 +261,7 @@ function getVUs(str:string) {
         res.push(vo);
     } else if (regColors.test(str)) {
         //TODO: Convert hex|hsl -> RGB(a).
+        str = toRgbStr(str);
         let cols = getVUsArr(str);
         let count = 0;
         for (let i = 0; i < cols.length; i++) {

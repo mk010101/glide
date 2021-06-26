@@ -274,6 +274,81 @@ class TweenGroup {
     }
 }
 
+function toRgb(val) {
+    if (is.hex(val)) {
+        return hexToRGB(val);
+    }
+    else if (is.hsl(val)) {
+        return hslToRgb(val);
+    }
+    else if (is.rgb(val)) {
+        let res = val.match(/[-.\d]+/g);
+        return res.map((v) => parseFloat(v));
+    }
+}
+function toRgbStr(val) {
+    let res = toRgb(val);
+    let str = res.length === 4 ? "rgba" : "rgb";
+    return `${str}(${res.join(", ")})`;
+}
+function hexToRGB(hex) {
+    hex = hex.replace(/^#/, "");
+    let bigint;
+    return [(bigint = parseInt(hex, 16)) >> 16 & 255, bigint >> 8 & 255, bigint & 255];
+}
+function hslToRgb(hsl) {
+    let [sh, ss, sl, sa] = hsl.match(/[-.\d]+/g);
+    let h = parseFloat(sh);
+    let s = parseFloat(ss);
+    let l = parseFloat(sl);
+    let a;
+    if (sa)
+        a = parseFloat(sa);
+    s /= 100;
+    l /= 100;
+    let C = (1 - Math.abs(2 * l - 1)) * s;
+    let hue = h / 60;
+    let X = C * (1 - Math.abs(hue % 2 - 1));
+    let r = 0;
+    let g = 0;
+    let b = 0;
+    if (hue >= 0 && hue < 1) {
+        r = C;
+        g = X;
+    }
+    else if (hue >= 1 && hue < 2) {
+        r = X;
+        g = C;
+    }
+    else if (hue >= 2 && hue < 3) {
+        g = C;
+        b = X;
+    }
+    else if (hue >= 3 && hue < 4) {
+        g = X;
+        b = C;
+    }
+    else if (hue >= 4 && hue < 5) {
+        r = X;
+        b = C;
+    }
+    else {
+        r = C;
+        b = X;
+    }
+    let m = l - C / 2;
+    r += m;
+    g += m;
+    b += m;
+    r *= 255.0;
+    g *= 255.0;
+    b *= 255.0;
+    let arr = [Math.round(r), Math.round(g), Math.round(b)];
+    if (a)
+        arr.push(a);
+    return arr;
+}
+
 function powerInOut(pow) {
     return function (t) {
         if ((t *= 2) < 1)
@@ -509,10 +584,12 @@ function getTweenType(targetType, prop) {
     return "other";
 }
 function getPropType(prop) {
-    if (is.propDropShadow(prop))
-        return "dropShadow";
+    if (is.propTransform(prop))
+        return "transform";
     else if (is.propColor(prop))
         return "color";
+    else if (is.propFilter(prop))
+        return "filter";
     else if (is.propMatrix(prop))
         return "matrix";
     return "other";
@@ -551,10 +628,10 @@ function getVo(targetType, prop, val) {
         res.push(...getVUs(p));
     }
     for (let i = 0; i < res.length; i++) {
-        if (res[i].number == (void 0) && res[i].string === "")
+        if (res[i].number == (void 0) && res[i].string === "") {
             res.splice(i, 1);
+        }
     }
-    console.log(res);
     return res;
 }
 function getVUs(str) {
@@ -565,6 +642,7 @@ function getVUs(str) {
         res.push(vo);
     }
     else if (regColors.test(str)) {
+        str = toRgbStr(str);
         let cols = getVUsArr(str);
         let count = 0;
         for (let i = 0; i < cols.length; i++) {

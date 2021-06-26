@@ -1,5 +1,6 @@
 import { getObjType, is, regColors, regIncrements, regNumsUnits, regProp, regStrValues, regTypes, regValues, regVUs } from "./regex";
 import { Vo } from "../core/vo";
+import { toRgbStr } from "./color";
 import { Tween } from "../core/tween";
 export function minMax(val, min, max) {
     return Math.min(Math.max(val, min), max);
@@ -36,10 +37,12 @@ export function getValueType(val = null) {
     return;
 }
 export function getPropType(prop) {
-    if (is.propDropShadow(prop))
-        return "dropShadow";
+    if (is.propTransform(prop))
+        return "transform";
     else if (is.propColor(prop))
         return "color";
+    else if (is.propFilter(prop))
+        return "filter";
     else if (is.propMatrix(prop))
         return "matrix";
     return "other";
@@ -163,10 +166,10 @@ export function getVo(targetType, prop, val) {
         res.push(...getVUs(p));
     }
     for (let i = 0; i < res.length; i++) {
-        if (res[i].number == (void 0) && res[i].string === "")
+        if (res[i].number == (void 0) && res[i].string === "") {
             res.splice(i, 1);
+        }
     }
-    console.log(res);
     return res;
 }
 function getVUs(str) {
@@ -177,6 +180,7 @@ function getVUs(str) {
         res.push(vo);
     }
     else if (regColors.test(str)) {
+        str = toRgbStr(str);
         let cols = getVUsArr(str);
         let count = 0;
         for (let i = 0; i < cols.length; i++) {
