@@ -197,13 +197,13 @@ function getDefaultVo(prop: string, val: number = null): Vo {
     if (is.propFilter(prop) || is.propTransform(prop)) {
         vo.numbers.push(null, val, null);
         vo.floats.push(1, 1, 1);
-        vo.units.push("", "", "");
+        vo.units.push(null, null, null);
         vo.strings.push(prop + "(", null, ")");
         vo.increments.push(null, null, null);
     } else {
         vo.numbers.push(val);
         vo.floats.push(1);
-        vo.units.push("");
+        vo.units.push(null);
         vo.strings.push(null);
         vo.increments.push(null);
     }
@@ -217,13 +217,13 @@ function addBraces(vo: Vo, prop: string) {
         vo.numbers.unshift(null);
         vo.increments.unshift(null);
         vo.floats.unshift(1);
-        vo.units.unshift("");
+        vo.units.unshift(null);
 
         vo.strings.push(")");
         vo.numbers.push(null);
         vo.increments.push(null);
         vo.floats.push(1);
-        vo.units.push("");
+        vo.units.push(null);
     }
 }
 
@@ -399,8 +399,8 @@ export function normalizeTween(tw: Tween, context: Context) {
 
     // console.log(tw.propType)
 
-    if (propType === "color") {
-        if (from.numbers.length !== to.numbers.length) {
+    if (from.numbers.length !== to.numbers.length) {
+        if (propType === "color") {
             let shorter: Vo = from.numbers.length > to.numbers.length ? to : from;
             let longer: Vo = shorter === from ? to : from;
             shorter.numbers.push(1, null);
@@ -409,52 +409,12 @@ export function normalizeTween(tw: Tween, context: Context) {
             shorter.increments = longer.increments;
             shorter.strings = longer.strings;
         }
+        return; // can't optimize if Tweens are too different.
     }
-
-
-    /*
-    if (from.numbers.length !== to.numbers.length) {
-        let shorter: Vo = from.numbers.length > to.numbers.length ? to : from;
-        let longer: Vo = shorter === from ? to : from;
-        let diff = longer.numbers.length - shorter.numbers.length;
-
-        for (let i = 0; i < diff; i++) {
-
-            if (shorter === from) {
-                shorter.units.push(shorter.units[0]);
-            } else {
-                to.units.push(to.units[to.units.length - 1]);
-                to.increments.push(to.increments[to.increments.length - 1]);
-            }
-
-            switch (propType) {
-
-                case "color":
-                    shorter.numbers.push(1);
-                    break;
-
-                case "transform":
-
-                    break;
-
-                case "other":
-                    shorter.numbers.push(shorter.numbers[0]);
-                    break;
-
-            }
-
-            //shorter.numbers.push(one_zero);
-            //shorter.units.push(null);
-        }
-
-
-    }
-
-    if (from.strings.length > to.strings.length) to.strings = from.strings;
 
     for (let i = 0; i < to.numbers.length; i++) {
 
-        if (to.units[i] == (void 0)) {
+        if (to.units[i] == null) {
             to.units[i] = from.units[i];
         }
 
@@ -462,7 +422,7 @@ export function normalizeTween(tw: Tween, context: Context) {
             from.numbers[i] = Context.convertUnits(from.numbers[i], from.units[i], to.units[i], context.units);
         }
 
-        if (to.units[i] == (void 0)) {
+        if (to.units[i] == null) {
             to.units[i] = defaultUnit;
         }
 
@@ -476,13 +436,7 @@ export function normalizeTween(tw: Tween, context: Context) {
         } else if (incr === "/") {
             to.numbers[i] /= from.numbers[i];
         }
-
-
     }
-     //*/
-
-
-    // console.log(from, to)
 
 
 }

@@ -219,9 +219,7 @@ export class Animation extends Dispatcher {
                 str += to.strings[i];
             }
         }
-
-        // console.log(str)
-
+        // console.log(str);
         return str;
     }
 

@@ -1,6 +1,7 @@
 import { getObjType, is, regColors, regIncrements, regNumsUnits, regProp, regStrValues, regTypes, regValues, regVUs } from "./regex";
 import { Vo } from "../core/vo";
 import { toRgbStr } from "./color";
+import Context from "../core/context";
 import { Tween } from "../core/tween";
 export function minMax(val, min, max) {
     return Math.min(Math.max(val, min), max);
@@ -137,14 +138,14 @@ function getDefaultVo(prop, val = null) {
     if (is.propFilter(prop) || is.propTransform(prop)) {
         vo.numbers.push(null, val, null);
         vo.floats.push(1, 1, 1);
-        vo.units.push("", "", "");
+        vo.units.push(null, null, null);
         vo.strings.push(prop + "(", null, ")");
         vo.increments.push(null, null, null);
     }
     else {
         vo.numbers.push(val);
         vo.floats.push(1);
-        vo.units.push("");
+        vo.units.push(null);
         vo.strings.push(null);
         vo.increments.push(null);
     }
@@ -156,12 +157,12 @@ function addBraces(vo, prop) {
         vo.numbers.unshift(null);
         vo.increments.unshift(null);
         vo.floats.unshift(1);
-        vo.units.unshift("");
+        vo.units.unshift(null);
         vo.strings.push(")");
         vo.numbers.push(null);
         vo.increments.push(null);
         vo.floats.push(1);
-        vo.units.push("");
+        vo.units.push(null);
     }
 }
 export function getVo(targetType, prop, val) {
@@ -292,8 +293,8 @@ export function normalizeTween(tw, context) {
     const propType = getPropType(prop);
     const defaultUnit = getDefaultUnit(prop);
     const defaultValue = getDefaultValue(prop);
-    if (propType === "color") {
-        if (from.numbers.length !== to.numbers.length) {
+    if (from.numbers.length !== to.numbers.length) {
+        if (propType === "color") {
             let shorter = from.numbers.length > to.numbers.length ? to : from;
             let longer = shorter === from ? to : from;
             shorter.numbers.push(1, null);
@@ -301,6 +302,31 @@ export function normalizeTween(tw, context) {
             shorter.units = longer.units;
             shorter.increments = longer.increments;
             shorter.strings = longer.strings;
+        }
+        return;
+    }
+    for (let i = 0; i < to.numbers.length; i++) {
+        if (to.units[i] == null) {
+            to.units[i] = from.units[i];
+        }
+        if (from.units[i] !== to.units[i]) {
+            from.numbers[i] = Context.convertUnits(from.numbers[i], from.units[i], to.units[i], context.units);
+        }
+        if (to.units[i] == null) {
+            to.units[i] = defaultUnit;
+        }
+        let incr = to.increments[i];
+        if (incr === "-") {
+            to.numbers[i] = from.numbers[i] - to.numbers[i];
+        }
+        else if (incr === "+") {
+            to.numbers[i] += from.numbers[i];
+        }
+        else if (incr === "*") {
+            to.numbers[i] *= from.numbers[i];
+        }
+        else if (incr === "/") {
+            to.numbers[i] /= from.numbers[i];
         }
     }
 }
