@@ -16,6 +16,7 @@ import {toRgb, toRgbStr} from "./color";
 import Context from "../core/context";
 import {Tween} from "../core/tween";
 import target from "../core/target";
+import Target from "../core/target";
 
 
 export function minMax(val: number, min: number, max: number): number {
@@ -37,9 +38,9 @@ export function getTargetType(val: any): "dom" | "object" {
  * @param prop
  * @return {TweenType}
  */
-export function getTweenType(targetType: any, prop: any): TweenType {
+export function getTweenType(targetType: TargetType, prop: any): TweenType {
 
-    if (is.obj(targetType))
+    if (targetType === "obj")
         return "obj";
     else if (is.propTransform(prop))
         return "transform";
@@ -83,8 +84,13 @@ export function getPropType(prop: string): PropType {
 /**
  * Returns a default unit.
  * @param prop
+ * @param targetType
  */
-export function getDefaultUnit(prop: string): string {
+export function getDefaultUnit(prop: string, targetType:TargetType): string {
+
+    if (targetType === "obj") {
+        return null;
+    }
 
     if (is.unitDegrees(prop))
         return "deg";
@@ -375,10 +381,12 @@ function recombineNumsAndStrings(numArr: any, strArr: any) {
 /**
  * Normalizes Tween's From and To.
  * @param tw {Tween}
- * @param context {Context}
+ * @param target {Target}
  */
-export function normalizeTween(tw: Tween, context: Context) {
+export function normalizeTween(tw: Tween, target:Target) {
 
+
+    // return
 
     const prop = tw.prop;
 
@@ -388,7 +396,7 @@ export function normalizeTween(tw: Tween, context: Context) {
     let to = tw.to;
     const twType = tw.twType;
     const propType = getPropType(prop);
-    const defaultUnit = getDefaultUnit(prop);
+    const defaultUnit = getDefaultUnit(prop, target.type);
     const defaultValue = getDefaultValue(prop);
 
 
@@ -454,7 +462,7 @@ export function normalizeTween(tw: Tween, context: Context) {
             }
 
             if (from.units[i] !== to.units[i]) {
-                from.numbers[i] = Context.convertUnits(from.numbers[i], from.units[i], to.units[i], context.units);
+                from.numbers[i] = Context.convertUnits(from.numbers[i], from.units[i], to.units[i], target.context.units);
             }
 
 

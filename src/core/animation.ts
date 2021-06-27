@@ -81,12 +81,10 @@ export class Animation extends Dispatcher {
 
         // console.log(~~this.time, ~~this.currentTime)
 
-        this.dispatch(Evt.progress, null);
-
         const tgs = this._currentKf.tgs;
 
         Animation._render(tgs, this.time, this._dir);
-
+        this.dispatch(Evt.progress, null);
 
         if (this.currentTime >= this._currentKf.totalDuration) {
 
@@ -120,6 +118,7 @@ export class Animation extends Dispatcher {
             this.currentTime = 0;
 
         }
+
 
     }
 
@@ -202,11 +201,15 @@ export class Animation extends Dispatcher {
         STATIC METHODS
      =================================================================================================================*/
 
-    static _getRenderStr(tw:Tween, t: number) {
+    static _getRenderStr(tw:Tween, t: number):any {
         let str = "";
 
         let from = tw.from;
         let to = tw.to;
+
+        if (to.numbers.length === 1 && to.units[0] == null) {
+            return from.numbers[0] + t * (to.numbers[0] - from.numbers[0]);
+        }
 
         for (let i = 0; i < to.numbers.length; i++) {
             let nfrom = from.numbers[i];
@@ -268,6 +271,7 @@ export class Animation extends Dispatcher {
                         break;
 
                     case "other":
+                    case "obj":
                         tweenable[prop] = Animation._getRenderStr(tween, eased);
                         break;
 
@@ -359,6 +363,7 @@ export class Animation extends Dispatcher {
         }
 
         const twType = getTweenType(target.type, prop);
+
         let optEase = options.ease;
         if (is.array(val)) {
             fromVal = val[0];
@@ -482,7 +487,7 @@ export class Animation extends Dispatcher {
                 tw.from = from;
                 tw.to = to;
                 // console.log(from, to)
-                normalizeTween(tw, tg.target.context);
+                normalizeTween(tw, tg.target);
             }
 
             if (transOldTweens) Animation._arrangeMaps(transOldTweens, transTweens, tg, "transform");

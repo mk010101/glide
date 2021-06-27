@@ -57,9 +57,9 @@ export class Animation extends Dispatcher {
         this.time += t * this._dir;
         this.currentTime += t;
         this.runningTime += t;
-        this.dispatch(Evt.progress, null);
         const tgs = this._currentKf.tgs;
         Animation._render(tgs, this.time, this._dir);
+        this.dispatch(Evt.progress, null);
         if (this.currentTime >= this._currentKf.totalDuration) {
             if (this._currentKf.callFunc) {
                 this._currentKf.callFunc(this._currentKf.callParams);
@@ -158,6 +158,9 @@ export class Animation extends Dispatcher {
         let str = "";
         let from = tw.from;
         let to = tw.to;
+        if (to.numbers.length === 1 && to.units[0] == null) {
+            return from.numbers[0] + t * (to.numbers[0] - from.numbers[0]);
+        }
         for (let i = 0; i < to.numbers.length; i++) {
             let nfrom = from.numbers[i];
             let nto = to.numbers[i];
@@ -207,6 +210,7 @@ export class Animation extends Dispatcher {
                         }
                         break;
                     case "other":
+                    case "obj":
                         tweenable[prop] = Animation._getRenderStr(tween, eased);
                         break;
                 }
@@ -382,7 +386,7 @@ export class Animation extends Dispatcher {
                 }
                 tw.from = from;
                 tw.to = to;
-                normalizeTween(tw, tg.target.context);
+                normalizeTween(tw, tg.target);
             }
             if (transOldTweens)
                 Animation._arrangeMaps(transOldTweens, transTweens, tg, "transform");

@@ -574,7 +574,7 @@ function minMax(val, min, max) {
     return Math.min(Math.max(val, min), max);
 }
 function getTweenType(targetType, prop) {
-    if (is.obj(targetType))
+    if (targetType === "obj")
         return "obj";
     else if (is.propTransform(prop))
         return "transform";
@@ -595,7 +595,10 @@ function getPropType(prop) {
         return "matrix";
     return "other";
 }
-function getDefaultUnit(prop) {
+function getDefaultUnit(prop, targetType) {
+    if (targetType === "obj") {
+        return null;
+    }
     if (is.unitDegrees(prop))
         return "deg";
     else if (is.unitPercent(prop))
@@ -782,14 +785,14 @@ function recombineNumsAndStrings(numArr, strArr) {
     }
     return res;
 }
-function normalizeTween(tw, context) {
+function normalizeTween(tw, target) {
     var _a, _b;
     const prop = tw.prop;
     let from = tw.from;
     let to = tw.to;
     tw.twType;
     getPropType(prop);
-    const defaultUnit = getDefaultUnit(prop);
+    const defaultUnit = getDefaultUnit(prop, target.type);
     const defaultValue = getDefaultValue(prop);
     if (from.numbers.length !== to.numbers.length) {
         let shorter = from.numbers.length > to.numbers.length ? to : from;
@@ -823,7 +826,7 @@ function normalizeTween(tw, context) {
                 to.units[i] = from.units[i];
             }
             if (from.units[i] !== to.units[i]) {
-                from.numbers[i] = Context.convertUnits(from.numbers[i], from.units[i], to.units[i], context.units);
+                from.numbers[i] = Context.convertUnits(from.numbers[i], from.units[i], to.units[i], target.context.units);
             }
             let incr = to.increments[i];
             if (incr === "-") {
@@ -963,9 +966,9 @@ class Animation extends Dispatcher {
         this.time += t * this._dir;
         this.currentTime += t;
         this.runningTime += t;
-        this.dispatch(Evt.progress, null);
         const tgs = this._currentKf.tgs;
         Animation._render(tgs, this.time, this._dir);
+        this.dispatch(Evt.progress, null);
         if (this.currentTime >= this._currentKf.totalDuration) {
             if (this._currentKf.callFunc) {
                 this._currentKf.callFunc(this._currentKf.callParams);
@@ -1064,6 +1067,9 @@ class Animation extends Dispatcher {
         let str = "";
         let from = tw.from;
         let to = tw.to;
+        if (to.numbers.length === 1 && to.units[0] == null) {
+            return from.numbers[0] + t * (to.numbers[0] - from.numbers[0]);
+        }
         for (let i = 0; i < to.numbers.length; i++) {
             let nfrom = from.numbers[i];
             let nto = to.numbers[i];
@@ -1113,6 +1119,7 @@ class Animation extends Dispatcher {
                         }
                         break;
                     case "other":
+                    case "obj":
                         tweenable[prop] = Animation._getRenderStr(tween, eased);
                         break;
                 }
@@ -1287,7 +1294,7 @@ class Animation extends Dispatcher {
                 }
                 tw.from = from;
                 tw.to = to;
-                normalizeTween(tw, tg.target.context);
+                normalizeTween(tw, tg.target);
             }
             if (transOldTweens)
                 Animation._arrangeMaps(transOldTweens, transTweens, tg, "transform");

@@ -15,7 +15,7 @@ export function getTargetType(val) {
     }
 }
 export function getTweenType(targetType, prop) {
-    if (is.obj(targetType))
+    if (targetType === "obj")
         return "obj";
     else if (is.propTransform(prop))
         return "transform";
@@ -48,7 +48,10 @@ export function getPropType(prop) {
         return "matrix";
     return "other";
 }
-export function getDefaultUnit(prop) {
+export function getDefaultUnit(prop, targetType) {
+    if (targetType === "obj") {
+        return null;
+    }
     if (is.unitDegrees(prop))
         return "deg";
     else if (is.unitPercent(prop))
@@ -277,14 +280,14 @@ function recombineNumsAndStrings(numArr, strArr) {
     }
     return res;
 }
-export function normalizeTween(tw, context) {
+export function normalizeTween(tw, target) {
     var _a, _b;
     const prop = tw.prop;
     let from = tw.from;
     let to = tw.to;
     const twType = tw.twType;
     const propType = getPropType(prop);
-    const defaultUnit = getDefaultUnit(prop);
+    const defaultUnit = getDefaultUnit(prop, target.type);
     const defaultValue = getDefaultValue(prop);
     if (from.numbers.length !== to.numbers.length) {
         let shorter = from.numbers.length > to.numbers.length ? to : from;
@@ -318,7 +321,7 @@ export function normalizeTween(tw, context) {
                 to.units[i] = from.units[i];
             }
             if (from.units[i] !== to.units[i]) {
-                from.numbers[i] = Context.convertUnits(from.numbers[i], from.units[i], to.units[i], context.units);
+                from.numbers[i] = Context.convertUnits(from.numbers[i], from.units[i], to.units[i], target.context.units);
             }
             let incr = to.increments[i];
             if (incr === "-") {
