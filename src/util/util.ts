@@ -191,8 +191,9 @@ export function unwrapValues(prop: string, val: any): any {
 
 function getDefaultVo(prop: string, val: number = null): Vo {
 
-    if (val == null) val = getDefaultValue(prop);
     let vo = new Vo();
+    if (val == null) return vo;
+
 
     if (is.propFilter(prop) || is.propTransform(prop)) {
         vo.numbers.push(null, val, null);
@@ -246,10 +247,8 @@ export function getVo(targetType: TargetType, prop: any, val: any): Vo {
         // addBraces(vo, prop);
         return vo;
     } else if (is.number(val)) {
-        let vo = getDefaultVo(prop, val);
         // addBraces(vo, prop);
-        // console.log(vo)
-        return vo;
+        return getDefaultVo(prop, val);
     }
 
     let arrColors = val.match(regColors);
@@ -300,16 +299,11 @@ export function getVo(targetType: TargetType, prop: any, val: any): Vo {
             vo.units.unshift(null);
             vo.increments.unshift(null);
             vo.strings.unshift(p);
-            if (p.indexOf("rgb") > -1) {
-                // vo.floats[i + 1] = 0;
-                // vo.floats[i + 2] = 0;
-                // vo.floats[i + 3] = 0;
-            }
             vo.floats.push(1);
         }
 
     }
-    // console.log(res)
+    // console.log(vo)
 
     addBraces(vo, prop);
     // console.log(vo)
@@ -407,6 +401,7 @@ export function normalizeTween(tw: Tween, context: Context) {
         let shorter: Vo = from.numbers.length > to.numbers.length ? to : from;
         let longer: Vo = shorter === from ? to : from;
 
+
         if (propType === "color") {
             shorter.numbers.push(1, null);
             shorter.floats = longer.floats;
@@ -424,11 +419,11 @@ export function normalizeTween(tw: Tween, context: Context) {
                     break;
                 }
             }
-            let startVal = firstNumIndex > -1? shorter.numbers[firstNumIndex] : defaultValue;
-            let startUnit = firstNumIndex > -1? shorter.units[firstNumIndex] : defaultUnit;
+            let startVal = firstNumIndex > -1 ? shorter.numbers[firstNumIndex] : defaultValue;
+            let startUnit = firstNumIndex > -1 ? shorter.units[firstNumIndex] : defaultUnit;
 
             for (let i = shorter.numbers.length; i < longer.numbers.length; i++) {
-                if(longer.numbers[i] != null) {
+                if (longer.numbers[i] != null) {
                     shorter.numbers.push(startVal);
                     shorter.units.push(startUnit);
                 } else {
@@ -446,11 +441,21 @@ export function normalizeTween(tw: Tween, context: Context) {
 
     for (let i = 0; i < to.numbers.length; i++) {
 
+        if (to.strings[i]?.indexOf("rgb") > -1) {
+            from.units[i + 1] = from.units[i + 3] = from.units[i + 5] =
+                to.units[i + 1] = to.units[i + 3] = to.units[i + 5] = "";
+            to.floats[i + 1] = to.floats[i + 3] = to.floats[i + 5] = 0;
+
+            if (to.strings[i]?.indexOf("rgba") > -1) {
+                to.units[i + 7] = from.units[i + 7] = "";
+            }
+        }
+
         if (to.numbers[i] != null) {
 
-            if (!from.units[i]) from.units[i] = defaultUnit;
+            if (from.units[i] == null) from.units[i] = defaultUnit;
 
-            if (!to.units[i]) {
+            if (to.units[i] == null) {
                 to.units[i] = from.units[i];
             }
 
@@ -469,6 +474,7 @@ export function normalizeTween(tw: Tween, context: Context) {
             } else if (incr === "/") {
                 to.numbers[i] /= from.numbers[i];
             }
+
         }
     }
 
@@ -497,12 +503,12 @@ export function strToMap(str: string, twType: TweenType): Map<string, Tween> {
 
         //*
         if (is.propDual(prop)) {
-            let prop = part.match(regProp)[0];
+
             let propX = prop + "X";
             let propY = prop + "Y";
             let part2 = part.replace(prop, "");
             let vus = part2.match(regValues);
-            if (vus.length === 1) vus.push(is.valueOne(prop)? "1" : "0");
+            if (vus.length === 1) vus.push(is.valueOne(prop) ? "1" : "0");
 
             let vox = getVo("dom", propX, vus[0]);
             let twx = new Tween(twType, propX, null, null, 0, 0, 0);
@@ -527,15 +533,18 @@ export function strToMap(str: string, twType: TweenType): Map<string, Tween> {
         } else {
             let tw = new Tween(twType, prop, null, null, 0, 0, 0);
             tw.from = vo;
+            tw.keepOld = true;
+            tw.oldValue = `${prop}(${part})`;
             res.set(tw.prop, tw);
         }
-        //*/
+        /*
 
         let tw = new Tween(twType, prop, null, null, 0, 0, 0);
         tw.from = vo;
         tw.keepOld = true;
         tw.oldValue = `${prop}(${part})`;
         res.set(tw.prop, tw);
+        //*/
 
         // console.log(tw)
 

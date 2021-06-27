@@ -214,7 +214,7 @@ export class Animation extends Dispatcher {
             if (transStr)
                 tg.target.tweenable.transform = transStr;
             if (filtersStr)
-                tg.target.tweenable.filter = transStr;
+                tg.target.tweenable.filter = filtersStr;
         }
     }
     static _getTargets(targets, options) {

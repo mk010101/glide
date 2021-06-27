@@ -275,11 +275,11 @@ export class Animation extends Dispatcher {
 
             }
 
-            // console.log(transStr)
+            // console.log(filtersStr)
             if (transStr)
                 tg.target.tweenable.transform = transStr;
             if (filtersStr)
-                tg.target.tweenable.filter = transStr;
+                tg.target.tweenable.filter = filtersStr;
 
         }
 

@@ -132,9 +132,9 @@ export function unwrapValues(prop, val) {
     }
 }
 function getDefaultVo(prop, val = null) {
-    if (val == null)
-        val = getDefaultValue(prop);
     let vo = new Vo();
+    if (val == null)
+        return vo;
     if (is.propFilter(prop) || is.propTransform(prop)) {
         vo.numbers.push(null, val, null);
         vo.floats.push(1, 1, 1);
@@ -174,8 +174,7 @@ export function getVo(targetType, prop, val) {
         return vo;
     }
     else if (is.number(val)) {
-        let vo = getDefaultVo(prop, val);
-        return vo;
+        return getDefaultVo(prop, val);
     }
     let arrColors = val.match(regColors);
     let arrCombined = [];
@@ -222,8 +221,6 @@ export function getVo(targetType, prop, val) {
             vo.units.unshift(null);
             vo.increments.unshift(null);
             vo.strings.unshift(p);
-            if (p.indexOf("rgb") > -1) {
-            }
             vo.floats.push(1);
         }
     }
@@ -281,6 +278,7 @@ function recombineNumsAndStrings(numArr, strArr) {
     return res;
 }
 export function normalizeTween(tw, context) {
+    var _a, _b;
     const prop = tw.prop;
     if (prop === "background")
         return;
@@ -326,10 +324,18 @@ export function normalizeTween(tw, context) {
         }
     }
     for (let i = 0; i < to.numbers.length; i++) {
+        if (((_a = to.strings[i]) === null || _a === void 0 ? void 0 : _a.indexOf("rgb")) > -1) {
+            from.units[i + 1] = from.units[i + 3] = from.units[i + 5] =
+                to.units[i + 1] = to.units[i + 3] = to.units[i + 5] = "";
+            to.floats[i + 1] = to.floats[i + 3] = to.floats[i + 5] = 0;
+            if (((_b = to.strings[i]) === null || _b === void 0 ? void 0 : _b.indexOf("rgba")) > -1) {
+                to.units[i + 7] = from.units[i + 7] = "";
+            }
+        }
         if (to.numbers[i] != null) {
-            if (!from.units[i])
+            if (from.units[i] == null)
                 from.units[i] = defaultUnit;
-            if (!to.units[i]) {
+            if (to.units[i] == null) {
                 to.units[i] = from.units[i];
             }
             if (from.units[i] !== to.units[i]) {
@@ -365,7 +371,6 @@ export function strToMap(str, twType) {
         part = part.replace(/[)(]+/g, "");
         let vo = getVo("dom", prop, part);
         if (is.propDual(prop)) {
-            let prop = part.match(regProp)[0];
             let propX = prop + "X";
             let propY = prop + "Y";
             let part2 = part.replace(prop, "");
@@ -388,13 +393,10 @@ export function strToMap(str, twType) {
         else {
             let tw = new Tween(twType, prop, null, null, 0, 0, 0);
             tw.from = vo;
+            tw.keepOld = true;
+            tw.oldValue = `${prop}(${part})`;
             res.set(tw.prop, tw);
         }
-        let tw = new Tween(twType, prop, null, null, 0, 0, 0);
-        tw.from = vo;
-        tw.keepOld = true;
-        tw.oldValue = `${prop}(${part})`;
-        res.set(tw.prop, tw);
     }
     return res;
 }
