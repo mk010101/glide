@@ -1,6 +1,6 @@
 import Target from "./target";
 import Dispatcher from "./dispatcher";
-import { getPropType, getTweenType, getVo, minMax, normalizeTween, strToMap } from "../util/util";
+import { getPropType, getTweenType, getVo, minMax, normalizeTween, strToMap, unwrapValues } from "../util/util";
 import { Keyframe } from "./keyframe";
 import { Tween } from "./tween";
 import { Evt } from "./events";
@@ -244,8 +244,15 @@ export class Animation extends Dispatcher {
         for (let i = 0; i < keys.length; i++) {
             let prop = keys[i];
             let val = params[prop];
-            let tw = Animation._getTween(target, prop, val, duration, options);
-            tg.tweens.push(tw);
+            if (target.type === "dom" && is.propDual(prop)) {
+                let res = unwrapValues(prop, val);
+                tg.tweens.push(Animation._getTween(target, res[0].prop, res[0].val, duration, options));
+                tg.tweens.push(Animation._getTween(target, res[1].prop, res[1].val, duration, options));
+            }
+            else {
+                let tw = Animation._getTween(target, prop, val, duration, options);
+                tg.tweens.push(tw);
+            }
         }
         return tg;
     }

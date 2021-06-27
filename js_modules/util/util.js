@@ -223,9 +223,6 @@ export function getVo(targetType, prop, val) {
             vo.increments.unshift(null);
             vo.strings.unshift(p);
             if (p.indexOf("rgb") > -1) {
-                vo.floats[i + 1] = 0;
-                vo.floats[i + 2] = 0;
-                vo.floats[i + 3] = 0;
             }
             vo.floats.push(1);
         }
@@ -294,39 +291,63 @@ export function normalizeTween(tw, context) {
     const defaultUnit = getDefaultUnit(prop);
     const defaultValue = getDefaultValue(prop);
     if (from.numbers.length !== to.numbers.length) {
+        let shorter = from.numbers.length > to.numbers.length ? to : from;
+        let longer = shorter === from ? to : from;
         if (propType === "color") {
-            let shorter = from.numbers.length > to.numbers.length ? to : from;
-            let longer = shorter === from ? to : from;
             shorter.numbers.push(1, null);
             shorter.floats = longer.floats;
             shorter.units = longer.units;
             shorter.increments = longer.increments;
             shorter.strings = longer.strings;
+            shorter.floats = longer.floats;
         }
-        return;
+        else {
+            shorter.strings = longer.strings;
+            let firstNumIndex = -1;
+            for (let i = 0; i < shorter.numbers.length; i++) {
+                if (shorter.numbers[i] != null) {
+                    firstNumIndex = i;
+                    break;
+                }
+            }
+            let startVal = firstNumIndex > -1 ? shorter.numbers[firstNumIndex] : defaultValue;
+            let startUnit = firstNumIndex > -1 ? shorter.units[firstNumIndex] : defaultUnit;
+            for (let i = shorter.numbers.length; i < longer.numbers.length; i++) {
+                if (longer.numbers[i] != null) {
+                    shorter.numbers.push(startVal);
+                    shorter.units.push(startUnit);
+                }
+                else {
+                    shorter.numbers.push(null);
+                    shorter.units.push(null);
+                }
+                shorter.increments.push(null);
+            }
+        }
     }
     for (let i = 0; i < to.numbers.length; i++) {
-        if (to.units[i] == null) {
-            to.units[i] = from.units[i];
-        }
-        if (from.units[i] !== to.units[i]) {
-            from.numbers[i] = Context.convertUnits(from.numbers[i], from.units[i], to.units[i], context.units);
-        }
-        if (to.units[i] == null) {
-            to.units[i] = defaultUnit;
-        }
-        let incr = to.increments[i];
-        if (incr === "-") {
-            to.numbers[i] = from.numbers[i] - to.numbers[i];
-        }
-        else if (incr === "+") {
-            to.numbers[i] += from.numbers[i];
-        }
-        else if (incr === "*") {
-            to.numbers[i] *= from.numbers[i];
-        }
-        else if (incr === "/") {
-            to.numbers[i] /= from.numbers[i];
+        if (to.numbers[i] != null) {
+            if (!from.units[i])
+                from.units[i] = defaultUnit;
+            if (!to.units[i]) {
+                to.units[i] = from.units[i];
+            }
+            if (from.units[i] !== to.units[i]) {
+                from.numbers[i] = Context.convertUnits(from.numbers[i], from.units[i], to.units[i], context.units);
+            }
+            let incr = to.increments[i];
+            if (incr === "-") {
+                to.numbers[i] = from.numbers[i] - to.numbers[i];
+            }
+            else if (incr === "+") {
+                to.numbers[i] += from.numbers[i];
+            }
+            else if (incr === "*") {
+                to.numbers[i] *= from.numbers[i];
+            }
+            else if (incr === "/") {
+                to.numbers[i] /= from.numbers[i];
+            }
         }
     }
 }
@@ -343,6 +364,32 @@ export function strToMap(str, twType) {
         part = part.replace(prop, "");
         part = part.replace(/[)(]+/g, "");
         let vo = getVo("dom", prop, part);
+        if (is.propDual(prop)) {
+            let prop = part.match(regProp)[0];
+            let propX = prop + "X";
+            let propY = prop + "Y";
+            let part2 = part.replace(prop, "");
+            let vus = part2.match(regValues);
+            if (vus.length === 1)
+                vus.push(is.valueOne(prop) ? "1" : "0");
+            let vox = getVo("dom", propX, vus[0]);
+            let twx = new Tween(twType, propX, null, null, 0, 0, 0);
+            twx.keepOld = true;
+            twx.oldValue = `${propX}(${vus[0]})`;
+            let voy = getVo("dom", propY, vus[1]);
+            let twy = new Tween(twType, propX, null, null, 0, 0, 0);
+            twy.keepOld = true;
+            twy.oldValue = `${propY}(${vus[1]})`;
+            twx.from = vox;
+            res.set(propX, twx);
+            twy.from = voy;
+            res.set(propY, twy);
+        }
+        else {
+            let tw = new Tween(twType, prop, null, null, 0, 0, 0);
+            tw.from = vo;
+            res.set(tw.prop, tw);
+        }
         let tw = new Tween(twType, prop, null, null, 0, 0, 0);
         tw.from = vo;
         tw.keepOld = true;

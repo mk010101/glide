@@ -320,7 +320,7 @@ export class Animation extends Dispatcher {
             let prop: any = keys[i];
             let val: any = params[prop];
 
-            /*
+            //*
             // If value is like scale(2) or translate(20px 5rem), unwrap it.
             if (target.type === "dom" && is.propDual(prop)) {
                 let res = unwrapValues(prop, val);
@@ -332,8 +332,8 @@ export class Animation extends Dispatcher {
             }
             //*/
 
-            let tw = Animation._getTween(target, prop, val, duration, options);
-            tg.tweens.push(tw);
+            // let tw = Animation._getTween(target, prop, val, duration, options);
+            // tg.tweens.push(tw);
 
 
         }
