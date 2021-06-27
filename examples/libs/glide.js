@@ -265,8 +265,8 @@
 
     class Vo {
         constructor() {
-            this.floats = [];
             this.numbers = [];
+            this.floats = [];
             this.units = [];
             this.increments = [];
             this.strings = [];
@@ -614,33 +614,50 @@
             return 1;
         return 0;
     }
-    function getDefaultVo(prop) {
-        let val = getDefaultValue(prop);
+    function getDefaultVo(prop, val = null) {
+        if (val == null)
+            val = getDefaultValue(prop);
         let vo = new Vo();
         if (is.propFilter(prop) || is.propTransform(prop)) {
             vo.numbers.push(null, val, null);
+            vo.floats.push(1, 1, 1);
+            vo.units.push("", "", "");
             vo.strings.push(prop + "(", null, ")");
-            vo.units.push(null, null, null);
             vo.increments.push(null, null, null);
         }
         else {
             vo.numbers.push(val);
+            vo.floats.push(1);
+            vo.units.push("");
             vo.strings.push(null);
-            vo.units.push(null);
             vo.increments.push(null);
         }
         return vo;
+    }
+    function addBraces(vo, prop) {
+        if (is.propTransform(prop) || is.propFilter(prop)) {
+            vo.strings.unshift(prop + "(");
+            vo.numbers.unshift(null);
+            vo.increments.unshift(null);
+            vo.floats.unshift(1);
+            vo.units.unshift("");
+            vo.strings.push(")");
+            vo.numbers.push(null);
+            vo.increments.push(null);
+            vo.floats.push(1);
+            vo.units.push("");
+        }
     }
     function getVo(targetType, prop, val) {
         let vo = new Vo();
         let res = [];
         getPropType(prop);
         if (val === undefined) {
-            return getDefaultVo(prop);
+            vo = getDefaultVo(prop, val);
+            return vo;
         }
         else if (is.number(val)) {
-            let vo = getDefaultVo(prop);
-            vo.numbers = [val];
+            let vo = getDefaultVo(prop, val);
             return vo;
         }
         let arrColors = val.match(regColors);
@@ -678,14 +695,25 @@
                 }
                 num = parseFloat(digStr);
                 vo.numbers.unshift(num);
+                vo.floats.unshift(1);
                 vo.units.unshift(unit);
                 vo.increments.unshift(incr);
                 vo.strings.unshift(null);
             }
-            else {
-                console.log(p);
+            else if (p !== "") {
+                vo.numbers.unshift(null);
+                vo.units.unshift(null);
+                vo.increments.unshift(null);
+                vo.strings.unshift(p);
+                if (p.indexOf("rgb") > -1) {
+                    vo.floats[i + 1] = 0;
+                    vo.floats[i + 2] = 0;
+                    vo.floats[i + 3] = 0;
+                }
+                vo.floats.push(1);
             }
         }
+        addBraces(vo, prop);
         return vo;
     }
     function getVUs(str) {
@@ -947,6 +975,21 @@
         }
         static _getRenderStr(tw, t) {
             let str = "";
+            let from = tw.from;
+            let to = tw.to;
+            for (let i = 0; i < to.numbers.length; i++) {
+                let nfrom = from.numbers[i];
+                let nto = to.numbers[i];
+                if (nto != null) {
+                    let val = nfrom + t * (nto - nfrom);
+                    if (to.floats[i] === 0)
+                        val = ~~val;
+                    str += val + to.units[i];
+                }
+                else {
+                    str += to.strings[i];
+                }
+            }
             return str;
         }
         static _render(tgs, time, dir) {

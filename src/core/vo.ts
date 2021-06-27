@@ -3,8 +3,8 @@ import Target from "./target";
 
 export class Vo {
 
-    floats: number[] = [];/// float:1, int:0
     numbers: number[] = [];
+    floats: number[] = [];/// float:1, int:0
     units: string[] = [];
     increments: string[] = [];
     strings: string[] = [];

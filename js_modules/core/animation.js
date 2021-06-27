@@ -156,6 +156,21 @@ export class Animation extends Dispatcher {
     }
     static _getRenderStr(tw, t) {
         let str = "";
+        let from = tw.from;
+        let to = tw.to;
+        for (let i = 0; i < to.numbers.length; i++) {
+            let nfrom = from.numbers[i];
+            let nto = to.numbers[i];
+            if (nto != null) {
+                let val = nfrom + t * (nto - nfrom);
+                if (to.floats[i] === 0)
+                    val = ~~val;
+                str += val + to.units[i];
+            }
+            else {
+                str += to.strings[i];
+            }
+        }
         return str;
     }
     static _render(tgs, time, dir) {

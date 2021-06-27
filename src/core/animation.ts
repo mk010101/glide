@@ -204,7 +204,23 @@ export class Animation extends Dispatcher {
 
     static _getRenderStr(tw:Tween, t: number) {
         let str = "";
-        // return str
+
+        let from = tw.from;
+        let to = tw.to;
+
+        for (let i = 0; i < to.numbers.length; i++) {
+            let nfrom = from.numbers[i];
+            let nto = to.numbers[i];
+            if (nto != null) {
+                let val = nfrom + t * (nto - nfrom);
+                if (to.floats[i] === 0) val = ~~val;
+                str += val + to.units[i];
+            } else {
+                str += to.strings[i];
+            }
+        }
+
+        // console.log(str)
 
         return str;
     }
