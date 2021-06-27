@@ -769,12 +769,23 @@
         const prop = tw.prop;
         if (prop === "background")
             return;
-        tw.from;
-        tw.to;
+        let from = tw.from;
+        let to = tw.to;
         tw.twType;
-        getPropType(prop);
+        const propType = getPropType(prop);
         getDefaultUnit(prop);
         getDefaultValue(prop);
+        if (propType === "color") {
+            if (from.numbers.length !== to.numbers.length) {
+                let shorter = from.numbers.length > to.numbers.length ? to : from;
+                let longer = shorter === from ? to : from;
+                shorter.numbers.push(1, null);
+                shorter.floats = longer.floats;
+                shorter.units = longer.units;
+                shorter.increments = longer.increments;
+                shorter.strings = longer.strings;
+            }
+        }
     }
     function strToMap(str, twType) {
         let res = new Map();

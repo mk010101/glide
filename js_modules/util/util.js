@@ -292,6 +292,17 @@ export function normalizeTween(tw, context) {
     const propType = getPropType(prop);
     const defaultUnit = getDefaultUnit(prop);
     const defaultValue = getDefaultValue(prop);
+    if (propType === "color") {
+        if (from.numbers.length !== to.numbers.length) {
+            let shorter = from.numbers.length > to.numbers.length ? to : from;
+            let longer = shorter === from ? to : from;
+            shorter.numbers.push(1, null);
+            shorter.floats = longer.floats;
+            shorter.units = longer.units;
+            shorter.increments = longer.increments;
+            shorter.strings = longer.strings;
+        }
+    }
 }
 export function strToMap(str, twType) {
     let res = new Map();

@@ -189,7 +189,7 @@ export function unwrapValues(prop: string, val: any): any {
     }
 }
 
-function getDefaultVo(prop: string, val:number=null): Vo {
+function getDefaultVo(prop: string, val: number = null): Vo {
 
     if (val == null) val = getDefaultValue(prop);
     let vo = new Vo();
@@ -397,16 +397,30 @@ export function normalizeTween(tw: Tween, context: Context) {
     const defaultUnit = getDefaultUnit(prop);
     const defaultValue = getDefaultValue(prop);
 
+    // console.log(tw.propType)
+
+    if (propType === "color") {
+        if (from.numbers.length !== to.numbers.length) {
+            let shorter: Vo = from.numbers.length > to.numbers.length ? to : from;
+            let longer: Vo = shorter === from ? to : from;
+            shorter.numbers.push(1, null);
+            shorter.floats = longer.floats;
+            shorter.units = longer.units;
+            shorter.increments = longer.increments;
+            shorter.strings = longer.strings;
+        }
+    }
+
 
     /*
-    if (froms.length !== tos.length) {
-        let shorter: Vo[] = froms.length > tos.length ? tos : froms;
-        let longer: Vo[] = shorter === froms ? tos : froms;
-        let diff = longer.length - shorter.length;
+    if (from.numbers.length !== to.numbers.length) {
+        let shorter: Vo = from.numbers.length > to.numbers.length ? to : from;
+        let longer: Vo = shorter === from ? to : from;
+        let diff = longer.numbers.length - shorter.numbers.length;
 
         for (let i = 0; i < diff; i++) {
 
-            if (shorter === froms) {
+            if (shorter === from) {
                 shorter.units.push(shorter.units[0]);
             } else {
                 to.units.push(to.units[to.units.length - 1]);
@@ -465,7 +479,7 @@ export function normalizeTween(tw: Tween, context: Context) {
 
 
     }
-     */
+     //*/
 
 
     // console.log(from, to)
