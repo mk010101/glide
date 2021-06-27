@@ -675,7 +675,7 @@ function getVo(targetType, prop, val) {
     let vo = new Vo();
     let res = [];
     getPropType(prop);
-    if (val === undefined) {
+    if (val == void 0) {
         vo = getDefaultVo(prop, val);
         return vo;
     }
@@ -708,7 +708,7 @@ function getVo(targetType, prop, val) {
             let vus = p.match(regNumsUnits);
             let num = 0.0;
             let digStr = vus[0];
-            let unit = vus[1];
+            let unit = vus[1] || null;
             let incr = null;
             let incrMatch = digStr.match(regIncrements);
             if (incrMatch) {
@@ -785,47 +785,26 @@ function recombineNumsAndStrings(numArr, strArr) {
 function normalizeTween(tw, context) {
     var _a, _b;
     const prop = tw.prop;
-    if (prop === "background")
-        return;
     let from = tw.from;
     let to = tw.to;
     tw.twType;
-    const propType = getPropType(prop);
+    getPropType(prop);
     const defaultUnit = getDefaultUnit(prop);
     const defaultValue = getDefaultValue(prop);
     if (from.numbers.length !== to.numbers.length) {
         let shorter = from.numbers.length > to.numbers.length ? to : from;
         let longer = shorter === from ? to : from;
-        if (propType === "color") {
-            shorter.numbers.push(1, null);
-            shorter.floats = longer.floats;
-            shorter.units = longer.units;
-            shorter.increments = longer.increments;
-            shorter.strings = longer.strings;
-            shorter.floats = longer.floats;
-        }
-        else {
-            shorter.strings = longer.strings;
-            let firstNumIndex = -1;
-            for (let i = 0; i < shorter.numbers.length; i++) {
-                if (shorter.numbers[i] != null) {
-                    firstNumIndex = i;
-                    break;
-                }
+        shorter.strings = longer.strings;
+        for (let i = shorter.numbers.length; i < longer.numbers.length; i++) {
+            if (longer.numbers[i] != null) {
+                shorter.numbers.push(defaultValue);
+                shorter.units.push(defaultUnit);
             }
-            let startVal = firstNumIndex > -1 ? shorter.numbers[firstNumIndex] : defaultValue;
-            let startUnit = firstNumIndex > -1 ? shorter.units[firstNumIndex] : defaultUnit;
-            for (let i = shorter.numbers.length; i < longer.numbers.length; i++) {
-                if (longer.numbers[i] != null) {
-                    shorter.numbers.push(startVal);
-                    shorter.units.push(startUnit);
-                }
-                else {
-                    shorter.numbers.push(null);
-                    shorter.units.push(null);
-                }
-                shorter.increments.push(null);
+            else {
+                shorter.numbers.push(null);
+                shorter.units.push(null);
             }
+            shorter.increments.push(null);
         }
     }
     for (let i = 0; i < to.numbers.length; i++) {
