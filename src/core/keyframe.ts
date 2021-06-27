@@ -9,6 +9,7 @@ export class Keyframe {
     tgs: TweenGroup[] = [];
     callFunc:Function = null;
     callParams:any = null;
+    startTime = 0;
 
 
 
@@ -20,27 +21,8 @@ export class Keyframe {
             if (this.totalDuration < tw.totalDuration) {
                 this.totalDuration = tw.totalDuration;
             }
-
-
-
-            /*
-            if (tw.type === "transform") {
-                if (!this.transforms) this.transforms = [];
-                this.transforms.push(tw);
-            } else if (tw.type === "filter") {
-                if (!this.filters) this.filters = [];
-                this.filters.push(tw);
-            } else {
-                this.tweens.push(tw);
-            }
-
-             */
-
         }
         this.tgs.push(tg);
-
-
-
     }
 
 }

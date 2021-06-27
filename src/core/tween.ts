@@ -1,15 +1,12 @@
-import {PropType, TargetType, TweenType} from "../types";
+import {PropType, TweenType} from "../types";
 import {quadInOut} from "../util/ease";
 import {Vo} from "./vo";
-import Target from "./target";
-import {getPropType} from "../util/util";
+
 
 export class Tween {
-    target:Target;
     tweenable: any = null;
-    type: TweenType = null;
+    twType: TweenType = null;
     propType:PropType;
-    targetType:TargetType = null;
     prop: any = "";
     duration: number = 0.0;
     delay = 0.0;
@@ -19,12 +16,12 @@ export class Tween {
     toVal:any = null;
     from: Vo = null;
     to: Vo = null;
-    computed: Vo = null;
     ease: Function = quadInOut;
-    initialized = false;
-    // pos = 0;
 
-    constructor(target: Target,
+    keepOld = false;
+    oldValue: string = "";
+
+    constructor(
                 twType: TweenType,
                 prop: any,
                 fromVal:any,
@@ -33,10 +30,8 @@ export class Tween {
                 delay: number,
                 start: number) {
 
-        this.target = target;
-        this.tweenable = target?.tweenable;
-        this.targetType = target?.type;
-        this.type = twType;
+
+        this.twType = twType;
         this.prop = prop;
         this.duration = duration;
         this.fromVal = fromVal;

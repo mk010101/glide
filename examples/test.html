@@ -90,7 +90,7 @@
         const els = document.querySelectorAll(".el");
         const el = els[0];
 
-        // const strTransform = "rotate(20deg) translate(150%, 5rem) scale(1.2, 2)";
+        const strTransform = "rotate(20deg) translate(150%, 5rem) scale(1.2)";
         // const strTransform = "rotate(0deg)";
         // const strTransform = "rotate(0deg)";
         const strFilter = "blur(1px) brightness(0.6) drop-shadow(-2px -2px 4px #333333) hue-rotate(-20deg)";
@@ -104,25 +104,31 @@
 
 
         // el.style.transform = strTransform;
-        el.style.transform = "scale(.8, .7) translate(50px) rotate(20deg)";
+        el.style.transform = "scale(.8, .7) translateX(50px) rotate(20deg)";
         // el.style.transform = "translate(30%, 50px)";
         // el.style.transform = "scale(2) translate(50px, 50px)";
         // el.style.transform = "translate(50px, 50px) scale(2)    ";
         // el.style.filter = strFilter;
+        // el.style.filter = "drop-shadow(#333333 -2px -2px 4px)";
+        // el.style.filter = "drop-shadow(rgba(51, 0, 51) 6px 6px 3px) ";
         // el.style.filter = "drop-shadow(-2px -2px 4px #333333)";
         // el.style.filter = "drop-shadow(-2px -2px 4px rgba(10,10,10,.8))";
         // el.style.margin = strMargins;
-        el.style.backgroundColor = "hsla(70, 50%, 50%, 1)";
+        // el.style.backgroundColor = "hsla(70deg, 50%, 50%, .7)";
+        // el.style.backgroundColor = "#ffcc00";
+        // el.style.backgroundColor = "rgba(250,32,222,0.7)";
         // el.style.borderColor = "hsla(25, 70%, 40%)";
         // el.style.top = "20px";
-        // el.style.left = "20px";
-        el.style.margin = "20px";
+        // el.style.left = "50px";
+        el.style.borderWidth = "1px 4px 6px ";
+        // el.style.borderWidth = "10px .2rem 4px";
 
 
         // console.log(strFilter.match(regFilters));
         // console.log(el.style.filter.match(regFilters));
         //console.log(el.style.filter);
         // console.log(el.style.margin);
+        // console.log(el.style.borderWidth);
 
         // console.log(window.getComputedStyle(el).background);
         // console.log(window.getComputedStyle(el).transform);
@@ -130,21 +136,23 @@
 
         function run() {
             let t0 = performance.now();
-            let a = glide.to(els, 1000,
+            let a = glide.to(els, 500,
                 {
                     // opacity: .5,
                     // left: "150px",
                     // left: 50,
-                    // left: "19%",
+                    // left: "15rem",
                     // left: "+=13%",
                     // top: "50%",
                     // top: {value:"50%", duration:600},
                     // marginLeft: "12rem",
-                    // margin: "10%, 12rem",
+                    // margin: "10% 12rem 10% 25",
                     // width: ["50%", 10],
                     // width: "5%",
                     // height: "10%",
+                    // "drop-shadow": "#330033 6px 6px 3px",
                     // "drop-shadow": "6px 6px 3px #330033",
+                    // "drop-shadow": "6px 6px 3px rgb(20,50,150)",
                     // dropShadow: "rgba(20,50,150, .6) 6px 6px 3px",
                     // invert: 90,
                     // blur: 3,
@@ -152,52 +160,62 @@
                     // hueRotate: 80,
                     // saturate: 20,
                     // sepia: 90,
-                    // translateX: "4rem",
-                    // x: "270px",
-                    x: {value: "12rem", ease: "bounceOut", duration: 1200},
+                    // translateX: "14rem",
+                    // x: 270,
+                    x: "+=270px",
+                    // x: {value: "12rem", ease: "bounceOut", duration: 1200},
                     // y: 50,
                     // y: "+=20",
                     // translateY: 50,
                     // translate: "100",
                     // scale: 1.5
                     // x: 120,
-                    // rotate: {value: "2rad", duration: 1000},
-                    rotate: -45,
+                    rotate: {value: "2rad", duration: 1000},
+                    // rotate: -45,
                     // scaleX: -1,
-                    // scale: ".75, .75",
-                    // matrix: "(1, 0, 0, 1, 30, 10)",
+                    // scale: "1.75, 1.75",
+                    // matrix: "1, 0, 0, 1, 30, 10",
                     // transformOrigin: "0 -100"
                     // backgroundColor: "#ff6c41",
-                    backgroundColor: "hsla(15deg, 100% 50%, .5)",
-                    //color: "rgba(153,215,255,0.8)",
-                    // background: "hsla(15deg, 100% 50%, .5)"
-                    //bg: "hsla(15deg, 100% 50%, .5)",
+                    // backgroundColor: "hsla(15deg, 100% 50%, .5)",
+                    // color: "rgba(153,215,255,0.8)",
+                    // background: "rgb(255, 0, 200)",
+                    // background: "linear-gradient(#ff0000, #0000ff)",
+                    // bg: "hsla(15deg, 100% 50%, .5)",
                     // bg: "#339922",
-                    //borderColor: "rgba(153,215,255,0.8)"
+                    // borderColor: "rgba(153,215,255,0.8)",
+                    // borderWidth: "4 9 12 3",
+                    // borderWidth: "+=4px",
+                    // border: "5px solid #00ff55"
                 }, {
                     delay: 500,
-                    zrepeat: 2,
+                    // repeat: 2,
                     // ease: "stepped(5)",
                     stagger: 50,
-                    zloop: false,
-                    zpaused: true,
-                    zkeep: true
+                    // loop: false,
+                    // paused: true,
+                    // keep: true
                 })
-                // .to(500, {left:"10%"}, {stagger:30})
-                // .call((params) => {console.log("called!", params)}, 123, 334)
-                .to(500, {top: 150})
-                // .to(500, {rotate:"+=50"})
+            // .to(500, {left:"10%"}, {stagger:30})
+            // .call((params) => {console.log("called!", params)}, 123, 334)
+            // .to(500, {top: 150})
+            // .to(500, {rotate:"90", bg:"#89a4bd"})
+                .on("progress", () => {
+                    updRange(a.runningTime)
+                })
                 .on('end', () => {
-                    console.log(a);
-                    // console.log(a.keyframes[0].tweens[0]);
+                    // console.log(a);
+                    console.log(a.keyframes[0].tgs[0].tweens);
                     console.log("end", (performance.now() - t0));
                     // console.log(window.getComputedStyle(el).transform);
                 });
 
             setTimeout(() => {
-                // a.seek(900)
+                // a.stop();
+                // a.reset();
+                // a.seek(0)
                 // a.remove(document.querySelector(".el"))
-            }, 300);
+            }, 1200);
 
             const r = document.createElement("input");
             r.type = "range";
@@ -208,6 +226,10 @@
                 let val = parseInt(r.value);
                 a.seek(val);
             });
+
+            function updRange(v) {
+                r.value = v.toString();
+            }
         }
 
 

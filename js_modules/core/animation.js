@@ -1,6 +1,6 @@
 import Target from "./target";
 import Dispatcher from "./dispatcher";
-import { getPropType, getTweenType, getVo, minMax, normalizeVos, strToMap, unwrapValues } from "../util/util";
+import { getPropType, getTweenType, getVo, minMax, normalizeTween, strToMap, unwrapValues } from "../util/util";
 import { Keyframe } from "./keyframe";
 import { Tween } from "./tween";
 import { Evt } from "./events";
@@ -15,8 +15,6 @@ export class Animation extends Dispatcher {
         this.targets = [];
         this.keyframes = [];
         this.paused = false;
-        this.seeking = false;
-        this.dir = 1;
         this.time = 0.0;
         this.totalDuration = 0.0;
         this.currentTime = 0.0;
@@ -24,7 +22,10 @@ export class Animation extends Dispatcher {
         this.playedTimes = 0;
         this.loop = true;
         this.repeat = 1;
-        this.num = 0;
+        this._pos = 0;
+        this._seeking = false;
+        this._preSeekState = 1;
+        this._dir = 1;
         this.repeat = (options.repeat != (void 0) && options.repeat > 0) ? options.repeat + 1 : 1;
         this.loop = options.loop != (void 0) ? options.loop : true;
         this.paused = options.paused != (void 0) ? options.paused : false;
@@ -38,133 +39,50 @@ export class Animation extends Dispatcher {
             const tg = Animation._getTweens(this.targets[i], duration, params, options);
             kf.push(tg);
         }
+        kf.startTime = this.totalDuration / this.repeat;
         this.totalDuration += kf.totalDuration * this.repeat;
         this.keyframes.push(kf);
-        if (!this.currentKf) {
-            this.currentKf = kf;
+        if (!this._currentKf) {
+            this._currentKf = kf;
         }
         return this;
     }
     update(t) {
-        if ((this.paused && !this.seeking) || this.status === -1)
+        if ((this.paused && !this._seeking) || this.status === -1)
             return;
-        if (!this.currentKf.initialized) {
-            Animation._initTweens(this.currentKf);
-            this.currentKf.initialized = true;
+        if (!this._currentKf.initialized) {
+            Animation._initTweens(this._currentKf);
+            this._currentKf.initialized = true;
         }
-        this.time += t * this.dir;
+        this.time += t * this._dir;
         this.currentTime += t;
         this.runningTime += t;
-        const tgs = this.currentKf.tgs;
-        for (let i = 0; i < tgs.length; i++) {
-            const tg = tgs[i];
-            const tweenable = tg.tweenable;
-            let transformsStr = "";
-            let filtersStr = "";
-            for (let j = 0; j < tg.tweens.length; j++) {
-                const tween = tg.tweens[j];
-                const twType = tween.type;
-                let elapsed = minMax(this.time - tween.start - tween.delay, 0, tween.duration) / tween.duration;
-                if (elapsed === 0 && this.dir === 1)
-                    return;
-                let eased = isNaN(elapsed) ? 1 : tween.ease(elapsed);
-                let from = tween.from;
-                let to = tween.to;
-                let tweenable = tween.tweenable;
-                let prop = tween.prop;
-                const isNum = from.isNumber;
-                switch (twType) {
-                    case "css":
-                        if (isNum) {
-                            tweenable[prop] = from.values[0] + eased * (to.values[0] - tween.from.values[0]);
-                        }
-                        else {
-                            let str = "";
-                            for (let j = 0; j < from.values.length; j++) {
-                                let val = from.values[j] + eased * (to.values[j] - tween.from.values[j]);
-                                str += `${val}${to.units[j]} `;
-                            }
-                            tweenable[prop] = str;
-                        }
-                        break;
-                    case "color":
-                        let r = ~~(from.values[0] + eased * to.diffVals[0]);
-                        let g = ~~(from.values[1] + eased * to.diffVals[1]);
-                        let b = ~~(from.values[2] + eased * to.diffVals[2]);
-                        let a = (from.values.length === 4) ? ", " + (from.values[3] + eased * to.diffVals[3]) : "";
-                        tweenable[prop] = `${to.strBegin}(${r}, ${g}, ${b}${a})`;
-                        break;
-                    case "transform":
-                        if (from.keepOriginal) {
-                            transformsStr += from.keepStr + " ";
-                        }
-                        else {
-                            transformsStr += `${to.prop}(`;
-                            for (let j = 0; j < from.values.length; j++) {
-                                let val = from.values[j] + eased * (to.values[j] - tween.from.values[j]);
-                                let sep = j < to.values.length - 1 ? ", " : "";
-                                transformsStr += `${val}${to.units[j]}${sep}`;
-                            }
-                            transformsStr += ") ";
-                        }
-                        break;
-                    case "filter":
-                        if (prop === "drop-shadow" && !from.keepOriginal) {
-                            let x = from.values[0] + eased * to.diffVals[0];
-                            let y = from.values[1] + eased * to.diffVals[1];
-                            let brad = from.values[2] + eased * to.diffVals[2];
-                            let r = ~~(from.values[3] + eased * to.diffVals[3]);
-                            let g = ~~(from.values[4] + eased * to.diffVals[4]);
-                            let b = ~~(from.values[5] + eased * to.diffVals[5]);
-                            let a = (from.values.length === 7) ? ", " + (from.values[6] + eased * (to.values[6] - from.values[6])) : "";
-                            let pref = (from.values.length === 7) ? "rgba" : "rgb";
-                            filtersStr += `drop-shadow(${x}${to.units[0]} ${y}${to.units[1]} ${brad}${to.units[2]} `;
-                            filtersStr += `${pref}(${r}, ${g}, ${b}${a}))`;
-                        }
-                        else if (from.keepOriginal) {
-                            filtersStr += from.keepStr + " ";
-                        }
-                        else {
-                            let v = from.values[0] + eased * to.diffVals[0];
-                            filtersStr += `${to.prop}(${v}${to.units[0]}) `;
-                        }
-                        break;
-                    case "direct":
-                        tweenable[prop] = from.values[0] + eased * to.diffVals[0];
-                        break;
-                }
-            }
-            if (transformsStr) {
-                tweenable.transform = transformsStr;
-            }
-            if (filtersStr) {
-                tweenable.filter = filtersStr;
-            }
-        }
+        const tgs = this._currentKf.tgs;
+        Animation._render(tgs, this.time, this._dir);
         this.dispatch(Evt.progress, null);
-        if (this.currentTime >= this.currentKf.totalDuration) {
-            if (this.currentKf.callFunc) {
-                this.currentKf.callFunc(this.currentKf.callParams);
+        if (this.currentTime >= this._currentKf.totalDuration) {
+            if (this._currentKf.callFunc) {
+                this._currentKf.callFunc(this._currentKf.callParams);
             }
-            if (this.dir > 0 && this.keyframes.length > this.num + 1) {
-                this.num++;
+            if (this._dir > 0 && this.keyframes.length > this._pos + 1) {
+                this._pos++;
                 this.time = 0;
-                this.currentKf = this.keyframes[this.num];
+                this._currentKf = this.keyframes[this._pos];
             }
-            else if (this.dir < 0 && this.num > 0) {
-                this.num--;
-                this.currentKf = this.keyframes[this.num];
-                this.time = this.currentKf.totalDuration;
+            else if (this._dir < 0 && this._pos > 0) {
+                this._pos--;
+                this._currentKf = this.keyframes[this._pos];
+                this.time = this._currentKf.totalDuration;
             }
             else {
                 this.playedTimes++;
                 if (this.playedTimes < this.repeat) {
                     if (this.loop) {
-                        this.dir *= -1;
+                        this._dir *= -1;
                     }
                     else {
                         this.reset();
-                        this.currentKf = this.keyframes[0];
+                        this._currentKf = this.keyframes[0];
                     }
                 }
                 else {
@@ -182,16 +100,12 @@ export class Animation extends Dispatcher {
         this.keyframes.push(kf);
         return this;
     }
-    reset() {
-        this.time = 0;
-        this.num = 0;
-    }
     remove(target) {
         for (let i = this.keyframes.length - 1; i >= 0; i--) {
             let kf = this.keyframes[i];
             for (let j = kf.tgs.length - 1; j >= 0; j--) {
                 const tg = kf.tgs[j];
-                if (tg.target.target === target) {
+                if (tg.target.el === target) {
                     kf.tgs.splice(j, 1);
                 }
             }
@@ -200,23 +114,112 @@ export class Animation extends Dispatcher {
             }
         }
     }
+    reset() {
+        this.stop();
+        for (let i = this.keyframes.length - 1; i >= 0; i--) {
+            const tgs = this.keyframes[i].tgs;
+            if (this.keyframes[i].initialized) {
+                for (let j = 0; j < tgs.length; j++) {
+                    Animation._render(tgs, 0, 1);
+                }
+            }
+        }
+    }
     stop() {
-        this.num = 0;
-        this.currentKf = this.keyframes[0];
+        this.status = 0;
+        this._pos = 0;
+        this._currentKf = this.keyframes[0];
         this.currentTime = 0;
+        this.runningTime = 0;
         this.playedTimes = 0;
-        this.dir = 1;
+        this._dir = 1;
         this.time = 0;
+    }
+    play() {
+        if (this.status > -1) {
+            this.status = 1;
+            this.paused = false;
+        }
     }
     seek(ms) {
         ms = minMax(ms, 0, this.totalDuration);
-        this.seeking = true;
-        this.stop();
+        this._seeking = true;
+        this._preSeekState = this.status;
+        this.status = 0;
+        this.reset();
         while (ms >= 0) {
             this.update(10);
             ms -= 10;
         }
-        this.seeking = false;
+        this.status = this._preSeekState;
+        this._seeking = false;
+    }
+    static _getRenderStr(tw, t) {
+        let str = "";
+        let from = tw.from;
+        let to = tw.to;
+        if (to.numbers.length === 1 && to.units[0] == null) {
+            return from.numbers[0] + t * (to.numbers[0] - from.numbers[0]);
+        }
+        for (let i = 0; i < to.numbers.length; i++) {
+            let nfrom = from.numbers[i];
+            let nto = to.numbers[i];
+            if (nto != null) {
+                let val = nfrom + t * (nto - nfrom);
+                if (to.floats[i] === 0)
+                    val = ~~val;
+                str += val + to.units[i];
+            }
+            else {
+                str += to.strings[i];
+            }
+        }
+        return str;
+    }
+    static _render(tgs, time, dir) {
+        for (let i = 0, k = tgs.length; i < k; i++) {
+            const tg = tgs[i];
+            let transStr = "";
+            let filtersStr = "";
+            for (let j = 0, f = tg.tweens.length; j < f; j++) {
+                const tween = tg.tweens[j];
+                const twType = tween.twType;
+                let elapsed = minMax(time - tween.start - tween.delay, 0, tween.duration) / tween.duration;
+                if (elapsed === 0 && dir === 1)
+                    return;
+                let eased = isNaN(elapsed) ? 1 : tween.ease(elapsed);
+                let from = tween.from;
+                let to = tween.to;
+                let tweenable = tween.tweenable;
+                let prop = tween.prop;
+                switch (twType) {
+                    case "transform":
+                        if (tween.keepOld) {
+                            transStr += tween.oldValue + " ";
+                        }
+                        else {
+                            transStr += Animation._getRenderStr(tween, eased) + " ";
+                        }
+                        break;
+                    case "filter":
+                        if (tween.keepOld) {
+                            filtersStr += tween.oldValue + " ";
+                        }
+                        else {
+                            filtersStr += Animation._getRenderStr(tween, eased) + " ";
+                        }
+                        break;
+                    case "other":
+                    case "obj":
+                        tweenable[prop] = Animation._getRenderStr(tween, eased);
+                        break;
+                }
+            }
+            if (transStr)
+                tg.target.tweenable.transform = transStr;
+            if (filtersStr)
+                tg.target.tweenable.filter = filtersStr;
+        }
     }
     static _getTargets(targets, options) {
         if (typeof targets === "string") {
@@ -288,9 +291,13 @@ export class Animation extends Dispatcher {
             toVal = val;
         }
         let delay = options.delay || 0;
-        let tw = new Tween(target, twType, prop, fromVal, toVal, dur, delay, 0);
-        if (twType === "direct")
-            tw.tweenable = target.target;
+        let tw = new Tween(twType, prop, fromVal, toVal, dur, delay, 0);
+        if (twType === "direct") {
+            tw.tweenable = target.el;
+        }
+        else {
+            tw.tweenable = target.tweenable;
+        }
         if (options.stagger) {
             let del = target.pos * options.stagger;
             tw.start = del;
@@ -330,28 +337,27 @@ export class Animation extends Dispatcher {
             for (let j = 0; j < tg.tweens.length; j++) {
                 const tw = tg.tweens[j];
                 let from;
-                let to = getVo(tw.targetType, tw.prop, tw.toVal);
-                if (tw.target.type === "dom") {
-                    switch (tw.type) {
-                        case "css":
-                        case "color":
+                let to = getVo(tg.target.type, tw.prop, tw.toVal);
+                if (tg.target.type === "dom") {
+                    switch (tw.twType) {
+                        case "other":
                         case "direct":
                             if (tw.fromVal)
-                                from = getVo(tw.targetType, tw.prop, tw.fromVal);
+                                from = getVo(tg.target.type, tw.prop, tw.fromVal);
                             else
-                                from = getVo(tw.targetType, tw.prop, tw.target.getExistingValue(tw.prop));
+                                from = getVo(tg.target.type, tw.prop, tg.target.getExistingValue(tw.prop));
                             break;
                         case "transform":
                         case "filter":
-                            if (tw.type === "transform" && !transChecked) {
-                                transOldTweens = strToMap(tw.target.getExistingValue("transform"));
+                            if (tw.twType === "transform" && !transChecked) {
+                                transOldTweens = strToMap(tg.target.getExistingValue("transform"), "transform");
                                 transTweens = new Map();
                                 transChecked = true;
                                 oldTweens = transOldTweens;
                                 newTweens = transTweens;
                             }
-                            else if (tw.type === "filter" && !filterChecked) {
-                                filterOldTweens = strToMap(tw.target.getExistingValue("filter"));
+                            else if (tw.twType === "filter" && !filterChecked) {
+                                filterOldTweens = strToMap(tg.target.getExistingValue("filter"), "filter");
                                 filterTweens = new Map();
                                 filterChecked = true;
                                 oldTweens = filterOldTweens;
@@ -363,7 +369,7 @@ export class Animation extends Dispatcher {
                             else {
                                 if (oldTweens && oldTweens.has(tw.prop)) {
                                     from = oldTweens.get(tw.prop).from;
-                                    from.keepOriginal = false;
+                                    tw.keepOld = false;
                                 }
                                 else {
                                     from = from = getVo("dom", tw.prop, tw.fromVal);
@@ -375,26 +381,30 @@ export class Animation extends Dispatcher {
                 }
                 else {
                     if (!tw.fromVal)
-                        tw.fromVal = tw.target.getExistingValue(tw.prop);
+                        tw.fromVal = tg.target.getExistingValue(tw.prop);
                     from = getVo("obj", tw.prop, tw.fromVal);
                 }
                 tw.from = from;
                 tw.to = to;
-                normalizeVos(from, to, tw.target.context);
+                normalizeTween(tw, tg.target);
             }
-            if (transOldTweens) {
-                transTweens.forEach((v, k) => {
-                    transOldTweens.set(k, v);
-                });
-                for (let j = tg.tweens.length - 1; j >= 0; j--) {
-                    if (tg.tweens[j].type === "transform") {
-                        tg.tweens.splice(j, 1);
-                    }
-                }
-                transOldTweens.forEach((v) => {
-                    tg.tweens.push(v);
-                });
+            if (transOldTweens)
+                Animation._arrangeMaps(transOldTweens, transTweens, tg, "transform");
+            if (filterOldTweens)
+                Animation._arrangeMaps(filterOldTweens, filterTweens, tg, "filter");
+        }
+    }
+    static _arrangeMaps(oldM, newM, tg, prop) {
+        newM.forEach((v, k) => {
+            oldM.set(k, v);
+        });
+        for (let j = tg.tweens.length - 1; j >= 0; j--) {
+            if (tg.tweens[j].twType === prop) {
+                tg.tweens.splice(j, 1);
             }
         }
+        oldM.forEach((v) => {
+            tg.tweens.push(v);
+        });
     }
 }

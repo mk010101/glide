@@ -1,30 +1,27 @@
-import {TargetType, TweenType} from "../types";
 import {Tween} from "./tween";
+import Target from "./target";
 
 export class Vo {
-    targetType:TargetType = "dom";
-    tweenType:TweenType = "css";
-    prop:any = "";
-    values: number[] = [];
+
+    numbers: number[] = [];
+    floats: number[] = [];/// float:1, int:0
     units: string[] = [];
     increments: string[] = [];
-    isNumber:boolean = false;
-    strBegin:string = "";
-    keepOriginal:boolean = false;
-    keepStr:string = "";
-    diffVals:number[] = [];
+    strings: string[] = [];
+    // isNum:boolean = false;
+
 }
 
 export class TweenGroup {
-    target:any = null;
-    tweenable:any = null;
-    type:TargetType = "dom";
-    tweens:Tween[] = [];
+    target: Target = null;
+    // tweenable:any = null;
+    // targetType:TargetType = "dom";
+    tweens: Tween[] = [];
 
-    constructor(target:any) {
+    constructor(target: any) {
         this.target = target;
-        this.tweenable = target.tweenable;
-        this.type = target.type;
+        // this.tweenable = target.tweenable;
+        // this.targetType = target.type;
     }
 
 }
