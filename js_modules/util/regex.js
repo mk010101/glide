@@ -7,7 +7,7 @@ export const regNumsAndStrings = /[^\d.+=]+|[-+=.\d]+/g;
 export const regNums = /[-.\d]+/g;
 export const regColors = /[rgbahsl]{3,4}\([-.%0-9, degratun]+\)|#[0-9A-F]{6}/gi;
 export const regVUs = /[-+*=/]*[.\d]+[a-z%]*/gi;
-export const regNumsUnits = /[-=.*\d]+|[a-z%]*/gi;
+export const regNumsUnits = /[-=+/.*\d]+|[a-z%]*/gi;
 export const regIncrements = /-=|\+=|\*=|\/=/g;
 export function getObjType(val) {
     return Object.prototype.toString.call(val);

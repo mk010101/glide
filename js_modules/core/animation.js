@@ -154,23 +154,8 @@ export class Animation extends Dispatcher {
         this.status = this._preSeekState;
         this._seeking = false;
     }
-    static _getRenderStr(froms, tos, t) {
+    static _getRenderStr(tw, t) {
         let str = "";
-        let from;
-        let to;
-        for (let i = 0; i < tos.length; i++) {
-            from = froms[i];
-            to = tos[i];
-            if (to.isNum) {
-                let val = from.number + t * (to.number - from.number);
-                if (to.float === 0)
-                    val = ~~val;
-                str += val + to.unit;
-            }
-            else {
-                str += to.string;
-            }
-        }
         return str;
     }
     static _render(tgs, time, dir) {
@@ -195,7 +180,7 @@ export class Animation extends Dispatcher {
                             transStr += tween.oldValue + " ";
                         }
                         else {
-                            transStr += Animation._getRenderStr(from, to, eased) + " ";
+                            transStr += Animation._getRenderStr(tween, eased) + " ";
                         }
                         break;
                     case "filter":
@@ -203,11 +188,11 @@ export class Animation extends Dispatcher {
                             filtersStr += tween.oldValue + " ";
                         }
                         else {
-                            filtersStr += Animation._getRenderStr(from, to, eased) + " ";
+                            filtersStr += Animation._getRenderStr(tween, eased) + " ";
                         }
                         break;
                     case "other":
-                        tweenable[prop] = Animation._getRenderStr(from, to, eased);
+                        tweenable[prop] = Animation._getRenderStr(tween, eased);
                         break;
                 }
             }

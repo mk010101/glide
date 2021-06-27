@@ -75,7 +75,7 @@
     const regProp = /^[-\w]+[^( ]/gi;
     const regColors = /[rgbahsl]{3,4}\([-.%0-9, degratun]+\)|#[0-9A-F]{6}/gi;
     const regVUs = /[-+*=/]*[.\d]+[a-z%]*/gi;
-    const regNumsUnits = /[-=.*\d]+|[a-z%]*/gi;
+    const regNumsUnits = /[-=+/.*\d]+|[a-z%]*/gi;
     const regIncrements = /-=|\+=|\*=|\/=/g;
     function getObjType(val) {
         return Object.prototype.toString.call(val);
@@ -265,11 +265,11 @@
 
     class Vo {
         constructor() {
-            this.float = 1;
-            this.number = undefined;
-            this.unit = "";
-            this.increment = null;
-            this.isNum = false;
+            this.floats = [];
+            this.numbers = [];
+            this.units = [];
+            this.increments = [];
+            this.strings = [];
         }
     }
     class TweenGroup {
@@ -614,20 +614,41 @@
             return 1;
         return 0;
     }
+    function getDefaultVo(prop) {
+        let val = getDefaultValue(prop);
+        let vo = new Vo();
+        if (is.propFilter(prop) || is.propTransform(prop)) {
+            vo.numbers.push(null, val, null);
+            vo.strings.push(prop + "(", null, ")");
+            vo.units.push(null, null, null);
+            vo.increments.push(null, null, null);
+        }
+        else {
+            vo.numbers.push(val);
+            vo.strings.push(null);
+            vo.units.push(null);
+            vo.increments.push(null);
+        }
+        return vo;
+    }
     function getVo(targetType, prop, val) {
+        let vo = new Vo();
         let res = [];
-        let propType = getPropType(prop);
+        getPropType(prop);
         if (val === undefined) {
-            return [new Vo()];
+            return getDefaultVo(prop);
         }
         else if (is.number(val)) {
-            let vo = new Vo();
-            vo.number = val;
-            return [vo];
+            let vo = getDefaultVo(prop);
+            vo.numbers = [val];
+            return vo;
         }
         let arrColors = val.match(regColors);
         let arrCombined = [];
         if (arrColors) {
+            for (let i = 0; i < arrColors.length; i++) {
+                arrColors[i] = toRgbStr(arrColors[i]);
+            }
             let strParts = val.split(regColors);
             arrCombined = recombineNumsAndStrings(arrColors, strParts);
         }
@@ -638,39 +659,43 @@
             let p = arrCombined[i];
             if (p === "")
                 continue;
+            getVUs(p);
             res.push(...getVUs(p));
         }
-        for (let i = 0; i < res.length; i++) {
-            if (res[i].number == (void 0) && res[i].string === "") {
-                res.splice(i, 1);
+        for (let i = res.length - 1; i >= 0; i--) {
+            let p = res[i];
+            let vus = p.match(regVUs);
+            if (vus) {
+                let vus = p.match(regNumsUnits);
+                let num = 0.0;
+                let digStr = vus[0];
+                let unit = vus[1];
+                let incr = null;
+                let incrMatch = digStr.match(regIncrements);
+                if (incrMatch) {
+                    incr = incrMatch[0][0];
+                    digStr = digStr.replace(incrMatch[0], "");
+                }
+                num = parseFloat(digStr);
+                vo.numbers.unshift(num);
+                vo.units.unshift(unit);
+                vo.increments.unshift(incr);
+                vo.strings.unshift(null);
+            }
+            else {
+                console.log(p);
             }
         }
-        if (propType === "transform" || propType === "filter") {
-            let begin = new Vo();
-            let end = new Vo();
-            begin.string = prop + "(";
-            end.string = ")";
-            res.unshift(begin);
-            res.push(end);
-        }
-        return res;
+        return vo;
     }
     function getVUs(str) {
         let res = [];
         if (!regVUs.test(str) && !regColors.test(str)) {
-            let vo = new Vo();
-            vo.string = str;
-            res.push(vo);
+            res.push(str);
         }
         else if (regColors.test(str)) {
-            str = toRgbStr(str);
             let cols = getVUsArr(str);
-            let count = 0;
             for (let i = 0; i < cols.length; i++) {
-                if (count < 3 && cols[i].number != (void 0)) {
-                    cols[i].float = 0;
-                    count++;
-                }
                 res.push(cols[i]);
             }
         }
@@ -688,28 +713,10 @@
         if (nums) {
             let strings = str.split(regVUs);
             for (let i = 0; i < nums.length; i++) {
-                let num = nums[i];
-                let incr = null;
-                let incrMatch = num.match(regIncrements);
-                if (incrMatch) {
-                    incr = incrMatch[0];
-                    num = num.replace(incr, "");
-                    incr = incr.substr(0, 1);
-                }
-                let nus = num.match(regNumsUnits);
-                let voNum = new Vo();
-                voNum.number = parseFloat(nus[0]);
-                voNum.unit = nus[1];
-                voNum.string = "";
-                voNum.increment = incr;
-                voNum.float = 1;
-                voNum.isNum = true;
-                resNums.push(voNum);
+                resNums.push(nums[i]);
             }
             for (let i = 0; i < strings.length; i++) {
-                let voStr = new Vo();
-                voStr.string = strings[i];
-                resStr.push(voStr);
+                resStr.push(strings[i]);
             }
         }
         while (resNums.length > 0 || resStr.length > 0) {
@@ -734,32 +741,12 @@
         const prop = tw.prop;
         if (prop === "background")
             return;
-        let froms = tw.from;
-        let tos = tw.to;
+        tw.from;
+        tw.to;
         tw.twType;
         getPropType(prop);
         getDefaultUnit(prop);
-        const defaultValue = getDefaultValue(prop);
-        if (froms.length === 1 && !froms[0].isNum) {
-            froms = [];
-            for (let i = 0; i < tos.length; i++) {
-                let vo = new Vo();
-                if (tos[i].isNum) {
-                    vo.number = defaultValue;
-                    vo.isNum = true;
-                }
-                vo.unit = tos[i].unit;
-                vo.float = tos[i].float;
-                vo.string = tos[i].string;
-                froms.push(vo);
-            }
-            tw.from = froms;
-        }
-        if (froms.length !== tos.length) {
-            let shorter = froms.length > tos.length ? tos : froms;
-            let longer = shorter === froms ? tos : froms;
-            longer.length - shorter.length;
-        }
+        getDefaultValue(prop);
     }
     function strToMap(str, twType) {
         let res = new Map();
@@ -958,23 +945,8 @@
             this.status = this._preSeekState;
             this._seeking = false;
         }
-        static _getRenderStr(froms, tos, t) {
+        static _getRenderStr(tw, t) {
             let str = "";
-            let from;
-            let to;
-            for (let i = 0; i < tos.length; i++) {
-                from = froms[i];
-                to = tos[i];
-                if (to.isNum) {
-                    let val = from.number + t * (to.number - from.number);
-                    if (to.float === 0)
-                        val = ~~val;
-                    str += val + to.unit;
-                }
-                else {
-                    str += to.string;
-                }
-            }
             return str;
         }
         static _render(tgs, time, dir) {
@@ -989,8 +961,8 @@
                     if (elapsed === 0 && dir === 1)
                         return;
                     let eased = isNaN(elapsed) ? 1 : tween.ease(elapsed);
-                    let from = tween.from;
-                    let to = tween.to;
+                    tween.from;
+                    tween.to;
                     let tweenable = tween.tweenable;
                     let prop = tween.prop;
                     switch (twType) {
@@ -999,7 +971,7 @@
                                 transStr += tween.oldValue + " ";
                             }
                             else {
-                                transStr += Animation._getRenderStr(from, to, eased) + " ";
+                                transStr += Animation._getRenderStr(tween, eased) + " ";
                             }
                             break;
                         case "filter":
@@ -1007,11 +979,11 @@
                                 filtersStr += tween.oldValue + " ";
                             }
                             else {
-                                filtersStr += Animation._getRenderStr(from, to, eased) + " ";
+                                filtersStr += Animation._getRenderStr(tween, eased) + " ";
                             }
                             break;
                         case "other":
-                            tweenable[prop] = Animation._getRenderStr(from, to, eased);
+                            tweenable[prop] = Animation._getRenderStr(tween, eased);
                             break;
                     }
                 }

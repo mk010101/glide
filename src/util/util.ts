@@ -189,14 +189,23 @@ export function unwrapValues(prop: string, val: any): any {
     }
 }
 
-function getDefaultVo(prop:string = null):Vo {
+function getDefaultVo(prop: string): Vo {
 
-    let val = prop? getDefaultValue(prop) : 0;
+    let val = getDefaultValue(prop);
     let vo = new Vo();
-    vo.numbers.push(val);
-    vo.strings.push(null);
-    vo.units.push(null);
-    vo.increments.push(null);
+
+    if (is.propFilter(prop) || is.propTransform(prop)) {
+        vo.numbers.push(null, val, null);
+        vo.strings.push(prop + "(", null, ")");
+        vo.units.push(null, null, null);
+        vo.increments.push(null, null, null);
+    } else {
+        vo.numbers.push(val);
+        vo.strings.push(null);
+        vo.units.push(null);
+        vo.increments.push(null);
+    }
+
     return vo;
 }
 
@@ -208,13 +217,14 @@ function getDefaultVo(prop:string = null):Vo {
  */
 export function getVo(targetType: TargetType, prop: any, val: any): Vo {
 
-    let res: Vo = new Vo();
+    let vo: Vo = new Vo();
+    let res: string[] = [];
     let propType = getPropType(prop);
 
     if (val === undefined) {
         return getDefaultVo(prop);
     } else if (is.number(val)) {
-        let vo = getDefaultVo();
+        let vo = getDefaultVo(prop);
         vo.numbers = [val];
         return vo;
     }
@@ -222,42 +232,58 @@ export function getVo(targetType: TargetType, prop: any, val: any): Vo {
     let arrColors = val.match(regColors);
     let arrCombined = [];
     if (arrColors) {
+        for (let i = 0; i < arrColors.length; i++) {
+            arrColors[i] = toRgbStr(arrColors[i]);
+        }
         let strParts = val.split(regColors);
         arrCombined = recombineNumsAndStrings(arrColors, strParts)
     } else {
         arrCombined = [val]
     }
+    //console.log(arrCombined)
 
     for (let i = 0; i < arrCombined.length; i++) {
         let p = arrCombined[i];
         if (p === "") continue;
+        getVUs(p);
         res.push(...getVUs(p));
     }
 
-    /// Trim result
-    for (let i = 0; i < res.length; i++) {
-        if (res[i].number == (void 0) && res[i].string === "") {
-            res.splice(i, 1);
+    /// Parse the resulting array and fill the Vo.
+
+    for (let i = res.length - 1; i >= 0; i--) {
+
+        let p = res[i];
+        let vus = p.match(regVUs);
+        if(vus) {
+            let vus = p.match(regNumsUnits);
+            let num = 0.0;
+            let digStr = vus[0];
+            let unit = vus[1];
+            let incr:string = null;
+            let incrMatch = digStr.match(regIncrements);
+            if (incrMatch) {
+                incr = incrMatch[0][0];
+                digStr = digStr.replace(incrMatch[0], "");
+            }
+            num = parseFloat(digStr);
+            vo.numbers.unshift(num);
+            vo.units.unshift(unit);
+            vo.increments.unshift(incr);
+            vo.strings.unshift(null);
+        } else {
+            console.log(p)
         }
+
+
     }
 
-    if (propType === "transform" || propType === "filter") {
-        // console.log(res)
-        let begin = new Vo();
-        let end = new Vo();
-        begin.string = prop + "(";
-        end.string = ")";
-        res.unshift(begin);
-        res.push(end);
-    }
 
-    // console.log(res);
-
-    return res;
+    return vo;
 
 }
 
-function getVUs(str: string):any[] {
+function getVUs(str: string): any[] {
     let res: any[] = [];
 
     if (!regVUs.test(str) && !regColors.test(str)) {
@@ -336,34 +362,6 @@ export function normalizeTween(tw: Tween, context: Context) {
     const propType = getPropType(prop);
     const defaultUnit = getDefaultUnit(prop);
     const defaultValue = getDefaultValue(prop);
-
-
-    if (froms.length === 1 && !froms[0].isNum) {
-        froms = [];
-        for (let i = 0; i < tos.length; i++) {
-            let vo = new Vo();
-            if (tos[i].isNum) {
-                vo.number = defaultValue;
-                vo.isNum = true;
-            }
-            vo.unit = tos[i].unit;
-            vo.float = tos[i].float;
-            vo.string = tos[i].string;
-            froms.push(vo);
-        }
-        tw.from = froms;
-    }
-
-    if (froms.length !== tos.length) {
-
-        let shorter: Vo[] = froms.length > tos.length ? tos : froms;
-        let longer: Vo[] = shorter === froms ? tos : froms;
-        let diff = longer.length - shorter.length;
-
-
-
-    }
-
 
 
     /*

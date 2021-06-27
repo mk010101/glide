@@ -1,5 +1,6 @@
-import { getObjType, is, regColors, regProp, regStrValues, regTypes, regValues, regVUs } from "./regex";
+import { getObjType, is, regColors, regIncrements, regNumsUnits, regProp, regStrValues, regTypes, regValues, regVUs } from "./regex";
 import { Vo } from "../core/vo";
+import { toRgbStr } from "./color";
 import { Tween } from "../core/tween";
 export function minMax(val, min, max) {
     return Math.min(Math.max(val, min), max);
@@ -129,29 +130,41 @@ export function unwrapValues(prop, val) {
         ];
     }
 }
-function getDefaultVo(prop = null) {
-    let val = prop ? getDefaultValue(prop) : 0;
+function getDefaultVo(prop) {
+    let val = getDefaultValue(prop);
     let vo = new Vo();
-    vo.numbers.push(val);
-    vo.strings.push(null);
-    vo.units.push(null);
-    vo.increments.push(null);
+    if (is.propFilter(prop) || is.propTransform(prop)) {
+        vo.numbers.push(null, val, null);
+        vo.strings.push(prop + "(", null, ")");
+        vo.units.push(null, null, null);
+        vo.increments.push(null, null, null);
+    }
+    else {
+        vo.numbers.push(val);
+        vo.strings.push(null);
+        vo.units.push(null);
+        vo.increments.push(null);
+    }
     return vo;
 }
 export function getVo(targetType, prop, val) {
-    let res = new Vo();
+    let vo = new Vo();
+    let res = [];
     let propType = getPropType(prop);
     if (val === undefined) {
         return getDefaultVo(prop);
     }
     else if (is.number(val)) {
-        let vo = getDefaultVo();
+        let vo = getDefaultVo(prop);
         vo.numbers = [val];
         return vo;
     }
     let arrColors = val.match(regColors);
     let arrCombined = [];
     if (arrColors) {
+        for (let i = 0; i < arrColors.length; i++) {
+            arrColors[i] = toRgbStr(arrColors[i]);
+        }
         let strParts = val.split(regColors);
         arrCombined = recombineNumsAndStrings(arrColors, strParts);
     }
@@ -162,22 +175,34 @@ export function getVo(targetType, prop, val) {
         let p = arrCombined[i];
         if (p === "")
             continue;
+        getVUs(p);
         res.push(...getVUs(p));
     }
-    for (let i = 0; i < res.length; i++) {
-        if (res[i].number == (void 0) && res[i].string === "") {
-            res.splice(i, 1);
+    for (let i = res.length - 1; i >= 0; i--) {
+        let p = res[i];
+        let vus = p.match(regVUs);
+        if (vus) {
+            let vus = p.match(regNumsUnits);
+            let num = 0.0;
+            let digStr = vus[0];
+            let unit = vus[1];
+            let incr = null;
+            let incrMatch = digStr.match(regIncrements);
+            if (incrMatch) {
+                incr = incrMatch[0][0];
+                digStr = digStr.replace(incrMatch[0], "");
+            }
+            num = parseFloat(digStr);
+            vo.numbers.unshift(num);
+            vo.units.unshift(unit);
+            vo.increments.unshift(incr);
+            vo.strings.unshift(null);
+        }
+        else {
+            console.log(p);
         }
     }
-    if (propType === "transform" || propType === "filter") {
-        let begin = new Vo();
-        let end = new Vo();
-        begin.string = prop + "(";
-        end.string = ")";
-        res.unshift(begin);
-        res.push(end);
-    }
-    return res;
+    return vo;
 }
 function getVUs(str) {
     let res = [];
@@ -239,26 +264,6 @@ export function normalizeTween(tw, context) {
     const propType = getPropType(prop);
     const defaultUnit = getDefaultUnit(prop);
     const defaultValue = getDefaultValue(prop);
-    if (froms.length === 1 && !froms[0].isNum) {
-        froms = [];
-        for (let i = 0; i < tos.length; i++) {
-            let vo = new Vo();
-            if (tos[i].isNum) {
-                vo.number = defaultValue;
-                vo.isNum = true;
-            }
-            vo.unit = tos[i].unit;
-            vo.float = tos[i].float;
-            vo.string = tos[i].string;
-            froms.push(vo);
-        }
-        tw.from = froms;
-    }
-    if (froms.length !== tos.length) {
-        let shorter = froms.length > tos.length ? tos : froms;
-        let longer = shorter === froms ? tos : froms;
-        let diff = longer.length - shorter.length;
-    }
 }
 export function strToMap(str, twType) {
     let res = new Map();

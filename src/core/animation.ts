@@ -202,23 +202,10 @@ export class Animation extends Dispatcher {
         STATIC METHODS
      =================================================================================================================*/
 
-    static _getRenderStr(froms: Vo[], tos: Vo[], t: number) {
+    static _getRenderStr(tw:Tween, t: number) {
         let str = "";
         // return str
-        let from:Vo;
-        let to:Vo;
-        for (let i = 0; i < tos.length; i++) {
-            from = froms[i];
-            to = tos[i];
-            if (to.isNum) {
-                let val: any = from.number + t * (to.number - from.number);
-                if (to.float === 0) val = ~~val;
-                str += val + to.unit;
-            } else {
-                str += to.string;
-            }
-        }
-        // console.log(str);
+
         return str;
     }
 
@@ -242,8 +229,8 @@ export class Animation extends Dispatcher {
                 let elapsed = minMax(time - tween.start - tween.delay, 0, tween.duration) / tween.duration;
                 if (elapsed === 0 && dir === 1) return;
                 let eased = isNaN(elapsed) ? 1 : tween.ease(elapsed);
-                let from: Vo[] = tween.from;
-                let to: Vo[] = tween.to;
+                let from: Vo = tween.from;
+                let to: Vo = tween.to;
                 let tweenable = tween.tweenable;
                 let prop = tween.prop;
 
@@ -254,7 +241,7 @@ export class Animation extends Dispatcher {
                         if (tween.keepOld) {
                             transStr += tween.oldValue + " ";
                         } else {
-                            transStr += Animation._getRenderStr(from, to, eased) + " ";
+                            transStr += Animation._getRenderStr(tween, eased) + " ";
                         }
                         break;
 
@@ -262,12 +249,12 @@ export class Animation extends Dispatcher {
                         if (tween.keepOld) {
                             filtersStr += tween.oldValue + " ";
                         } else {
-                            filtersStr += Animation._getRenderStr(from, to, eased) + " ";
+                            filtersStr += Animation._getRenderStr(tween, eased) + " ";
                         }
                         break;
 
                     case "other":
-                        tweenable[prop] = Animation._getRenderStr(from, to, eased);
+                        tweenable[prop] = Animation._getRenderStr(tween, eased);
                         break;
 
                 }
@@ -283,6 +270,7 @@ export class Animation extends Dispatcher {
         }
 
     }
+
 
 
     static _getTargets(targets: any, options: any): Target[] {
@@ -424,8 +412,8 @@ export class Animation extends Dispatcher {
             for (let j = 0; j < tg.tweens.length; j++) {
                 const tw = tg.tweens[j];
 
-                let from: Vo[];
-                let to: Vo[] = getVo(tg.target.type, tw.prop, tw.toVal);
+                let from: Vo;
+                let to: Vo = getVo(tg.target.type, tw.prop, tw.toVal);
 
                 if (tg.target.type === "dom") {
 
