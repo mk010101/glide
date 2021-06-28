@@ -54,12 +54,9 @@ export class Animation extends Dispatcher {
             Animation._initTweens(this._currentKf);
             this._currentKf.initialized = true;
         }
-        this.time += t * this._dir;
-        this.currentTime += t;
-        this.runningTime += t;
         const tgs = this._currentKf.tgs;
-        Animation._render(tgs, this.time, this._dir);
         this.dispatch(Evt.progress, null);
+        Animation._render(tgs, this.time, this._dir);
         if (this.currentTime >= this._currentKf.totalDuration) {
             if (this._currentKf.callFunc) {
                 this._currentKf.callFunc(this._currentKf.callParams);
@@ -92,6 +89,9 @@ export class Animation extends Dispatcher {
             }
             this.currentTime = 0;
         }
+        this.time += t * this._dir;
+        this.currentTime += t;
+        this.runningTime += t;
     }
     call(func, ...params) {
         let kf = new Keyframe();
