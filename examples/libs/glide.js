@@ -295,6 +295,8 @@
     }
     function toRgbStr(val) {
         let res = toRgb(val);
+        if (res.length === 3)
+            res.push(1);
         let str = res.length === 4 ? "rgba" : "rgb";
         return `${str}(${res.join(", ")})`;
     }
@@ -694,6 +696,9 @@
         let arrColors = val.match(regColors);
         let arrCombined = [];
         if (arrColors) {
+            if (prop === "drop-shadow") {
+                val = arrColors[0] + " " + val.replace(arrColors[0], "");
+            }
             for (let i = 0; i < arrColors.length; i++) {
                 arrColors[i] = toRgbStr(arrColors[i]);
             }
@@ -861,7 +866,7 @@
             let part = arr[i];
             let prop = part.match(regProp)[0];
             part = part.replace(prop, "");
-            part = part.replace(/[)(]+/g, "");
+            part = part.replace(/^\(|\)$/g, "");
             let vo = getVo("dom", prop, part);
             if (is.propDual(prop)) {
                 let propX = prop + "X";
