@@ -86,7 +86,7 @@ export function getPropType(prop: string): PropType {
  * @param prop
  * @param targetType
  */
-export function getDefaultUnit(prop: string, targetType:TargetType): string {
+export function getDefaultUnit(prop: string, targetType: TargetType): string {
 
     if (targetType === "obj") {
         return null;
@@ -104,7 +104,9 @@ export function getDefaultUnit(prop: string, targetType:TargetType): string {
 
 
 export function getDefaultValue(prop: string): number {
-    if (is.valueOne(prop))
+    if (prop === "saturate")
+        return 100;
+    else if (is.valueOne(prop))
         return 1;
     return 0;
 }
@@ -391,7 +393,7 @@ function recombineNumsAndStrings(numArr: any, strArr: any) {
  * @param tw {Tween}
  * @param target {Target}
  */
-export function normalizeTween(tw: Tween, target:Target) {
+export function normalizeTween(tw: Tween, target: Target) {
 
 
     // return
