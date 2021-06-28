@@ -13,6 +13,8 @@ export function toRgb(val) {
 }
 export function toRgbStr(val) {
     let res = toRgb(val);
+    if (res.length === 3)
+        res.push(1);
     let str = res.length === 4 ? "rgba" : "rgb";
     return `${str}(${res.join(", ")})`;
 }

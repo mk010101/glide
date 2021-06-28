@@ -54,6 +54,7 @@ export class Animation extends Dispatcher {
             const tg = Animation._getTweens(this.targets[i], duration, params, options);
             kf.push(tg);
         }
+        // Animation._initTweens(kf);
         kf.startTime = this.totalDuration / this.repeat;
         this.totalDuration += kf.totalDuration * this.repeat;
 
@@ -118,7 +119,6 @@ export class Animation extends Dispatcher {
             this.currentTime = 0;
 
         }
-
 
     }
 

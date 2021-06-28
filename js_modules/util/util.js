@@ -182,6 +182,9 @@ export function getVo(targetType, prop, val) {
     let arrColors = val.match(regColors);
     let arrCombined = [];
     if (arrColors) {
+        if (prop === "drop-shadow") {
+            val = arrColors[0] + " " + val.replace(arrColors[0], "");
+        }
         for (let i = 0; i < arrColors.length; i++) {
             arrColors[i] = toRgbStr(arrColors[i]);
         }
@@ -350,7 +353,7 @@ export function strToMap(str, twType) {
         let part = arr[i];
         let prop = part.match(regProp)[0];
         part = part.replace(prop, "");
-        part = part.replace(/[)(]+/g, "");
+        part = part.replace(/^\(|\)$/g, "");
         let vo = getVo("dom", prop, part);
         if (is.propDual(prop)) {
             let propX = prop + "X";
