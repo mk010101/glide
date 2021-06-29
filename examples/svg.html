@@ -26,7 +26,7 @@
             position: absolute;
             width: 20px;
             height: 20px;
-            background-color: #3399FF;
+            background-color: rgba(255, 95, 30, 0.78);
             top: 0;
             left: 0;
         }
@@ -43,7 +43,7 @@
     <path id="path-1" d="M59.1,458.8C59.1,352.3,164.3,266,294.1,266
 	C397.9,266,482,335,482,420.2c0,68.1-67.3,123.4-150.4,123.4c-66.4,0-120.3-44.2-120.3-98.7c0-43.6,43.1-79,96.2-79
 	c42.5,0,77,28.3,77,63.2" fill="none" stroke="#3399FF" stroke-width="4"/>
-    <rect id="rect-1" x="29.5" y="36.5" width="100" height="100" fill="#3399FF"/>
+    <rect id="rect-1" x="10" y="25" width="100" height="100" fill="rgba(0, 50, 255, .8)"/>
     <rect id="rect-2" x="29.5" y="346.5" width="100" height="100" fill="#3399FF"/>
 </svg>
 
@@ -53,7 +53,7 @@
 <script type="module">
 
     import glide from "./libs/glide.esm.js";
-    //import {is} from "../../ts_out/util/util.js";
+
 
     window.onload = () => {
 
@@ -66,19 +66,84 @@
         const path = document.querySelector("#path-1");
 
 
-        let a = glide.to(rect2)
-            .set({"ztransform-origin": "0 0", x:0, y:0})
-            // .to(500, {x: 200}, {delay:500})
-            .to(2500, {path: path},
-                {delay:500})
+        let a = glide.to(el)
+        //.set({"ztransform-origin": "50% 50%", x:0, y:0})
+        // .to(500, {x: 200}, {delay:500})
+        //.to(2500, {path: path},
+        //{delay:500})
             .on("end", () => {
                 // console.log(a)
-                console.log(a.keyframes[0].tgs[0].tweens[0])
+                console.log(a.keyframes[0].tgs[0].tweens[0]);
+                console.log(rect2.getAttribute("transform-origin"))
             });
 
 
         //-----------------------------------------------------------------
         //rect1.setAttribute("transform", "rotate(45)")
+
+
+        function getSvg(node) {
+            let parent = node;
+            while (parent instanceof SVGElement) {
+                if (!(parent.parentNode instanceof SVGElement)) {
+                    return parent;
+                }
+                parent = parent.parentNode;
+            }
+            return parent;
+        }
+
+        function getSvgViewBox(node) {
+
+            let svg = getSvg(node);
+
+            let bb = svg.getBoundingClientRect();
+
+
+
+
+
+            let vbStr = svg.getAttribute("viewBox");
+            let arr = [0, 0, bb.width, bb.height];
+
+            if (vbStr) {
+                let arrBB = vbStr.split(" ");
+                arr = arrBB.map((v)=> v = parseFloat(v));
+            }
+
+            return  {
+                x: bb.x,
+                y: bb.y,
+                width: bb.width,
+                height: bb.height,
+
+                vbX: arr[0],
+                vbY: arr[1],
+                vbWidth: arr[2],
+                vbHeight: arr[3],
+            };
+
+
+        }
+
+        let len = path.getTotalLength();
+        let pos = path.getPointAtLength(len);
+
+        let bb = getSvgViewBox(path);
+        console.log(bb)
+
+
+
+        let x = pos.x;
+        let y = pos.y;
+
+        let x1 = pos.x;
+        let y1 = pos.y;
+
+        rect1.setAttribute("transform", `translate(${x} ${y})`);
+
+        el.style.transform = `translate(${x}px, ${y}px)`;
+
 
     }
 
