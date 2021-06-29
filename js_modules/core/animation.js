@@ -26,12 +26,22 @@ export class Animation extends Dispatcher {
         this._seeking = false;
         this._preSeekState = 1;
         this._dir = 1;
-        this.repeat = (options.repeat != (void 0) && options.repeat > 0) ? options.repeat + 1 : 1;
-        this.loop = options.loop != (void 0) ? options.loop : true;
-        this.paused = options.paused != (void 0) ? options.paused : false;
-        this.keep = options.keep != (void 0) ? options.keep : false;
+        if (duration !== void 0) {
+            this.repeat = (options.repeat != (void 0) && options.repeat > 0) ? options.repeat + 1 : 1;
+            this.loop = options.loop != (void 0) ? options.loop : true;
+            this.paused = options.paused != (void 0) ? options.paused : false;
+            this.keep = options.keep != (void 0) ? options.keep : false;
+        }
+        else {
+            this.status = 0;
+        }
+        this.target(targets, options);
+        if (duration !== void 0)
+            this.to(duration, params, options);
+    }
+    target(targets, options) {
         this.targets = Animation._getTargets(targets, options);
-        this.to(duration, params, options);
+        return this;
     }
     to(duration, params, options = {}) {
         let kf = new Keyframe();
@@ -45,10 +55,22 @@ export class Animation extends Dispatcher {
         if (!this._currentKf) {
             this._currentKf = kf;
         }
+        if (this.status === 0)
+            this.status = 1;
+        return this;
+    }
+    set(params) {
+        let kf = new Keyframe();
+        for (let i = 0; i < this.targets.length; i++) {
+            const tg = Animation._getTweens(this.targets[i], 0, params, {});
+            kf.push(tg);
+            Animation._initTweens(kf);
+            Animation._render(kf.tgs, 1, 1);
+        }
         return this;
     }
     update(t) {
-        if ((this.paused && !this._seeking) || this.status === -1)
+        if ((this.paused && !this._seeking) || this.status < 1)
             return;
         if (!this._currentKf.initialized) {
             Animation._initTweens(this._currentKf);
