@@ -970,6 +970,9 @@ class Animation extends Dispatcher {
             Animation._initTweens(this._currentKf);
             this._currentKf.initialized = true;
         }
+        this.time += t * this._dir;
+        this.currentTime += t;
+        this.runningTime += t;
         const tgs = this._currentKf.tgs;
         this.dispatch(Evt.progress, null);
         Animation._render(tgs, this.time, this._dir);
@@ -1005,9 +1008,6 @@ class Animation extends Dispatcher {
             }
             this.currentTime = 0;
         }
-        this.time += t * this._dir;
-        this.currentTime += t;
-        this.runningTime += t;
     }
     call(func, ...params) {
         let kf = new Keyframe();
@@ -1104,8 +1104,8 @@ class Animation extends Dispatcher {
                 if (elapsed === 0 && dir === 1)
                     return;
                 let eased = isNaN(elapsed) ? 1 : tween.ease(elapsed);
-                tween.from;
-                tween.to;
+                let from = tween.from;
+                let to = tween.to;
                 let tweenable = tween.tweenable;
                 let prop = tween.prop;
                 switch (twType) {
@@ -1128,6 +1128,9 @@ class Animation extends Dispatcher {
                     case "other":
                     case "obj":
                         tweenable[prop] = Animation._getRenderStr(tween, eased);
+                        break;
+                    case "direct":
+                        tweenable[prop] = from.numbers[0] + eased * (to.numbers[i] - from.numbers[i]);
                         break;
                 }
             }

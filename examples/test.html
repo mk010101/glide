@@ -169,7 +169,7 @@
                     // translateY: 50,
                     // translate: "100",
                     // scale: 1.5
-                    y: {value:100, ease:"stepped(7)"},
+                    y: {value:100, ease:"cubicOut"},
                     x: 120,
                     // rotate: {value: "2rad", duration: 1000},
                     // rotate: -45,
@@ -241,7 +241,7 @@
             TESTS
          =============================================================================================================*/
 
-
+        //el.style.rotate = "20deg"
 
         // let oo = Object.assign(el.style,{transform:"scale(1,1)"});
         // console.log(el.style.cssText);
@@ -252,7 +252,8 @@
         function scroll() {
             const txt = document.querySelector(".txt");
             txt.scrollTop = 200;
-            glide.to(txt, 500, {scrollTop: 50}, {delay: 500});
+            let d = glide.to(txt, 500, {scrollTop: 50}, {delay: 500});
+            console.log(d)
         }
 
         // scroll()

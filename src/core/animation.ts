@@ -78,9 +78,9 @@ export class Animation extends Dispatcher {
         }
         //*/
 
-        // this.time += t * this._dir;
-        // this.currentTime += t;
-        // this.runningTime += t;
+        this.time += t * this._dir;
+        this.currentTime += t;
+        this.runningTime += t;
 
         // console.log(~~this.time, ~~this.currentTime)
 
@@ -122,9 +122,9 @@ export class Animation extends Dispatcher {
 
         }
 
-        this.time += t * this._dir;
-        this.currentTime += t;
-        this.runningTime += t;
+        // this.time += t * this._dir;
+        // this.currentTime += t;
+        // this.runningTime += t;
 
     }
 
@@ -280,6 +280,11 @@ export class Animation extends Dispatcher {
                     case "obj":
                         tweenable[prop] = Animation._getRenderStr(tween, eased);
                         break;
+
+                    case "direct":
+                        tweenable[prop] = from.numbers[0] + eased * (to.numbers[i] - from.numbers[i]);
+                        break;
+
 
                 }
 
