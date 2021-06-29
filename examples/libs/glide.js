@@ -616,7 +616,9 @@
         return "px";
     }
     function getDefaultValue(prop) {
-        if (is.valueOne(prop))
+        if (prop === "saturate")
+            return 100;
+        else if (is.valueOne(prop))
             return 1;
         return 0;
     }
@@ -978,8 +980,8 @@
             this.currentTime += t;
             this.runningTime += t;
             const tgs = this._currentKf.tgs;
-            Animation._render(tgs, this.time, this._dir);
             this.dispatch(Evt.progress, null);
+            Animation._render(tgs, this.time, this._dir);
             if (this.currentTime >= this._currentKf.totalDuration) {
                 if (this._currentKf.callFunc) {
                     this._currentKf.callFunc(this._currentKf.callParams);
@@ -1108,8 +1110,8 @@
                     if (elapsed === 0 && dir === 1)
                         return;
                     let eased = isNaN(elapsed) ? 1 : tween.ease(elapsed);
-                    tween.from;
-                    tween.to;
+                    let from = tween.from;
+                    let to = tween.to;
                     let tweenable = tween.tweenable;
                     let prop = tween.prop;
                     switch (twType) {
@@ -1132,6 +1134,9 @@
                         case "other":
                         case "obj":
                             tweenable[prop] = Animation._getRenderStr(tween, eased);
+                            break;
+                        case "direct":
+                            tweenable[prop] = from.numbers[0] + eased * (to.numbers[i] - from.numbers[i]);
                             break;
                     }
                 }

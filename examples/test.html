@@ -152,13 +152,13 @@
                     // height: "10%",
                     // "drop-shadow": "#330033 6px 6px 3px",
                     // "drop-shadow": "6px 6px 3px #330033",
-                    invert: 90,
-                    dropShadow: "6px 6px 5px rgb(20,50,150)",
+                    // invert: 90,
+                    // dropShadow: "6px 6px 5px rgb(20,50,150)",
                     // dropShadow: "rgba(20,50,150, .6) 6px 6px 3px",
-                    // blur: 3,
+                    // blur: 10,
                     // grayscale: 80,
                     // hueRotate: 80,
-                    // saturate: 20,
+                    // saturate: 200,
                     // sepia: 90,
                     // translateX: "14rem",
                     // x: 270,
@@ -169,7 +169,8 @@
                     // translateY: 50,
                     // translate: "100",
                     // scale: 1.5
-                    // x: 120,
+                    y: {value:100, ease:"cubicOut"},
+                    x: 120,
                     // rotate: {value: "2rad", duration: 1000},
                     // rotate: -45,
                     // scaleX: -1,
@@ -189,7 +190,7 @@
                     // border: "5px solid #00ff55"
                 }, {
                     delay: 500,
-                    // repeat: 2,
+                    // repeat: 1,
                     // ease: "stepped(5)",
                     stagger: 50,
                     // loop: false,
@@ -240,6 +241,7 @@
             TESTS
          =============================================================================================================*/
 
+        //el.style.rotate = "20deg"
 
         // let oo = Object.assign(el.style,{transform:"scale(1,1)"});
         // console.log(el.style.cssText);
@@ -250,7 +252,8 @@
         function scroll() {
             const txt = document.querySelector(".txt");
             txt.scrollTop = 200;
-            glide.to(txt, 500, {scrollTop: 50}, {delay: 500});
+            let d = glide.to(txt, 500, {scrollTop: 50}, {delay: 500});
+            console.log(d)
         }
 
         // scroll()

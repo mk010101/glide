@@ -58,8 +58,8 @@ export class Animation extends Dispatcher {
         this.currentTime += t;
         this.runningTime += t;
         const tgs = this._currentKf.tgs;
-        Animation._render(tgs, this.time, this._dir);
         this.dispatch(Evt.progress, null);
+        Animation._render(tgs, this.time, this._dir);
         if (this.currentTime >= this._currentKf.totalDuration) {
             if (this._currentKf.callFunc) {
                 this._currentKf.callFunc(this._currentKf.callParams);
@@ -212,6 +212,9 @@ export class Animation extends Dispatcher {
                     case "other":
                     case "obj":
                         tweenable[prop] = Animation._getRenderStr(tween, eased);
+                        break;
+                    case "direct":
+                        tweenable[prop] = from.numbers[0] + eased * (to.numbers[i] - from.numbers[i]);
                         break;
                 }
             }
