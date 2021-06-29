@@ -21,6 +21,8 @@ export class Tween {
     keepOld = false;
     oldValue: string = "";
 
+    orientToPath = true;
+
     constructor(
                 twType: TweenType,
                 prop: any,

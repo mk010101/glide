@@ -283,6 +283,15 @@
             this.strings = [];
         }
     }
+    class PathVo extends Vo {
+        constructor() {
+            super(...arguments);
+            this.path = null;
+            this.offsetX = 0;
+            this.offsetY = 0;
+            this.len = 0;
+        }
+    }
     class TweenGroup {
         constructor(target) {
             this.target = null;
@@ -577,6 +586,7 @@
             this.ease = quadInOut;
             this.keepOld = false;
             this.oldValue = "";
+            this.orientToPath = true;
             this.twType = twType;
             this.prop = prop;
             this.duration = duration;
@@ -600,6 +610,8 @@
             return "filter";
         else if (is.propDirect(prop))
             return "direct";
+        else if (prop === "path")
+            return "path";
         else if (targetType === "svg")
             return "svg";
         return "other";
@@ -706,6 +718,23 @@
         }
         else if (is.number(val)) {
             return getDefaultVo(prop, val);
+        }
+        if (prop === "path") {
+            const pVo = new PathVo();
+            let path;
+            if (is.svg(val)) {
+                path = val;
+            }
+            else {
+                path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                path.setAttribute("d", val);
+            }
+            let bb = path.getBoundingClientRect();
+            pVo.path = path;
+            pVo.len = path.getTotalLength();
+            pVo.offsetX = bb.x;
+            pVo.offsetY = bb.y;
+            return pVo;
         }
         let arrColors = val.match(regColors);
         let arrCombined = [];
@@ -815,10 +844,12 @@
         const prop = tw.prop;
         let from = tw.from;
         let to = tw.to;
-        tw.twType;
+        const twType = tw.twType;
         getPropType(prop);
         const defaultUnit = getDefaultUnit(prop, target.type);
         const defaultValue = getDefaultValue(prop);
+        if (twType === "path")
+            return;
         if (from.numbers.length !== to.numbers.length) {
             let shorter = from.numbers.length > to.numbers.length ? to : from;
             let longer = shorter === from ? to : from;
@@ -1136,6 +1167,25 @@
             }
             return str;
         }
+        static _getPathStr(tw, t) {
+            let vo = tw.to;
+            let path = vo.path;
+            let pos = path.getPointAtLength(vo.len * t);
+            let p0 = path.getPointAtLength(vo.len * (t - 0.01));
+            let p1 = path.getPointAtLength(vo.len * (t + 0.01));
+            let rot = 0;
+            let rotStr = "";
+            let deg = "";
+            if (tw.orientToPath) {
+                rot = Math.atan2(p1.y - p0.y, p1.x - p0.x) * 180 / Math.PI;
+                rotStr = ` rotate(${rot})`;
+                deg = "deg";
+            }
+            if (is.svg(tw.tweenable))
+                tw.tweenable.setAttribute("transform", `translate(${pos.x}, ${pos.y})${rotStr}`);
+            else
+                tw.tweenable.transform = `translate(${pos.x + vo.offsetX}px, ${pos.y + vo.offsetY}px) rotate(${rot}${deg})`;
+        }
         static _render(tgs, time, dir) {
             for (let i = 0, k = tgs.length; i < k; i++) {
                 const tg = tgs[i];
@@ -1178,6 +1228,9 @@
                             break;
                         case "svg":
                             tweenable.setAttribute(prop, Animation._getRenderStr(tween, eased));
+                            break;
+                        case "path":
+                            Animation._getPathStr(tween, eased);
                             break;
                     }
                 }

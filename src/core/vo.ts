@@ -8,9 +8,19 @@ export class Vo {
     units: string[] = [];
     increments: string[] = [];
     strings: string[] = [];
+
     // isNum:boolean = false;
 
 }
+
+
+export class PathVo extends Vo {
+    path: SVGPathElement = null;
+    offsetX:number = 0;
+    offsetY:number = 0;
+    len:number = 0;
+}
+
 
 export class TweenGroup {
     target: Target = null;

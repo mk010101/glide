@@ -15,6 +15,7 @@ export class Tween {
         this.ease = quadInOut;
         this.keepOld = false;
         this.oldValue = "";
+        this.orientToPath = true;
         this.twType = twType;
         this.prop = prop;
         this.duration = duration;

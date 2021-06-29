@@ -2,24 +2,29 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>SVG</title>
+    <title>path</title>
 
     <style>
-
         * {
             box-sizing: border-box;
         }
 
         html, body {
-            margin: 5px;
+            margin: 10px;
             overflow: hidden;
             box-sizing: border-box;
             font-family: Arial, sans-serif;
         }
 
         svg {
-            width: 30%;
-            border: 1px solid #3399FF;
+            width: 410px;
+            height: 280px;
+        }
+
+        path {
+            fill: none;
+            stroke: #3399FF;
+            stroke-width: 2px;
         }
 
         .el {
@@ -27,28 +32,22 @@
             width: 20px;
             height: 20px;
             background-color: #3399FF;
-            top: 0;
-            left: 0;
+            /*transform-origin: 25% 25%;*/
+            top: -10px;
+            left: -10px;
         }
-
     </style>
-
 
 </head>
 <body>
-<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px"
-     y="0px"
-     viewBox="0 0 600 600" style="enable-background:new 0 0 600 600;" xml:space="preserve">
-<circle id="circle-1" cx="270" cy="86" r="50" fill="#3399FF"/>
-    <path id="path-1" d="M59.1,458.8C59.1,352.3,164.3,266,294.1,266
-	C397.9,266,482,335,482,420.2c0,68.1-67.3,123.4-150.4,123.4c-66.4,0-120.3-44.2-120.3-98.7c0-43.6,43.1-79,96.2-79
-	c42.5,0,77,28.3,77,63.2" fill="none" stroke="#3399FF" stroke-width="4"/>
-    <rect id="rect-1" x="29.5" y="36.5" width="100" height="100" fill="#3399FF"/>
-    <rect id="rect-2" x="29.5" y="346.5" width="100" height="100" fill="#3399FF"/>
-</svg>
-
 <div class="el"></div>
 
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+      style="enable-background:new 0 0 400 270;" xml:space="preserve">
+<path id="path-1" d="M0,187.5C0,83.9,99.5,0,222.2,0
+	C320.4,0,400,67.2,400,150c0,66.3-63.7,120-142.2,120c-62.8,0-113.8-43-113.8-96c0-42.4,40.8-76.8,91-76.8
+	c40.2,0,72.8,27.5,72.8,61.4"/>
+</svg>
 
 <script type="module">
 
@@ -65,10 +64,12 @@
         const symbol1 = document.querySelector("#symbol-1");
         const path = document.querySelector("#path-1");
 
+        //console.log(path.getBoundingClientRect())
 
-        let a = glide.to(rect2)
-            .set({"ztransform-origin": "0 0", x:0, y:0})
-            // .to(500, {x: 200}, {delay:500})
+
+        let a = glide.to(el)
+        //.set({"transform-origin": "0 0", x:0, y:0})
+        // .to(500, {x: 200}, {delay:500})
             .to(2500, {path: path},
                 {delay:500})
             .on("end", () => {
@@ -85,15 +86,5 @@
 
 </script>
 
-
 </body>
 </html>
-
-
-
-
-
-
-
-
-

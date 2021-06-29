@@ -11,7 +11,7 @@ import {
     regValues,
     regVUs
 } from "./regex";
-import {Vo} from "../core/vo";
+import {PathVo, Vo} from "../core/vo";
 import {toRgb, toRgbStr} from "./color";
 import Context from "../core/context";
 import {Tween} from "../core/tween";
@@ -48,6 +48,8 @@ export function getTweenType(targetType: TargetType, prop: any): TweenType {
         return "filter";
     else if (is.propDirect(prop))
         return "direct";
+    else if (prop === "path")
+        return "path";
     else if (targetType === "svg")
         return "svg";
     return "other";
@@ -232,6 +234,23 @@ export function getVo(targetType: TargetType, prop: any, val: any): Vo {
         return getDefaultVo(prop, val);
     }
 
+    if (prop === "path") {
+        const pVo = new PathVo();
+        let path:SVGPathElement;
+        if(is.svg(val)) {
+            path = val;
+        } else {
+            path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            path.setAttribute("d", val);
+        }
+        let bb = path.getBoundingClientRect();
+        pVo.path = path;
+        pVo.len = path.getTotalLength();
+        pVo.offsetX = bb.x;
+        pVo.offsetY = bb.y;
+        return pVo;
+    }
+
     // console.log(prop, val)
 
     let arrColors = val.match(regColors);
@@ -381,6 +400,9 @@ export function normalizeTween(tw: Tween, target: Target) {
     const propType = getPropType(prop);
     const defaultUnit = getDefaultUnit(prop, target.type);
     const defaultValue = getDefaultValue(prop);
+
+    if (twType === "path")
+        return;
 
     // print(from)
     // print(to)
