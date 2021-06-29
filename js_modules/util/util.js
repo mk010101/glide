@@ -54,11 +54,11 @@ export function getDefaultUnit(prop, targetType) {
     if (targetType === "obj") {
         return null;
     }
-    if (is.unitDegrees(prop))
+    else if (is.unitDegrees(prop))
         return "deg";
     else if (is.unitPercent(prop))
         return "%";
-    else if (is.unitless(prop))
+    else if (is.unitless(prop) || targetType === "svg")
         return "";
     return "px";
 }
@@ -299,13 +299,17 @@ export function normalizeTween(tw, target) {
             }
         }
         if (to.numbers[i] != null) {
-            if (from.units[i] == null)
-                from.units[i] = defaultUnit;
-            if (to.units[i] == null) {
-                to.units[i] = from.units[i];
-            }
-            if (from.units[i] !== to.units[i]) {
-                from.numbers[i] = Context.convertUnits(from.numbers[i], from.units[i], to.units[i], target.context.units);
+            if (from.numbers[i] == null)
+                from.numbers[i] = defaultValue;
+            if (target.type !== "svg") {
+                if (from.units[i] == null)
+                    from.units[i] = defaultUnit;
+                if (to.units[i] == null) {
+                    to.units[i] = from.units[i];
+                }
+                if (from.units[i] !== to.units[i]) {
+                    from.numbers[i] = Context.convertUnits(from.numbers[i], from.units[i], to.units[i], target.context.units);
+                }
             }
             let incr = to.increments[i];
             if (incr === "-") {

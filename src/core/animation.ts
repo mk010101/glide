@@ -287,6 +287,7 @@ export class Animation extends Dispatcher {
 
                     case "svg":
                         tweenable.setAttribute(prop, Animation._getRenderStr(tween, eased));
+                        // console.log(prop, Animation._getRenderStr(tween, eased))
                         break;
 
 

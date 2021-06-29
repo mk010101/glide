@@ -91,13 +91,11 @@ export function getDefaultUnit(prop: string, targetType: TargetType): string {
 
     if (targetType === "obj") {
         return null;
-    }
-
-    if (is.unitDegrees(prop))
+    } else if (is.unitDegrees(prop))
         return "deg";
     else if (is.unitPercent(prop))
         return "%";
-    else if (is.unitless(prop))
+    else if (is.unitless(prop) || targetType === "svg")
         return "";
 
     return "px";
@@ -373,8 +371,6 @@ function recombineNumsAndStrings(numArr: any, strArr: any) {
 export function normalizeTween(tw: Tween, target: Target) {
 
 
-    // return
-
     const prop = tw.prop;
 
     //TODO: Need to look into implementing complex values.
@@ -386,10 +382,13 @@ export function normalizeTween(tw: Tween, target: Target) {
     const defaultUnit = getDefaultUnit(prop, target.type);
     const defaultValue = getDefaultValue(prop);
 
+    // print(from)
+    // print(to)
+
 
     // console.log(tw.propType)
     // return;
-
+    //
     if (from.numbers.length !== to.numbers.length) {
 
         let shorter: Vo = from.numbers.length > to.numbers.length ? to : from;
@@ -426,6 +425,7 @@ export function normalizeTween(tw: Tween, target: Target) {
 
     }
 
+
     // return;
 
     for (let i = 0; i < to.numbers.length; i++) {
@@ -442,14 +442,16 @@ export function normalizeTween(tw: Tween, target: Target) {
 
         if (to.numbers[i] != null) {
 
-            if (from.units[i] == null) from.units[i] = defaultUnit;
+            if (from.numbers[i] == null) from.numbers[i] = defaultValue;
 
-            if (to.units[i] == null) {
-                to.units[i] = from.units[i];
-            }
-
-            if (from.units[i] !== to.units[i]) {
-                from.numbers[i] = Context.convertUnits(from.numbers[i], from.units[i], to.units[i], target.context.units);
+            if (target.type !== "svg") {
+                if (from.units[i] == null) from.units[i] = defaultUnit;
+                if (to.units[i] == null) {
+                    to.units[i] = from.units[i];
+                }
+                if (from.units[i] !== to.units[i]) {
+                    from.numbers[i] = Context.convertUnits(from.numbers[i], from.units[i], to.units[i], target.context.units);
+                }
             }
 
 
