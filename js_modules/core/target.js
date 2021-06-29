@@ -7,7 +7,14 @@ export default class Target {
         this.init();
     }
     init() {
-        this.type = is.dom(this.el) ? "dom" : "obj";
+        let isSvg = is.svg(this.el);
+        let isDom = is.dom(this.el);
+        if (isSvg)
+            this.type = "svg";
+        else if (isDom && !isSvg)
+            this.type = "dom";
+        else
+            this.type = "obj";
         if (this.type === "dom") {
             this.style = this.el.style;
             this.tweenable = this.style;
@@ -27,6 +34,9 @@ export default class Target {
                 prop = "transform";
             else if (is.propFilter(prop))
                 prop = "filter";
+        }
+        if (this.type === "svg") {
+            return this.el.getAttribute(prop);
         }
         if (this.style) {
             res = this.style[prop];

@@ -23,6 +23,8 @@ export function getTweenType(targetType, prop) {
         return "filter";
     else if (is.propDirect(prop))
         return "direct";
+    else if (targetType === "svg")
+        return "svg";
     return "other";
 }
 export function getValueType(val = null) {
@@ -80,29 +82,6 @@ export function getValueUnit(val) {
         unit: v.length === 1 ? "" : v[1],
         increment: increment ? increment[0] : null
     };
-}
-export function getValuesUnits(val) {
-    let vus = [];
-    let vtype = getValueType(val);
-    if (vtype === "null") {
-        return [{
-                value: 0,
-                unit: null,
-                increment: null
-            }];
-    }
-    else if (vtype === "number") {
-        return [{
-                value: val,
-                unit: null,
-                increment: null
-            }];
-    }
-    let arr = val.match(regVUs);
-    for (let i = 0; i < arr.length; i++) {
-        vus.push(getValueUnit(arr[i]));
-    }
-    return vus;
 }
 function getNumbers(val) {
     let nums = val.match(/[-.\d]+/g);

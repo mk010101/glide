@@ -48,7 +48,8 @@ export function getTweenType(targetType: TargetType, prop: any): TweenType {
         return "filter";
     else if (is.propDirect(prop))
         return "direct";
-
+    else if (targetType === "svg")
+        return "svg";
     return "other";
 }
 
@@ -131,32 +132,6 @@ export function getValueUnit(val: string): ValueUnit {
     };
 }
 
-export function getValuesUnits(val: any): ValueUnit[] {
-    let vus: ValueUnit[] = [];
-
-    let vtype = getValueType(val);
-
-    if (vtype === "null") {
-        return [{
-            value: 0,
-            unit: null,
-            increment: null
-        }];
-    } else if (vtype === "number") {
-        return [{
-            value: val,
-            unit: null,
-            increment: null
-        }];
-    }
-
-    let arr = val.match(regVUs);
-
-    for (let i = 0; i < arr.length; i++) {
-        vus.push(getValueUnit(arr[i]));
-    }
-    return vus;
-}
 
 /**
  * Returns numbers from a string.
@@ -258,6 +233,8 @@ export function getVo(targetType: TargetType, prop: any, val: any): Vo {
         // addBraces(vo, prop);
         return getDefaultVo(prop, val);
     }
+
+    // console.log(prop, val)
 
     let arrColors = val.match(regColors);
 

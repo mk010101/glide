@@ -285,6 +285,10 @@ export class Animation extends Dispatcher {
                         tweenable[prop] = from.numbers[0] + eased * (to.numbers[i] - from.numbers[i]);
                         break;
 
+                    case "svg":
+                        tweenable.setAttribute(prop, Animation._getRenderStr(tween, eased));
+                        break;
+
 
                 }
 

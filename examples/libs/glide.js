@@ -188,7 +188,14 @@
             this.init();
         }
         init() {
-            this.type = is.dom(this.el) ? "dom" : "obj";
+            let isSvg = is.svg(this.el);
+            let isDom = is.dom(this.el);
+            if (isSvg)
+                this.type = "svg";
+            else if (isDom && !isSvg)
+                this.type = "dom";
+            else
+                this.type = "obj";
             if (this.type === "dom") {
                 this.style = this.el.style;
                 this.tweenable = this.style;
@@ -208,6 +215,9 @@
                     prop = "transform";
                 else if (is.propFilter(prop))
                     prop = "filter";
+            }
+            if (this.type === "svg") {
+                return this.el.getAttribute(prop);
             }
             if (this.style) {
                 res = this.style[prop];
@@ -590,6 +600,8 @@
             return "filter";
         else if (is.propDirect(prop))
             return "direct";
+        else if (targetType === "svg")
+            return "svg";
         return "other";
     }
     function getPropType(prop) {
@@ -1137,6 +1149,9 @@
                             break;
                         case "direct":
                             tweenable[prop] = from.numbers[0] + eased * (to.numbers[i] - from.numbers[i]);
+                            break;
+                        case "svg":
+                            tweenable.setAttribute(prop, Animation._getRenderStr(tween, eased));
                             break;
                     }
                 }

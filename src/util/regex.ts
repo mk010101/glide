@@ -120,3 +120,4 @@ export const is = {
         return (/scale|opacity|color|fill/i.test(val));
     },
 };
+
