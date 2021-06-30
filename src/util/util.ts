@@ -15,9 +15,8 @@ import {PathVo, Vo} from "../core/vo";
 import {toRgb, toRgbStr} from "./color";
 import Context from "../core/context";
 import {Tween} from "../core/tween";
-import target from "../core/target";
 import Target from "../core/target";
-import {getOffsetBox} from "./geom";
+import {getSvg} from "./geom";
 
 
 export function minMax(val: number, min: number, max: number): number {
@@ -119,7 +118,16 @@ export function getDefaultValue(prop: string): number {
  * @param val
  * @return {ValueUnit}
  */
-export function getValueUnit(val: string): ValueUnit {
+export function getValueUnit(val: any): ValueUnit {
+
+    if (is.number(val)) {
+        return {
+            value: val,
+            unit: null,
+            increment: null
+        }
+    }
+
     const increment = val.match(/-=|\+=|\*=|\/=/g);
     if (increment) increment[0] = increment[0].replace("=", "");
     val = val.replace("-=", "");
@@ -131,6 +139,20 @@ export function getValueUnit(val: string): ValueUnit {
         unit: v.length === 1 ? "" : v[1],
         increment: increment ? increment[0] : null
     };
+}
+
+function getVUs(val: any): ValueUnit[] {
+
+    let res: ValueUnit[] = [];
+
+    if (is.number(val))
+        return [getValueUnit(val)];
+
+    const arr = val.match(regVUs);
+    arr.map((v: string) => {
+        res.push(getValueUnit(v))
+    });
+    return res;
 }
 
 
@@ -217,14 +239,14 @@ function addBraces(vo: Vo, prop: string) {
  * @param target
  * @param prop
  * @param val
+ * @param options
  */
-export function getVo(target:Target, prop: any, val: any): Vo {
+export function getVo(target: Target, prop: any, val: any, options: any = null): Vo {
 
     let vo: Vo = new Vo();
     let res: string[] = [];
-    let propType = getPropType(prop);
+    // let propType = getPropType(prop);
 
-    // console.log(prop, val)
 
     if (val == void 0) {
         vo = getDefaultVo(prop, val);
@@ -237,8 +259,8 @@ export function getVo(target:Target, prop: any, val: any): Vo {
 
     if (prop === "path") {
         const pVo = new PathVo();
-        let path:SVGPathElement;
-        if(is.svg(val)) {
+        let path: SVGPathElement;
+        if (is.svg(val)) {
             path = val;
         } else {
             path = document.createElementNS("http://www.w3.org/2000/svg", "path");
@@ -246,7 +268,16 @@ export function getVo(target:Target, prop: any, val: any): Vo {
         }
         pVo.path = path;
         pVo.len = path.getTotalLength();
-        pVo.offsetBox = getOffsetBox(path, target.el);
+        pVo.svg = getSvg(path);
+        pVo.bBox = target.el.getBoundingClientRect();
+        if (options?.offset !== undefined) {
+            let vus = getVUs(options.offset);
+            pVo.offsetX = vus[0].unit === "%"? vus[0].value / 100 * pVo.bBox.width : vus[0].value;
+            if (vus.length === 1)
+                pVo.offsetY = pVo.offsetX;
+            else
+                pVo.offsetY = vus[1].unit === "%"? vus[1].value / 100 * pVo.bBox.width : vus[1].value;
+        }
         return pVo;
     }
 
@@ -275,8 +306,8 @@ export function getVo(target:Target, prop: any, val: any): Vo {
     for (let i = 0; i < arrCombined.length; i++) {
         let p = arrCombined[i];
         if (p === "") continue;
-        getVUs(p);
-        res.push(...getVUs(p));
+        getVUstrings(p);
+        res.push(...getVUstrings(p));
     }
 
     /// Parse the resulting array and fill the Vo.
@@ -321,7 +352,7 @@ export function getVo(target:Target, prop: any, val: any): Vo {
 
 }
 
-function getVUs(str: string): any[] {
+function getVUstrings(str: string): any[] {
     let res: any[] = [];
 
     if (!regVUs.test(str) && !regColors.test(str)) {

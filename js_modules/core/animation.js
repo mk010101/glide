@@ -201,7 +201,7 @@ export class Animation extends Dispatcher {
     static _getPathStr(tw, t) {
         const vo = tw.to;
         const path = vo.path;
-        const box = vo.offsetBox;
+        const box = vo.bBox;
         const pos = path.getPointAtLength(vo.len * t);
         const p0 = path.getPointAtLength(vo.len * (t - 0.01));
         const p1 = path.getPointAtLength(vo.len * (t + 0.01));
@@ -215,14 +215,15 @@ export class Animation extends Dispatcher {
         }
         let x, y;
         if (is.svg(tw.tweenable)) {
-            let rectOffsetX = (box.el.x - box.svg.bbX) / box.svg.scaleX;
-            let rectOffsetY = (box.el.y - box.svg.bbY) / box.svg.scaleY;
-            x = (pos.x) - box.svg.x - rectOffsetX;
-            y = (pos.y) - box.svg.y - rectOffsetY;
+            x = (pos.x);
+            y = (pos.y);
             tw.tweenable.setAttribute("transform", `translate(${x}, ${y})${rotStr}`);
         }
         else {
-            tw.tweenable.transform = `translate(${pos.x + vo.offsetX}px, ${pos.y + vo.offsetY}px) rotate(${rot}${deg})`;
+            let screenPt = pos.matrixTransform(vo.svg.getScreenCTM());
+            let offsetX = box.x - vo.offsetX;
+            let offsetY = box.y - vo.offsetY;
+            tw.tweenable.transform = `translate(${screenPt.x - offsetX}px, ${screenPt.y - offsetY}px) rotate(${rot}${deg})`;
         }
     }
     static _render(tgs, time, dir) {
@@ -350,6 +351,7 @@ export class Animation extends Dispatcher {
         }
         let delay = options.delay || 0;
         let tw = new Tween(twType, prop, fromVal, toVal, dur, delay, 0);
+        tw.options = options;
         if (twType === "direct") {
             tw.tweenable = target.el;
         }
@@ -395,7 +397,7 @@ export class Animation extends Dispatcher {
             for (let j = 0; j < tg.tweens.length; j++) {
                 const tw = tg.tweens[j];
                 let from;
-                let to = getVo(tg.target, tw.prop, tw.toVal);
+                let to = getVo(tg.target, tw.prop, tw.toVal, tw.options);
                 if (tg.target.type === "dom") {
                     switch (tw.twType) {
                         case "other":

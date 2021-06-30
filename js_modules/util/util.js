@@ -3,7 +3,7 @@ import { PathVo, Vo } from "../core/vo";
 import { toRgbStr } from "./color";
 import Context from "../core/context";
 import { Tween } from "../core/tween";
-import { getOffsetBox } from "./geom";
+import { getSvg } from "./geom";
 export function minMax(val, min, max) {
     return Math.min(Math.max(val, min), max);
 }
@@ -73,6 +73,13 @@ export function getDefaultValue(prop) {
     return 0;
 }
 export function getValueUnit(val) {
+    if (is.number(val)) {
+        return {
+            value: val,
+            unit: null,
+            increment: null
+        };
+    }
     const increment = val.match(/-=|\+=|\*=|\/=/g);
     if (increment)
         increment[0] = increment[0].replace("=", "");
@@ -85,6 +92,16 @@ export function getValueUnit(val) {
         unit: v.length === 1 ? "" : v[1],
         increment: increment ? increment[0] : null
     };
+}
+function getVUs(val) {
+    let res = [];
+    if (is.number(val))
+        return [getValueUnit(val)];
+    const arr = val.match(regVUs);
+    arr.map((v) => {
+        res.push(getValueUnit(v));
+    });
+    return res;
 }
 function getNumbers(val) {
     let nums = val.match(/[-.\d]+/g);
@@ -152,10 +169,9 @@ function addBraces(vo, prop) {
         vo.units.push(null);
     }
 }
-export function getVo(target, prop, val) {
+export function getVo(target, prop, val, options = null) {
     let vo = new Vo();
     let res = [];
-    let propType = getPropType(prop);
     if (val == void 0) {
         vo = getDefaultVo(prop, val);
         return vo;
@@ -175,7 +191,16 @@ export function getVo(target, prop, val) {
         }
         pVo.path = path;
         pVo.len = path.getTotalLength();
-        pVo.offsetBox = getOffsetBox(path, target.el);
+        pVo.svg = getSvg(path);
+        pVo.bBox = target.el.getBoundingClientRect();
+        if ((options === null || options === void 0 ? void 0 : options.offset) !== undefined) {
+            let vus = getVUs(options.offset);
+            pVo.offsetX = vus[0].unit === "%" ? vus[0].value / 100 * pVo.bBox.width : vus[0].value;
+            if (vus.length === 1)
+                pVo.offsetY = pVo.offsetX;
+            else
+                pVo.offsetY = vus[1].unit === "%" ? vus[1].value / 100 * pVo.bBox.width : vus[1].value;
+        }
         return pVo;
     }
     let arrColors = val.match(regColors);
@@ -197,8 +222,8 @@ export function getVo(target, prop, val) {
         let p = arrCombined[i];
         if (p === "")
             continue;
-        getVUs(p);
-        res.push(...getVUs(p));
+        getVUstrings(p);
+        res.push(...getVUstrings(p));
     }
     for (let i = res.length - 1; i >= 0; i--) {
         let p = res[i];
@@ -232,7 +257,7 @@ export function getVo(target, prop, val) {
     addBraces(vo, prop);
     return vo;
 }
-function getVUs(str) {
+function getVUstrings(str) {
     let res = [];
     if (!regVUs.test(str) && !regColors.test(str)) {
         res.push(str);

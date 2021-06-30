@@ -602,36 +602,6 @@ function getSvg(node) {
     }
     return parent;
 }
-function getOffsetBox(svgEl, el) {
-    const svg = getSvg(svgEl);
-    const bbSvgEl = svgEl.getBoundingClientRect();
-    const bbEl = el.getBoundingClientRect();
-    const bbSvg = svg.getBoundingClientRect();
-    const viewBoxStr = svg.getAttribute("viewBox");
-    let arrVB = [0, 0, bbSvgEl.width, bbSvgEl.height];
-    if (viewBoxStr) {
-        let arr = viewBoxStr.split(" ");
-        arrVB = arr.map((v) => v = parseFloat(v));
-    }
-    return {
-        svg: {
-            x: arrVB[0],
-            y: arrVB[1],
-            w: arrVB[2],
-            h: arrVB[3],
-            bbX: bbSvg.x,
-            bbY: bbSvg.y,
-            scaleX: bbSvg.width / arrVB[2],
-            scaleY: bbSvg.height / arrVB[3],
-        },
-        el: {
-            x: bbEl.x,
-            y: bbEl.y,
-            w: bbEl.width,
-            h: bbEl.height,
-        }
-    };
-}
 
 function minMax(val, min, max) {
     return Math.min(Math.max(val, min), max);
@@ -680,6 +650,37 @@ function getDefaultValue(prop) {
     else if (is.valueOne(prop))
         return 1;
     return 0;
+}
+function getValueUnit(val) {
+    if (is.number(val)) {
+        return {
+            value: val,
+            unit: null,
+            increment: null
+        };
+    }
+    const increment = val.match(/-=|\+=|\*=|\/=/g);
+    if (increment)
+        increment[0] = increment[0].replace("=", "");
+    val = val.replace("-=", "");
+    const v = val.match(/[-.\d]+|[%\w]+/g);
+    if (v.length === 1)
+        v.push(null);
+    return {
+        value: parseFloat(v[0]),
+        unit: v.length === 1 ? "" : v[1],
+        increment: increment ? increment[0] : null
+    };
+}
+function getVUs(val) {
+    let res = [];
+    if (is.number(val))
+        return [getValueUnit(val)];
+    const arr = val.match(regVUs);
+    arr.map((v) => {
+        res.push(getValueUnit(v));
+    });
+    return res;
 }
 function unwrapValues(prop, val) {
     const propX = prop + "X";
@@ -743,10 +744,9 @@ function addBraces(vo, prop) {
         vo.units.push(null);
     }
 }
-function getVo(target, prop, val) {
+function getVo(target, prop, val, options = null) {
     let vo = new Vo();
     let res = [];
-    getPropType(prop);
     if (val == void 0) {
         vo = getDefaultVo(prop, val);
         return vo;
@@ -766,7 +766,16 @@ function getVo(target, prop, val) {
         }
         pVo.path = path;
         pVo.len = path.getTotalLength();
-        pVo.offsetBox = getOffsetBox(path, target.el);
+        pVo.svg = getSvg(path);
+        pVo.bBox = target.el.getBoundingClientRect();
+        if ((options === null || options === void 0 ? void 0 : options.offset) !== undefined) {
+            let vus = getVUs(options.offset);
+            pVo.offsetX = vus[0].unit === "%" ? vus[0].value / 100 * pVo.bBox.width : vus[0].value;
+            if (vus.length === 1)
+                pVo.offsetY = pVo.offsetX;
+            else
+                pVo.offsetY = vus[1].unit === "%" ? vus[1].value / 100 * pVo.bBox.width : vus[1].value;
+        }
         return pVo;
     }
     let arrColors = val.match(regColors);
@@ -788,8 +797,8 @@ function getVo(target, prop, val) {
         let p = arrCombined[i];
         if (p === "")
             continue;
-        getVUs(p);
-        res.push(...getVUs(p));
+        getVUstrings(p);
+        res.push(...getVUstrings(p));
     }
     for (let i = res.length - 1; i >= 0; i--) {
         let p = res[i];
@@ -823,7 +832,7 @@ function getVo(target, prop, val) {
     addBraces(vo, prop);
     return vo;
 }
-function getVUs(str) {
+function getVUstrings(str) {
     let res = [];
     if (!regVUs.test(str) && !regColors.test(str)) {
         res.push(str);
@@ -1203,7 +1212,7 @@ class Animation extends Dispatcher {
     static _getPathStr(tw, t) {
         const vo = tw.to;
         const path = vo.path;
-        const box = vo.offsetBox;
+        const box = vo.bBox;
         const pos = path.getPointAtLength(vo.len * t);
         const p0 = path.getPointAtLength(vo.len * (t - 0.01));
         const p1 = path.getPointAtLength(vo.len * (t + 0.01));
@@ -1217,14 +1226,15 @@ class Animation extends Dispatcher {
         }
         let x, y;
         if (is.svg(tw.tweenable)) {
-            let rectOffsetX = (box.el.x - box.svg.bbX) / box.svg.scaleX;
-            let rectOffsetY = (box.el.y - box.svg.bbY) / box.svg.scaleY;
-            x = (pos.x) - box.svg.x - rectOffsetX;
-            y = (pos.y) - box.svg.y - rectOffsetY;
+            x = (pos.x);
+            y = (pos.y);
             tw.tweenable.setAttribute("transform", `translate(${x}, ${y})${rotStr}`);
         }
         else {
-            tw.tweenable.transform = `translate(${pos.x + vo.offsetX}px, ${pos.y + vo.offsetY}px) rotate(${rot}${deg})`;
+            let screenPt = pos.matrixTransform(vo.svg.getScreenCTM());
+            let offsetX = box.x - vo.offsetX;
+            let offsetY = box.y - vo.offsetY;
+            tw.tweenable.transform = `translate(${screenPt.x - offsetX}px, ${screenPt.y - offsetY}px) rotate(${rot}${deg})`;
         }
     }
     static _render(tgs, time, dir) {
@@ -1351,6 +1361,7 @@ class Animation extends Dispatcher {
         }
         let delay = options.delay || 0;
         let tw = new Tween(twType, prop, fromVal, toVal, dur, delay, 0);
+        tw.options = options;
         if (twType === "direct") {
             tw.tweenable = target.el;
         }
@@ -1396,7 +1407,7 @@ class Animation extends Dispatcher {
             for (let j = 0; j < tg.tweens.length; j++) {
                 const tw = tg.tweens[j];
                 let from;
-                let to = getVo(tg.target, tw.prop, tw.toVal);
+                let to = getVo(tg.target, tw.prop, tw.toVal, tw.options);
                 if (tg.target.type === "dom") {
                     switch (tw.twType) {
                         case "other":

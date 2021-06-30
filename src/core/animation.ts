@@ -4,7 +4,7 @@ import {getPropType, getTweenType, getVo, minMax, normalizeTween, print, strToMa
 import {Keyframe} from "./keyframe";
 import {Tween} from "./tween";
 import {Evt} from "./events";
-import {OffsetBox, TweenType, Value} from "../types";
+import {TweenType, Value} from "../types";
 import {PathVo, TweenGroup, Vo} from "./vo";
 import {is} from "../util/regex";
 import * as $Ease from "../util/ease";
@@ -261,7 +261,7 @@ export class Animation extends Dispatcher {
 
         const vo: PathVo = <PathVo>tw.to;
         const path = vo.path;
-        const box: OffsetBox = vo.offsetBox;
+        const box: any = vo.bBox;
         const pos = path.getPointAtLength(vo.len * t);
         const p0 = path.getPointAtLength(vo.len * (t - 0.01));
         const p1 = path.getPointAtLength(vo.len * (t + 0.01));
@@ -279,14 +279,15 @@ export class Animation extends Dispatcher {
         let x: number, y: number;
 
         if (is.svg(tw.tweenable)) {
-            let rectOffsetX = (box.el.x - box.svg.bbX) / box.svg.scaleX;
-            let rectOffsetY = (box.el.y - box.svg.bbY) / box.svg.scaleY;
-            x = (pos.x) - box.svg.x - rectOffsetX;
-            y = (pos.y) - box.svg.y - rectOffsetY;
+            x = (pos.x);
+            y = (pos.y);
             tw.tweenable.setAttribute("transform", `translate(${x}, ${y})${rotStr}`);
         } else {
-
-            tw.tweenable.transform = `translate(${pos.x + vo.offsetX}px, ${pos.y + vo.offsetY}px) rotate(${rot}${deg})`;
+            let screenPt = pos.matrixTransform(vo.svg.getScreenCTM());
+            let offsetX = box.x - vo.offsetX;
+            let offsetY = box.y - vo.offsetY;
+            tw.tweenable.transform = `translate(${screenPt.x - offsetX}px, ${screenPt.y - offsetY}px) rotate(${rot}${deg})`;
+            // console.log(offsetX, offsetY)
         }
 
     }
@@ -457,6 +458,7 @@ export class Animation extends Dispatcher {
 
         let delay = options.delay || 0;
         let tw = new Tween(twType, prop, fromVal, toVal, dur, delay, 0);
+        tw.options = options;
         if (twType === "direct") {
             tw.tweenable = target.el;
         } else {
@@ -509,7 +511,7 @@ export class Animation extends Dispatcher {
                 const tw = tg.tweens[j];
 
                 let from: Vo;
-                let to: Vo = getVo(tg.target, tw.prop, tw.toVal);
+                let to: Vo = getVo(tg.target, tw.prop, tw.toVal, tw.options);
 
                 if (tg.target.type === "dom") {
 
