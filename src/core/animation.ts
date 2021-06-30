@@ -279,8 +279,8 @@ export class Animation extends Dispatcher {
         let x: number, y: number;
 
         if (is.svg(tw.tweenable)) {
-            x = (pos.x);
-            y = (pos.y);
+            x = pos.x;
+            y = pos.y;
             tw.tweenable.setAttribute("transform", `translate(${x}, ${y})${rotStr}`);
         } else {
             let screenPt = pos.matrixTransform(vo.svg.getScreenCTM());

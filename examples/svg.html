@@ -70,11 +70,10 @@
         const path = document.querySelector("#path-1");
 
 
-        let a = glide.to(el)
+        let a = glide.to(rect1)
         //.set({"ztransform-origin": "50% 50%", x:0, y:0})
         // .to(500, {x: 200}, {delay:500})
-            .to(2500, {path: path},
-                {delay: 500, offset: "-50%"})
+            .to(2500, {path: path}, {delay: 500, offset: "-50%"})
             .on("end", () => {
                 // console.log(a)
                 console.log(a.keyframes[0].tgs[0].tweens[0]);
@@ -86,39 +85,24 @@
         //rect1.setAttribute("transform", "rotate(45)")
 
 
-        function getSvg(node) {
-            let parent = node;
-            while (parent instanceof SVGElement) {
-                if (!(parent.parentNode instanceof SVGElement)) {
-                    return parent;
-                }
-                parent = parent.parentNode;
-            }
-            return parent;
-        }
-
-
-        svg.style.width = "500px";
-        svg.style.height = "250px";
+        // svg.style.width = "500px";
+        // svg.style.height = "250px";
 
         let len = path.getTotalLength();
         let pos = path.getPointAtLength(len);
 
         // -------------------------------------
 
-        let bbEl = el.getBoundingClientRect();
         let screenPt = pos.matrixTransform(svg.getScreenCTM());
-        let x0 = screenPt.x - bbEl.x;
-        let y0 = screenPt.y - bbEl.y;
-        // console.log(bbEl)
-        // el.style.transform = `translate(${x0}px, ${y0}px)`;
-
 
         // -------------------------------------
 
+        let bbRect = rect1.getBoundingClientRect();
+        let bbSvg = svg.getBoundingClientRect();
 
-        // console.log(rect1.getCTM())
-        // console.log(svg.getCTM())
+
+        console.log(bbRect)
+        console.log(bbSvg)
 
         let x1 = (pos.x)// - 124
         let y1 = (pos.y)// - resRect.svg.y;

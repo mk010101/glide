@@ -1226,8 +1226,8 @@ class Animation extends Dispatcher {
         }
         let x, y;
         if (is.svg(tw.tweenable)) {
-            x = (pos.x);
-            y = (pos.y);
+            x = pos.x;
+            y = pos.y;
             tw.tweenable.setAttribute("transform", `translate(${x}, ${y})${rotStr}`);
         }
         else {
