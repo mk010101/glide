@@ -11,7 +11,8 @@
         }
 
         html, body {
-            margin: 5px;
+            margin: .2rem;
+            padding: 10px;
             overflow: hidden;
             box-sizing: border-box;
             font-family: Arial, sans-serif;
@@ -27,9 +28,11 @@
             width: 20px;
             height: 20px;
             background-color: rgba(255, 95, 30, 0.78);
-            top: 0;
-            left: 0;
+            /*top: -10px;*/
+            /*left: -10px;*/
+            margin-left: -10px;
         }
+
 
     </style>
 
@@ -43,11 +46,12 @@
     <path id="path-1" d="M59.1,458.8C59.1,352.3,164.3,266,294.1,266
 	C397.9,266,482,335,482,420.2c0,68.1-67.3,123.4-150.4,123.4c-66.4,0-120.3-44.2-120.3-98.7c0-43.6,43.1-79,96.2-79
 	c42.5,0,77,28.3,77,63.2" fill="none" stroke="#3399FF" stroke-width="4"/>
-    <rect id="rect-1" x="10" y="25" width="100" height="100" fill="rgba(0, 50, 255, .8)"/>
+    <rect id="rect-1" x="50" y="25" width="100" height="100" fill="rgba(0, 50, 255, .8)"/>
     <rect id="rect-2" x="29.5" y="346.5" width="100" height="100" fill="#3399FF"/>
 </svg>
 
 <div class="el"></div>
+<div class="pt"></div>
 
 
 <script type="module">
@@ -59,6 +63,7 @@
 
         const el = document.querySelector(".el");
 
+        const svg = document.querySelector("svg");
         const circle = document.querySelector("#circle-1");
         const rect1 = document.querySelector("#rect-1");
         const rect2 = document.querySelector("#rect-2");
@@ -93,56 +98,73 @@
             return parent;
         }
 
-        function getSvgViewBox(node) {
 
-            let svg = getSvg(node);
+        function getBox(path, $el) {
 
-            let bb = svg.getBoundingClientRect();
+            const svg = getSvg(path);
 
+            const bbPath = path.getBoundingClientRect();
+            const bbEl = $el.getBoundingClientRect();
+            const bbSvg = svg.getBoundingClientRect();
+            const viewBoxStr = svg.getAttribute("viewBox");
 
+            let arrVB = [0, 0, bbPath.width, bbPath.height];
 
-
-
-            let vbStr = svg.getAttribute("viewBox");
-            let arr = [0, 0, bb.width, bb.height];
-
-            if (vbStr) {
-                let arrBB = vbStr.split(" ");
-                arr = arrBB.map((v)=> v = parseFloat(v));
+            if (viewBoxStr) {
+                let arr = viewBoxStr.split(" ");
+                arrVB = arr.map((v) => v = parseFloat(v));
             }
 
-            return  {
-                x: bb.x,
-                y: bb.y,
-                width: bb.width,
-                height: bb.height,
-
-                vbX: arr[0],
-                vbY: arr[1],
-                vbWidth: arr[2],
-                vbHeight: arr[3],
-            };
-
-
+            return {
+                vieBox: {
+                    x: arrVB[0],
+                    y: arrVB[1],
+                    w: arrVB[2],
+                    h: arrVB[3],
+                    bbX: bbSvg.x,
+                    bbY: bbSvg.y,
+                    scaleX: bbSvg.width / arrVB[2],
+                    scaleY: bbSvg.height / arrVB[3],
+                },
+                el: {
+                    x: bbEl.x,
+                    y: bbEl.y,
+                    w: bbEl.width,
+                    h: bbEl.height,
+                },
+                path: {
+                    x: bbPath.x,
+                    y: bbPath.y,
+                    w: bbPath.width,
+                    h: bbPath.height,
+                }
+            }
         }
+
+
+
+        svg.style.width = "30%";
 
         let len = path.getTotalLength();
         let pos = path.getPointAtLength(len);
 
-        let bb = getSvgViewBox(path);
-        console.log(bb)
+        // -------------------------------------
+        let resEl = getBox(path, el);
 
+        let elOffsetX = resEl.el.x;
+        let elOffsetY = resEl.el.y;
 
+        let x0 = (pos.x) * resEl.vieBox.scaleX + resEl.vieBox.bbX - elOffsetX;
+        let y0 = (pos.y) * resEl.vieBox.scaleY + resEl.vieBox.bbY - elOffsetY;
 
-        let x = pos.x;
-        let y = pos.y;
+        el.style.transform = `translate(${x0}px, ${y0}px)`;
 
-        let x1 = pos.x;
-        let y1 = pos.y;
+        // -------------------------------------
 
-        rect1.setAttribute("transform", `translate(${x} ${y})`);
+        let resSvg = getBox(path, rect1);
 
-        el.style.transform = `translate(${x}px, ${y}px)`;
+        //rect1.setAttribute("transform", `translate(${x1} ${y1})`);
+
 
 
     }
