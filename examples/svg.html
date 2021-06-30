@@ -47,7 +47,7 @@
     <path id="path-1" d="M59.1,458.8C59.1,352.3,164.3,266,294.1,266
 	C397.9,266,482,335,482,420.2c0,68.1-67.3,123.4-150.4,123.4c-66.4,0-120.3-44.2-120.3-98.7c0-43.6,43.1-79,96.2-79
 	c42.5,0,77,28.3,77,63.2" fill="none" stroke="#3399FF" stroke-width="4"/>
-    <rect id="rect-1" x="0" y="0" width="40" height="40" fill="rgba(0, 50, 255, .5)"/>
+    <rect id="rect-1" x="20" y="100" width="40" height="40" fill="rgba(0, 50, 255, .5)"/>
 </svg>
 
 <div class="el"></div>
@@ -71,7 +71,7 @@
         const path = document.querySelector("#path-1");
 
 
-        let a = glide.to(["#rect-1", ".el"])
+        let a = glide.to(["#rect-1"])
         //.set({"ztransform-origin": "50% 50%", x:0, y:0})
         // .to(500, {x: 200}, {delay:500})
             .to(2500, {path: path}, {delay: 500, offset: "-50%"})
@@ -115,7 +115,7 @@
         let x1 = pos.x - rectBB.x;
         let y1 = pos.y - rectBB.y;
 
-        rect1.setAttribute("transform", `translate(${x1} ${y1})`);
+        //rect1.setAttribute("transform", `translate(${x1} ${y1})`);
 
 
     }
