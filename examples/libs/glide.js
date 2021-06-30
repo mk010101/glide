@@ -1298,13 +1298,18 @@
             }
         }
         static _getTargets(targets, options) {
-            if (typeof targets === "string") {
+            if (is.string(targets)) {
                 targets = document.querySelectorAll(targets);
             }
             let t = [];
             if (is.list(targets)) {
                 for (let i = 0; i < targets.length; i++) {
-                    let target = new Target(targets[i], options.context);
+                    let targ;
+                    if (is.string(targets[i]))
+                        targ = document.querySelector(targets[i]);
+                    else
+                        targ = targets[i];
+                    let target = new Target(targ, options.context);
                     target.pos = i;
                     t.push(target);
                 }

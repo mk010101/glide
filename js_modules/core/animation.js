@@ -281,14 +281,19 @@ export class Animation extends Dispatcher {
         }
     }
     static _getTargets(targets, options) {
-        if (typeof targets === "string") {
+        if (is.string(targets)) {
             targets = document.querySelectorAll(targets);
         }
         let t = [];
         if (is.list(targets)) {
             let staggerTime = 0;
             for (let i = 0; i < targets.length; i++) {
-                let target = new Target(targets[i], options.context);
+                let targ;
+                if (is.string(targets[i]))
+                    targ = document.querySelector(targets[i]);
+                else
+                    targ = targets[i];
+                let target = new Target(targ, options.context);
                 target.pos = i;
                 t.push(target);
             }
