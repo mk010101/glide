@@ -199,11 +199,12 @@ export class Animation extends Dispatcher {
         return str;
     }
     static _getPathStr(tw, t) {
-        let vo = tw.to;
-        let path = vo.path;
-        let pos = path.getPointAtLength(vo.len * t);
-        let p0 = path.getPointAtLength(vo.len * (t - 0.01));
-        let p1 = path.getPointAtLength(vo.len * (t + 0.01));
+        const vo = tw.to;
+        const path = vo.path;
+        const box = vo.offsetBox;
+        const pos = path.getPointAtLength(vo.len * t);
+        const p0 = path.getPointAtLength(vo.len * (t - 0.01));
+        const p1 = path.getPointAtLength(vo.len * (t + 0.01));
         let rot = 0;
         let rotStr = "";
         let deg = "";
@@ -212,10 +213,17 @@ export class Animation extends Dispatcher {
             rotStr = ` rotate(${rot})`;
             deg = "deg";
         }
-        if (is.svg(tw.tweenable))
-            tw.tweenable.setAttribute("transform", `translate(${pos.x}, ${pos.y})${rotStr}`);
-        else
+        let x, y;
+        if (is.svg(tw.tweenable)) {
+            let rectOffsetX = (box.el.x - box.svg.bbX) / box.svg.scaleX;
+            let rectOffsetY = (box.el.y - box.svg.bbY) / box.svg.scaleY;
+            x = (pos.x) - box.svg.x - rectOffsetX;
+            y = (pos.y) - box.svg.y - rectOffsetY;
+            tw.tweenable.setAttribute("transform", `translate(${x}, ${y})${rotStr}`);
+        }
+        else {
             tw.tweenable.transform = `translate(${pos.x + vo.offsetX}px, ${pos.y + vo.offsetY}px) rotate(${rot}${deg})`;
+        }
     }
     static _render(tgs, time, dir) {
         for (let i = 0, k = tgs.length; i < k; i++) {
@@ -387,15 +395,15 @@ export class Animation extends Dispatcher {
             for (let j = 0; j < tg.tweens.length; j++) {
                 const tw = tg.tweens[j];
                 let from;
-                let to = getVo(tg.target.type, tw.prop, tw.toVal);
+                let to = getVo(tg.target, tw.prop, tw.toVal);
                 if (tg.target.type === "dom") {
                     switch (tw.twType) {
                         case "other":
                         case "direct":
                             if (tw.fromVal)
-                                from = getVo(tg.target.type, tw.prop, tw.fromVal);
+                                from = getVo(tg.target, tw.prop, tw.fromVal);
                             else
-                                from = getVo(tg.target.type, tw.prop, tg.target.getExistingValue(tw.prop));
+                                from = getVo(tg.target, tw.prop, tg.target.getExistingValue(tw.prop));
                             break;
                         case "transform":
                         case "filter":
@@ -414,7 +422,7 @@ export class Animation extends Dispatcher {
                                 newTweens = filterTweens;
                             }
                             if (tw.fromVal) {
-                                from = getVo("dom", tw.prop, tw.fromVal);
+                                from = getVo(tg.target, tw.prop, tw.fromVal);
                             }
                             else {
                                 if (oldTweens && oldTweens.has(tw.prop)) {
@@ -422,7 +430,7 @@ export class Animation extends Dispatcher {
                                     tw.keepOld = false;
                                 }
                                 else {
-                                    from = from = getVo("dom", tw.prop, tw.fromVal);
+                                    from = from = getVo(tg.target, tw.prop, tw.fromVal);
                                 }
                             }
                             newTweens.set(tw.prop, tw);
@@ -432,7 +440,7 @@ export class Animation extends Dispatcher {
                 else {
                     if (!tw.fromVal)
                         tw.fromVal = tg.target.getExistingValue(tw.prop);
-                    from = getVo("obj", tw.prop, tw.fromVal);
+                    from = getVo(tg.target, tw.prop, tw.fromVal);
                 }
                 tw.from = from;
                 tw.to = to;

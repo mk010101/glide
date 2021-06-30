@@ -598,6 +598,47 @@
         }
     }
 
+    function getSvg(node) {
+        let parent = node;
+        while (parent instanceof SVGElement) {
+            if (!(parent.parentNode instanceof SVGElement)) {
+                return parent;
+            }
+            parent = parent.parentNode;
+        }
+        return parent;
+    }
+    function getOffsetBox(svgEl, el) {
+        const svg = getSvg(svgEl);
+        const bbSvgEl = svgEl.getBoundingClientRect();
+        const bbEl = el.getBoundingClientRect();
+        const bbSvg = svg.getBoundingClientRect();
+        const viewBoxStr = svg.getAttribute("viewBox");
+        let arrVB = [0, 0, bbSvgEl.width, bbSvgEl.height];
+        if (viewBoxStr) {
+            let arr = viewBoxStr.split(" ");
+            arrVB = arr.map((v) => v = parseFloat(v));
+        }
+        return {
+            svg: {
+                x: arrVB[0],
+                y: arrVB[1],
+                w: arrVB[2],
+                h: arrVB[3],
+                bbX: bbSvg.x,
+                bbY: bbSvg.y,
+                scaleX: bbSvg.width / arrVB[2],
+                scaleY: bbSvg.height / arrVB[3],
+            },
+            el: {
+                x: bbEl.x,
+                y: bbEl.y,
+                w: bbEl.width,
+                h: bbEl.height,
+            }
+        };
+    }
+
     function minMax(val, min, max) {
         return Math.min(Math.max(val, min), max);
     }
@@ -708,7 +749,7 @@
             vo.units.push(null);
         }
     }
-    function getVo(targetType, prop, val) {
+    function getVo(target, prop, val) {
         let vo = new Vo();
         let res = [];
         getPropType(prop);
@@ -729,11 +770,9 @@
                 path = document.createElementNS("http://www.w3.org/2000/svg", "path");
                 path.setAttribute("d", val);
             }
-            let bb = path.getBoundingClientRect();
             pVo.path = path;
             pVo.len = path.getTotalLength();
-            pVo.offsetX = bb.x;
-            pVo.offsetY = bb.y;
+            pVo.offsetBox = getOffsetBox(path, target.el);
             return pVo;
         }
         let arrColors = val.match(regColors);
@@ -916,7 +955,7 @@
             let prop = part.match(regProp)[0];
             part = part.replace(prop, "");
             part = part.replace(/^\(|\)$/g, "");
-            let vo = getVo("dom", prop, part);
+            let vo = getVo(null, prop, part);
             if (is.propDual(prop)) {
                 let propX = prop + "X";
                 let propY = prop + "Y";
@@ -924,11 +963,11 @@
                 let vus = part2.match(regValues);
                 if (vus.length === 1)
                     vus.push(is.valueOne(prop) ? "1" : "0");
-                let vox = getVo("dom", propX, vus[0]);
+                let vox = getVo(null, propX, vus[0]);
                 let twx = new Tween(twType, propX, null, null, 0, 0, 0);
                 twx.keepOld = true;
                 twx.oldValue = `${propX}(${vus[0]})`;
-                let voy = getVo("dom", propY, vus[1]);
+                let voy = getVo(null, propY, vus[1]);
                 let twy = new Tween(twType, propX, null, null, 0, 0, 0);
                 twy.keepOld = true;
                 twy.oldValue = `${propY}(${vus[1]})`;
@@ -1168,11 +1207,12 @@
             return str;
         }
         static _getPathStr(tw, t) {
-            let vo = tw.to;
-            let path = vo.path;
-            let pos = path.getPointAtLength(vo.len * t);
-            let p0 = path.getPointAtLength(vo.len * (t - 0.01));
-            let p1 = path.getPointAtLength(vo.len * (t + 0.01));
+            const vo = tw.to;
+            const path = vo.path;
+            const box = vo.offsetBox;
+            const pos = path.getPointAtLength(vo.len * t);
+            const p0 = path.getPointAtLength(vo.len * (t - 0.01));
+            const p1 = path.getPointAtLength(vo.len * (t + 0.01));
             let rot = 0;
             let rotStr = "";
             let deg = "";
@@ -1181,10 +1221,17 @@
                 rotStr = ` rotate(${rot})`;
                 deg = "deg";
             }
-            if (is.svg(tw.tweenable))
-                tw.tweenable.setAttribute("transform", `translate(${pos.x}, ${pos.y})${rotStr}`);
-            else
+            let x, y;
+            if (is.svg(tw.tweenable)) {
+                let rectOffsetX = (box.el.x - box.svg.bbX) / box.svg.scaleX;
+                let rectOffsetY = (box.el.y - box.svg.bbY) / box.svg.scaleY;
+                x = (pos.x) - box.svg.x - rectOffsetX;
+                y = (pos.y) - box.svg.y - rectOffsetY;
+                tw.tweenable.setAttribute("transform", `translate(${x}, ${y})${rotStr}`);
+            }
+            else {
                 tw.tweenable.transform = `translate(${pos.x + vo.offsetX}px, ${pos.y + vo.offsetY}px) rotate(${rot}${deg})`;
+            }
         }
         static _render(tgs, time, dir) {
             for (let i = 0, k = tgs.length; i < k; i++) {
@@ -1355,15 +1402,15 @@
                 for (let j = 0; j < tg.tweens.length; j++) {
                     const tw = tg.tweens[j];
                     let from;
-                    let to = getVo(tg.target.type, tw.prop, tw.toVal);
+                    let to = getVo(tg.target, tw.prop, tw.toVal);
                     if (tg.target.type === "dom") {
                         switch (tw.twType) {
                             case "other":
                             case "direct":
                                 if (tw.fromVal)
-                                    from = getVo(tg.target.type, tw.prop, tw.fromVal);
+                                    from = getVo(tg.target, tw.prop, tw.fromVal);
                                 else
-                                    from = getVo(tg.target.type, tw.prop, tg.target.getExistingValue(tw.prop));
+                                    from = getVo(tg.target, tw.prop, tg.target.getExistingValue(tw.prop));
                                 break;
                             case "transform":
                             case "filter":
@@ -1382,7 +1429,7 @@
                                     newTweens = filterTweens;
                                 }
                                 if (tw.fromVal) {
-                                    from = getVo("dom", tw.prop, tw.fromVal);
+                                    from = getVo(tg.target, tw.prop, tw.fromVal);
                                 }
                                 else {
                                     if (oldTweens && oldTweens.has(tw.prop)) {
@@ -1390,7 +1437,7 @@
                                         tw.keepOld = false;
                                     }
                                     else {
-                                        from = from = getVo("dom", tw.prop, tw.fromVal);
+                                        from = from = getVo(tg.target, tw.prop, tw.fromVal);
                                     }
                                 }
                                 newTweens.set(tw.prop, tw);
@@ -1400,7 +1447,7 @@
                     else {
                         if (!tw.fromVal)
                             tw.fromVal = tg.target.getExistingValue(tw.prop);
-                        from = getVo("obj", tw.prop, tw.fromVal);
+                        from = getVo(tg.target, tw.prop, tw.fromVal);
                     }
                     tw.from = from;
                     tw.to = to;

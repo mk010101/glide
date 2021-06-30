@@ -15,3 +15,22 @@ export type ValueUnit = {
     unit:string;
     increment: string;
 }
+
+export type OffsetBox = {
+    svg: {
+        x: number,
+        y: number,
+        w: number,
+        h: number,
+        bbX: number,
+        bbY: number,
+        scaleX: number,
+        scaleY: number,
+    },
+    el: {
+        x: number,
+        y: number,
+        w: number,
+        h: number,
+    }
+}

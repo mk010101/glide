@@ -4,7 +4,7 @@ import {getPropType, getTweenType, getVo, minMax, normalizeTween, print, strToMa
 import {Keyframe} from "./keyframe";
 import {Tween} from "./tween";
 import {Evt} from "./events";
-import {TweenType, Value} from "../types";
+import {OffsetBox, TweenType, Value} from "../types";
 import {PathVo, TweenGroup, Vo} from "./vo";
 import {is} from "../util/regex";
 import * as $Ease from "../util/ease";
@@ -51,7 +51,7 @@ export class Animation extends Dispatcher {
 
     }
 
-    target(targets:any, options:any) {
+    target(targets: any, options: any) {
         this.targets = Animation._getTargets(targets, options);
         return this;
     }
@@ -78,7 +78,7 @@ export class Animation extends Dispatcher {
         return this;
     }
 
-    set(params:any) {
+    set(params: any) {
         let kf = new Keyframe();
 
         for (let i = 0; i < this.targets.length; i++) {
@@ -232,7 +232,7 @@ export class Animation extends Dispatcher {
         STATIC METHODS
      =================================================================================================================*/
 
-    static _getRenderStr(tw:Tween, t: number):any {
+    static _getRenderStr(tw: Tween, t: number): any {
         let str = "";
 
         let from = tw.from;
@@ -257,28 +257,37 @@ export class Animation extends Dispatcher {
         return str;
     }
 
-    static _getPathStr(tw:Tween, t:number) {
+    static _getPathStr(tw: Tween, t: number) {
 
-        let vo:PathVo = <PathVo>tw.to;
-        let path = vo.path;
-
-        let pos = path.getPointAtLength(vo.len * t);
-        let p0 = path.getPointAtLength(vo.len * (t - 0.01));
-        let p1 = path.getPointAtLength(vo.len * (t + 0.01));
+        const vo: PathVo = <PathVo>tw.to;
+        const path = vo.path;
+        const box: OffsetBox = vo.offsetBox;
+        const pos = path.getPointAtLength(vo.len * t);
+        const p0 = path.getPointAtLength(vo.len * (t - 0.01));
+        const p1 = path.getPointAtLength(vo.len * (t + 0.01));
         let rot = 0;
         let rotStr = "";
         let deg = "";
+
+
         if (tw.orientToPath) {
             rot = Math.atan2(p1.y - p0.y, p1.x - p0.x) * 180 / Math.PI;
             rotStr = ` rotate(${rot})`;
             deg = "deg";
         }
 
+        let x: number, y: number;
 
-        if (is.svg(tw.tweenable))
-            tw.tweenable.setAttribute("transform", `translate(${pos.x}, ${pos.y})${rotStr}`);
-        else
+        if (is.svg(tw.tweenable)) {
+            let rectOffsetX = (box.el.x - box.svg.bbX) / box.svg.scaleX;
+            let rectOffsetY = (box.el.y - box.svg.bbY) / box.svg.scaleY;
+            x = (pos.x) - box.svg.x - rectOffsetX;
+            y = (pos.y) - box.svg.y - rectOffsetY;
+            tw.tweenable.setAttribute("transform", `translate(${x}, ${y})${rotStr}`);
+        } else {
+
             tw.tweenable.transform = `translate(${pos.x + vo.offsetX}px, ${pos.y + vo.offsetY}px) rotate(${rot}${deg})`;
+        }
 
     }
 
@@ -358,7 +367,6 @@ export class Animation extends Dispatcher {
         }
 
     }
-
 
 
     static _getTargets(targets: any, options: any): Target[] {
@@ -501,7 +509,7 @@ export class Animation extends Dispatcher {
                 const tw = tg.tweens[j];
 
                 let from: Vo;
-                let to: Vo = getVo(tg.target.type, tw.prop, tw.toVal);
+                let to: Vo = getVo(tg.target, tw.prop, tw.toVal);
 
                 if (tg.target.type === "dom") {
 
@@ -509,9 +517,9 @@ export class Animation extends Dispatcher {
 
                         case "other":
                         case "direct":
-                            if (tw.fromVal) from = getVo(tg.target.type, tw.prop, tw.fromVal);
+                            if (tw.fromVal) from = getVo(tg.target, tw.prop, tw.fromVal);
                             else
-                                from = getVo(tg.target.type, tw.prop, tg.target.getExistingValue(tw.prop));
+                                from = getVo(tg.target, tw.prop, tg.target.getExistingValue(tw.prop));
                             break;
 
                         case "transform":
@@ -533,14 +541,14 @@ export class Animation extends Dispatcher {
                             }
 
                             if (tw.fromVal) {
-                                from = getVo("dom", tw.prop, tw.fromVal);
+                                from = getVo(tg.target, tw.prop, tw.fromVal);
                             } else {
                                 if (oldTweens && oldTweens.has(tw.prop)) {
                                     // console.log(tw.prop)
                                     from = oldTweens.get(tw.prop).from;
                                     tw.keepOld = false;
                                 } else {
-                                    from = from = getVo("dom", tw.prop, tw.fromVal);
+                                    from = from = getVo(tg.target, tw.prop, tw.fromVal);
                                 }
                             }
                             newTweens.set(tw.prop, tw);
@@ -550,7 +558,7 @@ export class Animation extends Dispatcher {
                     }
                 } else {
                     if (!tw.fromVal) tw.fromVal = tg.target.getExistingValue(tw.prop);
-                    from = getVo("obj", tw.prop, tw.fromVal);
+                    from = getVo(tg.target, tw.prop, tw.fromVal);
                 }
 
                 tw.from = from;
@@ -567,7 +575,7 @@ export class Animation extends Dispatcher {
     }
 
 
-    static _arrangeMaps(oldM: Map<string, Tween>, newM: Map<string, Tween>, tg:TweenGroup, prop:TweenType) {
+    static _arrangeMaps(oldM: Map<string, Tween>, newM: Map<string, Tween>, tg: TweenGroup, prop: TweenType) {
 
         newM.forEach((v, k) => {
             oldM.set(k, v);

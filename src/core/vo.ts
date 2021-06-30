@@ -1,5 +1,6 @@
 import {Tween} from "./tween";
 import Target from "./target";
+import {OffsetBox} from "../types";
 
 export class Vo {
 
@@ -19,6 +20,7 @@ export class PathVo extends Vo {
     offsetX:number = 0;
     offsetY:number = 0;
     len:number = 0;
+    offsetBox:OffsetBox;
 }
 
 

@@ -47,6 +47,7 @@
 <path id="path-1" d="M0,187.5C0,83.9,99.5,0,222.2,0
 	C320.4,0,400,67.2,400,150c0,66.3-63.7,120-142.2,120c-62.8,0-113.8-43-113.8-96c0-42.4,40.8-76.8,91-76.8
 	c40.2,0,72.8,27.5,72.8,61.4"/>
+    <rect id="rect-1" x="150" y="25" width="40" height="40" fill="rgba(0, 50, 255, .5)"/>
 </svg>
 
 <script type="module">
@@ -67,11 +68,11 @@
         //console.log(path.getBoundingClientRect())
 
 
-        let a = glide.to(el)
+        let a = glide.to(rect1)
         //.set({"transform-origin": "0 0", x:0, y:0})
         // .to(500, {x: 200}, {delay:500})
             .to(2500, {path: path},
-                {delay:500})
+                {delay:500, repeat:1})
             .on("end", () => {
                 // console.log(a)
                 console.log(a.keyframes[0].tgs[0].tweens[0])

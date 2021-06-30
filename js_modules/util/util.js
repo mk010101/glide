@@ -3,6 +3,7 @@ import { PathVo, Vo } from "../core/vo";
 import { toRgbStr } from "./color";
 import Context from "../core/context";
 import { Tween } from "../core/tween";
+import { getOffsetBox } from "./geom";
 export function minMax(val, min, max) {
     return Math.min(Math.max(val, min), max);
 }
@@ -151,7 +152,7 @@ function addBraces(vo, prop) {
         vo.units.push(null);
     }
 }
-export function getVo(targetType, prop, val) {
+export function getVo(target, prop, val) {
     let vo = new Vo();
     let res = [];
     let propType = getPropType(prop);
@@ -172,11 +173,9 @@ export function getVo(targetType, prop, val) {
             path = document.createElementNS("http://www.w3.org/2000/svg", "path");
             path.setAttribute("d", val);
         }
-        let bb = path.getBoundingClientRect();
         pVo.path = path;
         pVo.len = path.getTotalLength();
-        pVo.offsetX = bb.x;
-        pVo.offsetY = bb.y;
+        pVo.offsetBox = getOffsetBox(path, target.el);
         return pVo;
     }
     let arrColors = val.match(regColors);
@@ -360,7 +359,7 @@ export function strToMap(str, twType) {
         let prop = part.match(regProp)[0];
         part = part.replace(prop, "");
         part = part.replace(/^\(|\)$/g, "");
-        let vo = getVo("dom", prop, part);
+        let vo = getVo(null, prop, part);
         if (is.propDual(prop)) {
             let propX = prop + "X";
             let propY = prop + "Y";
@@ -368,11 +367,11 @@ export function strToMap(str, twType) {
             let vus = part2.match(regValues);
             if (vus.length === 1)
                 vus.push(is.valueOne(prop) ? "1" : "0");
-            let vox = getVo("dom", propX, vus[0]);
+            let vox = getVo(null, propX, vus[0]);
             let twx = new Tween(twType, propX, null, null, 0, 0, 0);
             twx.keepOld = true;
             twx.oldValue = `${propX}(${vus[0]})`;
-            let voy = getVo("dom", propY, vus[1]);
+            let voy = getVo(null, propY, vus[1]);
             let twy = new Tween(twType, propX, null, null, 0, 0, 0);
             twy.keepOld = true;
             twy.oldValue = `${propY}(${vus[1]})`;

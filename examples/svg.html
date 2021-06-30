@@ -11,8 +11,8 @@
         }
 
         html, body {
-            margin: 5px;
-            padding: 10px;
+            margin: 20px;
+            padding: 4px;
             overflow: hidden;
             box-sizing: border-box;
             font-family: Arial, sans-serif;
@@ -28,9 +28,9 @@
             width: 20px;
             height: 20px;
             background-color: rgba(255, 95, 30, 0.78);
-            /*top: -10px;*/
-            /*left: -10px;*/
-            margin-left: -10px;
+            /*top: 0;*/
+            /*left: 0;*/
+            /*margin-left: -10px;*/
         }
 
 
@@ -41,13 +41,12 @@
 <body>
 <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px"
      y="0px"
-     viewBox="-20 30 600 600" style="enable-background:new 0 0 600 600;" xml:space="preserve">
-<circle id="circle-1" cx="270" cy="86" r="50" fill="#3399FF"/>
+     viewBox="0 0 600 600" style="enable-background:new 0 0 600 600;" xml:space="preserve">
+<circle id="circle-1" cx="270" cy="86" r="50" fill="rgba(0,100,0,.5)"/>
     <path id="path-1" d="M59.1,458.8C59.1,352.3,164.3,266,294.1,266
 	C397.9,266,482,335,482,420.2c0,68.1-67.3,123.4-150.4,123.4c-66.4,0-120.3-44.2-120.3-98.7c0-43.6,43.1-79,96.2-79
 	c42.5,0,77,28.3,77,63.2" fill="none" stroke="#3399FF" stroke-width="4"/>
-    <rect id="rect-1" x="150" y="25" width="40" height="40" fill="rgba(0, 50, 255, .5)"/>
-    <rect id="rect-2" x="29.5" y="346.5" width="100" height="100" fill="#3399FF"/>
+    <rect id="rect-1" x="0" y="0" width="40" height="40" fill="rgba(0, 50, 255, .5)"/>
 </svg>
 
 <div class="el"></div>
@@ -118,12 +117,16 @@
 
             return {
                 svg: {
-                    x: arrVB[0],
-                    y: arrVB[1],
-                    w: arrVB[2],
-                    h: arrVB[3],
-                    bbX: bbSvg.x,
-                    bbY: bbSvg.y,
+
+                    boxX: arrVB[0],
+                    boxY: arrVB[1],
+                    boxW: arrVB[2],
+                    boxH: arrVB[3],
+
+                    x: bbSvg.x,
+                    y: bbSvg.y,
+                    w: bbSvg.width,
+                    h: bbSvg.height,
                     scaleX: bbSvg.width / arrVB[2],
                     scaleY: bbSvg.height / arrVB[3],
                 },
@@ -132,39 +135,46 @@
                     y: bbEl.y,
                     w: bbEl.width,
                     h: bbEl.height,
+                },
+                svgEl: {
+                    x: bbSvgEl.x,
+                    y: bbSvgEl.y,
+                    w: bbSvgEl.width,
+                    h: bbSvgEl.height,
                 }
             }
         }
 
 
-        svg.style.width = "40%";
+        svg.style.width = "500px";
+        svg.style.height = "250px";
 
         let len = path.getTotalLength();
         let pos = path.getPointAtLength(len);
 
         // -------------------------------------
-        let resEl = getBox(path, el);
 
-        let elOffsetX = resEl.el.x;
-        let elOffsetY = resEl.el.y;
+        let bbEl = el.getBoundingClientRect();
 
+        let screenPt = pos.matrixTransform(svg.getScreenCTM());
 
-        let x0 = (pos.x - resEl.svg.x) * resEl.svg.scaleX + resEl.svg.bbX - elOffsetX;
-        let y0 = (pos.y - resEl.svg.y) * resEl.svg.scaleY + resEl.svg.bbY - elOffsetY;
+        let x0 = screenPt.x - bbEl.x;
+        let y0 = screenPt.y - bbEl.y;
+
 
         el.style.transform = `translate(${x0}px, ${y0}px)`;
+
 
         // -------------------------------------
 
         let resRect = getBox(path, rect1);
 
-        let rectOffsetX = (resRect.el.x - resRect.svg.bbX) / resRect.svg.scaleX;
-        let rectOffsetY = (resRect.el.y - resRect.svg.bbY) / resRect.svg.scaleY;
 
-        console.log(resRect)
+        console.log(rect1.getCTM())
+        console.log(svg.getCTM())
 
-        let x1 = (pos.x) - resRect.svg.x - rectOffsetX;
-        let y1 = (pos.y) - resRect.svg.y - rectOffsetY;
+        let x1 = (pos.x)// - 124
+        let y1 = (pos.y)// - resRect.svg.y;
 
         rect1.setAttribute("transform", `translate(${x1} ${y1})`);
 
