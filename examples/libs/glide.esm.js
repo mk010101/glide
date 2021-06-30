@@ -767,7 +767,7 @@ function getVo(target, prop, val, options = null) {
         pVo.path = path;
         pVo.len = path.getTotalLength();
         pVo.svg = getSvg(path);
-        pVo.bBox = target.el.getBoundingClientRect();
+        pVo.bBox = is.svg(target.el) ? target.el.getBBox() : target.el.getBoundingClientRect();
         if ((options === null || options === void 0 ? void 0 : options.offset) !== undefined) {
             let vus = getVUs(options.offset);
             pVo.offsetX = vus[0].unit === "%" ? vus[0].value / 100 * pVo.bBox.width : vus[0].value;
@@ -1226,8 +1226,8 @@ class Animation extends Dispatcher {
         }
         let x, y;
         if (is.svg(tw.tweenable)) {
-            x = pos.x;
-            y = pos.y;
+            x = pos.x - vo.bBox.x;
+            y = pos.y - vo.bBox.y;
             tw.tweenable.setAttribute("transform", `translate(${x}, ${y})${rotStr}`);
         }
         else {

@@ -21,6 +21,7 @@
         svg {
             width: 30%;
             border: 1px solid #3399FF;
+            background-color: #e7edf2;
         }
 
         .el {
@@ -85,8 +86,8 @@
         //rect1.setAttribute("transform", "rotate(45)")
 
 
-        // svg.style.width = "500px";
-        // svg.style.height = "250px";
+        svg.style.width = "500px";
+        svg.style.height = "250px";
 
         let len = path.getTotalLength();
         let pos = path.getPointAtLength(len);
@@ -96,16 +97,23 @@
         let screenPt = pos.matrixTransform(svg.getScreenCTM());
 
         // -------------------------------------
+        /*let dot = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+        dot.setAttribute("x", "0");
+        dot.setAttribute("y", "0");
+        dot.setAttribute("width", "10");
+        dot.setAttribute("height", "10");
+        dot.setAttribute("fill", "rgba(72,200,55,0.6)");
+        dot.setAttribute("id", "rect-test");
+        svg.appendChild(dot)*/
 
-        let bbRect = rect1.getBoundingClientRect();
-        let bbSvg = svg.getBoundingClientRect();
 
 
-        console.log(bbRect)
-        console.log(bbSvg)
 
-        let x1 = (pos.x)// - 124
-        let y1 = (pos.y)// - resRect.svg.y;
+        let rectBB = rect1.getBBox();
+
+
+        let x1 = pos.x - rectBB.x;
+        let y1 = pos.y - rectBB.y;
 
         rect1.setAttribute("transform", `translate(${x1} ${y1})`);
 
