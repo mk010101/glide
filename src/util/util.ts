@@ -11,12 +11,12 @@ import {
     regValues,
     regVUs
 } from "./regex";
-import {Vo} from "../core/vo";
+import {PathVo, Vo} from "../core/vo";
 import {toRgb, toRgbStr} from "./color";
 import Context from "../core/context";
 import {Tween} from "../core/tween";
-import target from "../core/target";
 import Target from "../core/target";
+import {getSvg} from "./geom";
 
 
 export function minMax(val: number, min: number, max: number): number {
@@ -48,7 +48,10 @@ export function getTweenType(targetType: TargetType, prop: any): TweenType {
         return "filter";
     else if (is.propDirect(prop))
         return "direct";
-
+    else if (prop === "path")
+        return "path";
+    else if (targetType === "svg")
+        return "svg";
     return "other";
 }
 
@@ -90,13 +93,11 @@ export function getDefaultUnit(prop: string, targetType: TargetType): string {
 
     if (targetType === "obj") {
         return null;
-    }
-
-    if (is.unitDegrees(prop))
+    } else if (is.unitDegrees(prop))
         return "deg";
     else if (is.unitPercent(prop))
         return "%";
-    else if (is.unitless(prop))
+    else if (is.unitless(prop) || targetType === "svg")
         return "";
 
     return "px";
@@ -117,7 +118,16 @@ export function getDefaultValue(prop: string): number {
  * @param val
  * @return {ValueUnit}
  */
-export function getValueUnit(val: string): ValueUnit {
+export function getValueUnit(val: any): ValueUnit {
+
+    if (is.number(val)) {
+        return {
+            value: val,
+            unit: null,
+            increment: null
+        }
+    }
+
     const increment = val.match(/-=|\+=|\*=|\/=/g);
     if (increment) increment[0] = increment[0].replace("=", "");
     val = val.replace("-=", "");
@@ -131,32 +141,20 @@ export function getValueUnit(val: string): ValueUnit {
     };
 }
 
-export function getValuesUnits(val: any): ValueUnit[] {
-    let vus: ValueUnit[] = [];
+function getVUs(val: any): ValueUnit[] {
 
-    let vtype = getValueType(val);
+    let res: ValueUnit[] = [];
 
-    if (vtype === "null") {
-        return [{
-            value: 0,
-            unit: null,
-            increment: null
-        }];
-    } else if (vtype === "number") {
-        return [{
-            value: val,
-            unit: null,
-            increment: null
-        }];
-    }
+    if (is.number(val))
+        return [getValueUnit(val)];
 
-    let arr = val.match(regVUs);
-
-    for (let i = 0; i < arr.length; i++) {
-        vus.push(getValueUnit(arr[i]));
-    }
-    return vus;
+    const arr = val.match(regVUs);
+    arr.map((v: string) => {
+        res.push(getValueUnit(v))
+    });
+    return res;
 }
+
 
 /**
  * Returns numbers from a string.
@@ -238,17 +236,17 @@ function addBraces(vo: Vo, prop: string) {
 
 /**
  * Creates {Vo} object
- * @param targetType
+ * @param target
  * @param prop
  * @param val
+ * @param options
  */
-export function getVo(targetType: TargetType, prop: any, val: any): Vo {
+export function getVo(target: Target, prop: any, val: any, options: any = null): Vo {
 
     let vo: Vo = new Vo();
     let res: string[] = [];
-    let propType = getPropType(prop);
+    // let propType = getPropType(prop);
 
-    // console.log(prop, val)
 
     if (val == void 0) {
         vo = getDefaultVo(prop, val);
@@ -258,6 +256,32 @@ export function getVo(targetType: TargetType, prop: any, val: any): Vo {
         // addBraces(vo, prop);
         return getDefaultVo(prop, val);
     }
+
+    if (prop === "path") {
+        const pVo = new PathVo();
+        let path: SVGPathElement;
+        if (is.svg(val)) {
+            path = val;
+        } else {
+            path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            path.setAttribute("d", val);
+        }
+        pVo.path = path;
+        pVo.len = path.getTotalLength();
+        pVo.svg = getSvg(path);
+        pVo.bBox = is.svg(target.el)? target.el.getBBox() : target.el.getBoundingClientRect();
+        if (options?.offset !== undefined) {
+            let vus = getVUs(options.offset);
+            pVo.offsetX = vus[0].unit === "%"? vus[0].value / 100 * pVo.bBox.width : vus[0].value;
+            if (vus.length === 1)
+                pVo.offsetY = pVo.offsetX;
+            else
+                pVo.offsetY = vus[1].unit === "%"? vus[1].value / 100 * pVo.bBox.width : vus[1].value;
+        }
+        return pVo;
+    }
+
+    // console.log(prop, val)
 
     let arrColors = val.match(regColors);
 
@@ -282,8 +306,8 @@ export function getVo(targetType: TargetType, prop: any, val: any): Vo {
     for (let i = 0; i < arrCombined.length; i++) {
         let p = arrCombined[i];
         if (p === "") continue;
-        getVUs(p);
-        res.push(...getVUs(p));
+        getVUstrings(p);
+        res.push(...getVUstrings(p));
     }
 
     /// Parse the resulting array and fill the Vo.
@@ -328,7 +352,7 @@ export function getVo(targetType: TargetType, prop: any, val: any): Vo {
 
 }
 
-function getVUs(str: string): any[] {
+function getVUstrings(str: string): any[] {
     let res: any[] = [];
 
     if (!regVUs.test(str) && !regColors.test(str)) {
@@ -396,8 +420,6 @@ function recombineNumsAndStrings(numArr: any, strArr: any) {
 export function normalizeTween(tw: Tween, target: Target) {
 
 
-    // return
-
     const prop = tw.prop;
 
     //TODO: Need to look into implementing complex values.
@@ -409,10 +431,16 @@ export function normalizeTween(tw: Tween, target: Target) {
     const defaultUnit = getDefaultUnit(prop, target.type);
     const defaultValue = getDefaultValue(prop);
 
+    if (twType === "path")
+        return;
+
+    // print(from)
+    // print(to)
+
 
     // console.log(tw.propType)
     // return;
-
+    //
     if (from.numbers.length !== to.numbers.length) {
 
         let shorter: Vo = from.numbers.length > to.numbers.length ? to : from;
@@ -449,6 +477,7 @@ export function normalizeTween(tw: Tween, target: Target) {
 
     }
 
+
     // return;
 
     for (let i = 0; i < to.numbers.length; i++) {
@@ -465,14 +494,16 @@ export function normalizeTween(tw: Tween, target: Target) {
 
         if (to.numbers[i] != null) {
 
-            if (from.units[i] == null) from.units[i] = defaultUnit;
+            if (from.numbers[i] == null) from.numbers[i] = defaultValue;
 
-            if (to.units[i] == null) {
-                to.units[i] = from.units[i];
-            }
-
-            if (from.units[i] !== to.units[i]) {
-                from.numbers[i] = Context.convertUnits(from.numbers[i], from.units[i], to.units[i], target.context.units);
+            if (target.type !== "svg") {
+                if (from.units[i] == null) from.units[i] = defaultUnit;
+                if (to.units[i] == null) {
+                    to.units[i] = from.units[i];
+                }
+                if (from.units[i] !== to.units[i]) {
+                    from.numbers[i] = Context.convertUnits(from.numbers[i], from.units[i], to.units[i], target.context.units);
+                }
             }
 
 
@@ -511,7 +542,7 @@ export function strToMap(str: string, twType: TweenType): Map<string, Tween> {
         part = part.replace(prop, "");
         part = part.replace(/^\(|\)$/g, "");
         // console.log(prop, part)
-        let vo = getVo("dom", prop, part);
+        let vo = getVo(null, prop, part);
 
         //*
         if (is.propDual(prop)) {
@@ -522,12 +553,12 @@ export function strToMap(str: string, twType: TweenType): Map<string, Tween> {
             let vus = part2.match(regValues);
             if (vus.length === 1) vus.push(is.valueOne(prop) ? "1" : "0");
 
-            let vox = getVo("dom", propX, vus[0]);
+            let vox = getVo(null, propX, vus[0]);
             let twx = new Tween(twType, propX, null, null, 0, 0, 0);
             twx.keepOld = true;
             twx.oldValue = `${propX}(${vus[0]})`;
 
-            let voy = getVo("dom", propY, vus[1]);
+            let voy = getVo(null, propY, vus[1]);
             let twy = new Tween(twType, propX, null, null, 0, 0, 0);
             twy.keepOld = true;
             twy.oldValue = `${propY}(${vus[1]})`;

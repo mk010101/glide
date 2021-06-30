@@ -5,7 +5,7 @@ import {Keyframe} from "./keyframe";
 import {Tween} from "./tween";
 import {Evt} from "./events";
 import {TweenType, Value} from "../types";
-import {TweenGroup, Vo} from "./vo";
+import {PathVo, TweenGroup, Vo} from "./vo";
 import {is} from "../util/regex";
 import * as $Ease from "../util/ease";
 
@@ -35,14 +35,25 @@ export class Animation extends Dispatcher {
     constructor(targets: any, duration: number, params: any, options: any = {}) {
         super();
 
-        this.repeat = (options.repeat != (void 0) && options.repeat > 0) ? options.repeat + 1 : 1;
-        this.loop = options.loop != (void 0) ? options.loop : true;
-        this.paused = options.paused != (void 0) ? options.paused : false;
-        this.keep = options.keep != (void 0) ? options.keep : false;
+        if (duration !== void 0) {
+            this.repeat = (options.repeat != (void 0) && options.repeat > 0) ? options.repeat + 1 : 1;
+            this.loop = options.loop != (void 0) ? options.loop : true;
+            this.paused = options.paused != (void 0) ? options.paused : false;
+            this.keep = options.keep != (void 0) ? options.keep : false;
+        } else {
+            this.status = 0;
+        }
 
+        this.target(targets, options);
+
+        if (duration !== void 0)
+            this.to(duration, params, options);
+
+    }
+
+    target(targets: any, options: any) {
         this.targets = Animation._getTargets(targets, options);
-        this.to(duration, params, options);
-
+        return this;
     }
 
 
@@ -63,13 +74,27 @@ export class Animation extends Dispatcher {
         if (!this._currentKf) {
             this._currentKf = kf;
         }
+        if (this.status === 0) this.status = 1;
+        return this;
+    }
+
+    set(params: any) {
+        let kf = new Keyframe();
+
+        for (let i = 0; i < this.targets.length; i++) {
+            const tg = Animation._getTweens(this.targets[i], 0, params, {});
+            kf.push(tg);
+            Animation._initTweens(kf);
+            Animation._render(kf.tgs, 1, 1)
+        }
+
         return this;
     }
 
 
     update(t: number) {
 
-        if ((this.paused && !this._seeking) || this.status === -1) return;
+        if ((this.paused && !this._seeking) || this.status < 1) return;
 
         //*
         if (!this._currentKf.initialized) {
@@ -207,7 +232,7 @@ export class Animation extends Dispatcher {
         STATIC METHODS
      =================================================================================================================*/
 
-    static _getRenderStr(tw:Tween, t: number):any {
+    static _getRenderStr(tw: Tween, t: number): any {
         let str = "";
 
         let from = tw.from;
@@ -230,6 +255,42 @@ export class Animation extends Dispatcher {
         }
         // console.log(str);
         return str;
+    }
+
+    static _getPathStr(tw: Tween, t: number) {
+
+        const vo: PathVo = <PathVo>tw.to;
+        const path = vo.path;
+        const box: any = vo.bBox;
+        const pos = path.getPointAtLength(vo.len * t);
+        const p0 = path.getPointAtLength(vo.len * (t - 0.01));
+        const p1 = path.getPointAtLength(vo.len * (t + 0.01));
+        let rot = 0;
+        let rotStr = "";
+        let deg = "";
+
+
+        if (tw.orientToPath) {
+            rot = Math.atan2(p1.y - p0.y, p1.x - p0.x) * 180 / Math.PI;
+            rotStr = ` rotate(${rot})`;
+            deg = "deg";
+        }
+
+        let x: number, y: number;
+
+        if (is.svg(tw.tweenable)) {
+            x = pos.x - vo.bBox.x;
+            y = pos.y - vo.bBox.y;
+            tw.tweenable.setAttribute("transform", `translate(${x}, ${y})${rotStr}`);
+            // tw.tweenable.setAttribute("transform", `translate(0, 0) ${rotStr} translate(${x}, ${y})`);
+        } else {
+            let screenPt = pos.matrixTransform(vo.svg.getScreenCTM());
+            let offsetX = box.x - vo.offsetX;
+            let offsetY = box.y - vo.offsetY;
+            tw.tweenable.transform = `translate(${screenPt.x - offsetX}px, ${screenPt.y - offsetY}px) rotate(${rot}${deg})`;
+            // console.log(offsetX, offsetY)
+        }
+
     }
 
     static _render(tgs: TweenGroup[], time: number, dir: number) {
@@ -285,6 +346,15 @@ export class Animation extends Dispatcher {
                         tweenable[prop] = from.numbers[0] + eased * (to.numbers[i] - from.numbers[i]);
                         break;
 
+                    case "svg":
+                        tweenable.setAttribute(prop, Animation._getRenderStr(tween, eased));
+                        break;
+
+                    case "path":
+                        Animation._getPathStr(tween, eased);
+                        //tweenable.setAttribute(prop, Animation._getRenderStr(tween, eased));
+                        break;
+
 
                 }
 
@@ -301,9 +371,8 @@ export class Animation extends Dispatcher {
     }
 
 
-
     static _getTargets(targets: any, options: any): Target[] {
-        if (typeof targets === "string") {
+        if (is.string(targets)) {
             targets = document.querySelectorAll(targets);
         }
 
@@ -312,7 +381,14 @@ export class Animation extends Dispatcher {
         if (is.list(targets)) {
             let staggerTime = 0;
             for (let i = 0; i < targets.length; i++) {
-                let target = new Target(targets[i], options.context);
+                let targ:any;
+
+                if (is.string(targets[i]))
+                    targ = document.querySelector(targets[i]);
+                else
+                    targ = targets[i];
+
+                let target = new Target(targ, options.context);
                 target.pos = i;
                 t.push(target);
             }
@@ -390,6 +466,7 @@ export class Animation extends Dispatcher {
 
         let delay = options.delay || 0;
         let tw = new Tween(twType, prop, fromVal, toVal, dur, delay, 0);
+        tw.options = options;
         if (twType === "direct") {
             tw.tweenable = target.el;
         } else {
@@ -417,7 +494,6 @@ export class Animation extends Dispatcher {
         }
         tw.ease = ease || Ease.quadInOut;
         tw.propType = getPropType(prop);
-
         return tw;
     }
 
@@ -443,7 +519,7 @@ export class Animation extends Dispatcher {
                 const tw = tg.tweens[j];
 
                 let from: Vo;
-                let to: Vo = getVo(tg.target.type, tw.prop, tw.toVal);
+                let to: Vo = getVo(tg.target, tw.prop, tw.toVal, tw.options);
 
                 if (tg.target.type === "dom") {
 
@@ -451,9 +527,9 @@ export class Animation extends Dispatcher {
 
                         case "other":
                         case "direct":
-                            if (tw.fromVal) from = getVo(tg.target.type, tw.prop, tw.fromVal);
+                            if (tw.fromVal) from = getVo(tg.target, tw.prop, tw.fromVal);
                             else
-                                from = getVo(tg.target.type, tw.prop, tg.target.getExistingValue(tw.prop));
+                                from = getVo(tg.target, tw.prop, tg.target.getExistingValue(tw.prop));
                             break;
 
                         case "transform":
@@ -475,14 +551,14 @@ export class Animation extends Dispatcher {
                             }
 
                             if (tw.fromVal) {
-                                from = getVo("dom", tw.prop, tw.fromVal);
+                                from = getVo(tg.target, tw.prop, tw.fromVal);
                             } else {
                                 if (oldTweens && oldTweens.has(tw.prop)) {
                                     // console.log(tw.prop)
                                     from = oldTweens.get(tw.prop).from;
                                     tw.keepOld = false;
                                 } else {
-                                    from = from = getVo("dom", tw.prop, tw.fromVal);
+                                    from = from = getVo(tg.target, tw.prop, tw.fromVal);
                                 }
                             }
                             newTweens.set(tw.prop, tw);
@@ -492,7 +568,7 @@ export class Animation extends Dispatcher {
                     }
                 } else {
                     if (!tw.fromVal) tw.fromVal = tg.target.getExistingValue(tw.prop);
-                    from = getVo("obj", tw.prop, tw.fromVal);
+                    from = getVo(tg.target, tw.prop, tw.fromVal);
                 }
 
                 tw.from = from;
@@ -509,7 +585,7 @@ export class Animation extends Dispatcher {
     }
 
 
-    static _arrangeMaps(oldM: Map<string, Tween>, newM: Map<string, Tween>, tg:TweenGroup, prop:TweenType) {
+    static _arrangeMaps(oldM: Map<string, Tween>, newM: Map<string, Tween>, tg: TweenGroup, prop: TweenType) {
 
         newM.forEach((v, k) => {
             oldM.set(k, v);

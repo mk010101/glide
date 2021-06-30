@@ -1,6 +1,6 @@
 
-export type TargetType = "dom" | "obj";
-export type TweenType = "transform" | "filter" | "other" | "direct" | "obj";
+export type TargetType = "dom" | "svg" | "obj";
+export type TweenType = "transform" | "filter" | "other" | "direct" | "obj" | "svg" | "path";
 export type ValueType = "null" | "number" | "string";
 export type PropType = "transform" | "filter" | "color" | "matrix" | "other";
 
@@ -15,3 +15,4 @@ export type ValueUnit = {
     unit:string;
     increment: string;
 }
+

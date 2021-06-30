@@ -1,8 +1,9 @@
 import { getObjType, is, regColors, regIncrements, regNumsUnits, regProp, regStrValues, regTypes, regValues, regVUs } from "./regex";
-import { Vo } from "../core/vo";
+import { PathVo, Vo } from "../core/vo";
 import { toRgbStr } from "./color";
 import Context from "../core/context";
 import { Tween } from "../core/tween";
+import { getSvg } from "./geom";
 export function minMax(val, min, max) {
     return Math.min(Math.max(val, min), max);
 }
@@ -23,6 +24,10 @@ export function getTweenType(targetType, prop) {
         return "filter";
     else if (is.propDirect(prop))
         return "direct";
+    else if (prop === "path")
+        return "path";
+    else if (targetType === "svg")
+        return "svg";
     return "other";
 }
 export function getValueType(val = null) {
@@ -52,11 +57,11 @@ export function getDefaultUnit(prop, targetType) {
     if (targetType === "obj") {
         return null;
     }
-    if (is.unitDegrees(prop))
+    else if (is.unitDegrees(prop))
         return "deg";
     else if (is.unitPercent(prop))
         return "%";
-    else if (is.unitless(prop))
+    else if (is.unitless(prop) || targetType === "svg")
         return "";
     return "px";
 }
@@ -68,6 +73,13 @@ export function getDefaultValue(prop) {
     return 0;
 }
 export function getValueUnit(val) {
+    if (is.number(val)) {
+        return {
+            value: val,
+            unit: null,
+            increment: null
+        };
+    }
     const increment = val.match(/-=|\+=|\*=|\/=/g);
     if (increment)
         increment[0] = increment[0].replace("=", "");
@@ -81,28 +93,15 @@ export function getValueUnit(val) {
         increment: increment ? increment[0] : null
     };
 }
-export function getValuesUnits(val) {
-    let vus = [];
-    let vtype = getValueType(val);
-    if (vtype === "null") {
-        return [{
-                value: 0,
-                unit: null,
-                increment: null
-            }];
-    }
-    else if (vtype === "number") {
-        return [{
-                value: val,
-                unit: null,
-                increment: null
-            }];
-    }
-    let arr = val.match(regVUs);
-    for (let i = 0; i < arr.length; i++) {
-        vus.push(getValueUnit(arr[i]));
-    }
-    return vus;
+function getVUs(val) {
+    let res = [];
+    if (is.number(val))
+        return [getValueUnit(val)];
+    const arr = val.match(regVUs);
+    arr.map((v) => {
+        res.push(getValueUnit(v));
+    });
+    return res;
 }
 function getNumbers(val) {
     let nums = val.match(/[-.\d]+/g);
@@ -170,16 +169,39 @@ function addBraces(vo, prop) {
         vo.units.push(null);
     }
 }
-export function getVo(targetType, prop, val) {
+export function getVo(target, prop, val, options = null) {
     let vo = new Vo();
     let res = [];
-    let propType = getPropType(prop);
     if (val == void 0) {
         vo = getDefaultVo(prop, val);
         return vo;
     }
     else if (is.number(val)) {
         return getDefaultVo(prop, val);
+    }
+    if (prop === "path") {
+        const pVo = new PathVo();
+        let path;
+        if (is.svg(val)) {
+            path = val;
+        }
+        else {
+            path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            path.setAttribute("d", val);
+        }
+        pVo.path = path;
+        pVo.len = path.getTotalLength();
+        pVo.svg = getSvg(path);
+        pVo.bBox = is.svg(target.el) ? target.el.getBBox() : target.el.getBoundingClientRect();
+        if ((options === null || options === void 0 ? void 0 : options.offset) !== undefined) {
+            let vus = getVUs(options.offset);
+            pVo.offsetX = vus[0].unit === "%" ? vus[0].value / 100 * pVo.bBox.width : vus[0].value;
+            if (vus.length === 1)
+                pVo.offsetY = pVo.offsetX;
+            else
+                pVo.offsetY = vus[1].unit === "%" ? vus[1].value / 100 * pVo.bBox.width : vus[1].value;
+        }
+        return pVo;
     }
     let arrColors = val.match(regColors);
     let arrCombined = [];
@@ -200,8 +222,8 @@ export function getVo(targetType, prop, val) {
         let p = arrCombined[i];
         if (p === "")
             continue;
-        getVUs(p);
-        res.push(...getVUs(p));
+        getVUstrings(p);
+        res.push(...getVUstrings(p));
     }
     for (let i = res.length - 1; i >= 0; i--) {
         let p = res[i];
@@ -235,7 +257,7 @@ export function getVo(targetType, prop, val) {
     addBraces(vo, prop);
     return vo;
 }
-function getVUs(str) {
+function getVUstrings(str) {
     let res = [];
     if (!regVUs.test(str) && !regColors.test(str)) {
         res.push(str);
@@ -294,6 +316,8 @@ export function normalizeTween(tw, target) {
     const propType = getPropType(prop);
     const defaultUnit = getDefaultUnit(prop, target.type);
     const defaultValue = getDefaultValue(prop);
+    if (twType === "path")
+        return;
     if (from.numbers.length !== to.numbers.length) {
         let shorter = from.numbers.length > to.numbers.length ? to : from;
         let longer = shorter === from ? to : from;
@@ -320,13 +344,17 @@ export function normalizeTween(tw, target) {
             }
         }
         if (to.numbers[i] != null) {
-            if (from.units[i] == null)
-                from.units[i] = defaultUnit;
-            if (to.units[i] == null) {
-                to.units[i] = from.units[i];
-            }
-            if (from.units[i] !== to.units[i]) {
-                from.numbers[i] = Context.convertUnits(from.numbers[i], from.units[i], to.units[i], target.context.units);
+            if (from.numbers[i] == null)
+                from.numbers[i] = defaultValue;
+            if (target.type !== "svg") {
+                if (from.units[i] == null)
+                    from.units[i] = defaultUnit;
+                if (to.units[i] == null) {
+                    to.units[i] = from.units[i];
+                }
+                if (from.units[i] !== to.units[i]) {
+                    from.numbers[i] = Context.convertUnits(from.numbers[i], from.units[i], to.units[i], target.context.units);
+                }
             }
             let incr = to.increments[i];
             if (incr === "-") {
@@ -356,7 +384,7 @@ export function strToMap(str, twType) {
         let prop = part.match(regProp)[0];
         part = part.replace(prop, "");
         part = part.replace(/^\(|\)$/g, "");
-        let vo = getVo("dom", prop, part);
+        let vo = getVo(null, prop, part);
         if (is.propDual(prop)) {
             let propX = prop + "X";
             let propY = prop + "Y";
@@ -364,11 +392,11 @@ export function strToMap(str, twType) {
             let vus = part2.match(regValues);
             if (vus.length === 1)
                 vus.push(is.valueOne(prop) ? "1" : "0");
-            let vox = getVo("dom", propX, vus[0]);
+            let vox = getVo(null, propX, vus[0]);
             let twx = new Tween(twType, propX, null, null, 0, 0, 0);
             twx.keepOld = true;
             twx.oldValue = `${propX}(${vus[0]})`;
-            let voy = getVo("dom", propY, vus[1]);
+            let voy = getVo(null, propY, vus[1]);
             let twy = new Tween(twType, propX, null, null, 0, 0, 0);
             twy.keepOld = true;
             twy.oldValue = `${propY}(${vus[1]})`;

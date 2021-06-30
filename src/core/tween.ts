@@ -18,8 +18,12 @@ export class Tween {
     to: Vo = null;
     ease: Function = quadInOut;
 
+    options:any;
+
     keepOld = false;
     oldValue: string = "";
+
+    orientToPath = true;
 
     constructor(
                 twType: TweenType,

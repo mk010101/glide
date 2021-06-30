@@ -6,7 +6,7 @@ export default class Target {
 
     el: any;
     type: TargetType;
-    tweenable:any;
+    tweenable: any;
     style: CSSStyleDeclaration;
     // cssTxt: string;
     computedStyle: CSSStyleDeclaration;
@@ -22,7 +22,15 @@ export default class Target {
     }
 
     init() {
-        this.type = is.dom(this.el)? "dom" : "obj";
+        let isSvg = is.svg(this.el);
+        let isDom = is.dom(this.el);
+        if (isSvg)
+            this.type = "svg";
+        else if (isDom && !isSvg)
+            this.type = "dom";
+        else
+            this.type = "obj";
+
         if (this.type === "dom") {
             this.style = this.el.style;
             // this.cssTxt = this.style.cssText;
@@ -42,6 +50,10 @@ export default class Target {
                 prop = "transform";
             else if (is.propFilter(prop))
                 prop = "filter";
+        }
+
+        if (this.type === "svg") {
+            return this.el.getAttribute(prop);
         }
 
         if (this.style) {

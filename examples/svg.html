@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SVG</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html, body {
+            margin: 20px;
+            padding: 4px;
+            overflow: hidden;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        svg {
+            width: 30%;
+            border: 1px solid #3399FF;
+            background-color: #e7edf2;
+        }
+
+        .el {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background-color: rgba(255, 95, 30, 0.78);
+            /*top: 0;*/
+            /*left: 0;*/
+            /*margin-left: -10px;*/
+        }
+
+
+    </style>
+
+
+</head>
+<body>
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px"
+     y="0px"
+     viewBox="0 0 600 600" style="enable-background:new 0 0 600 600;" xml:space="preserve">
+<circle id="circle-1" cx="270" cy="86" r="50" fill="rgba(0,100,0,.5)"/>
+    <path id="path-1" d="M59.1,458.8C59.1,352.3,164.3,266,294.1,266
+	C397.9,266,482,335,482,420.2c0,68.1-67.3,123.4-150.4,123.4c-66.4,0-120.3-44.2-120.3-98.7c0-43.6,43.1-79,96.2-79
+	c42.5,0,77,28.3,77,63.2" fill="none" stroke="#3399FF" stroke-width="4"/>
+    <rect id="rect-1" x="0" y="0" width="40" height="40" fill="rgba(0, 50, 255, .5)"/>
+</svg>
+
+<div class="el"></div>
+<div class="pt"></div>
+
+
+<script type="module">
+
+    import glide from "./libs/glide.esm.js";
+
+
+    window.onload = () => {
+
+        const el = document.querySelector(".el");
+
+        const svg = document.querySelector("svg");
+        const circle = document.querySelector("#circle-1");
+        const rect1 = document.querySelector("#rect-1");
+        const rect2 = document.querySelector("#rect-2");
+        const symbol1 = document.querySelector("#symbol-1");
+        const path = document.querySelector("#path-1");
+
+
+        let a = glide.to(["#rect-1", ".el"])
+        //.set({"ztransform-origin": "50% 50%", x:0, y:0})
+        // .to(500, {x: 200}, {delay:500})
+            .to(2500, {path: path}, {delay: 500, offset: "-50%"})
+            .on("end", () => {
+                // console.log(a)
+                console.log(a.keyframes[0].tgs[0].tweens[0]);
+
+            });
+
+
+        //-----------------------------------------------------------------
+        //rect1.setAttribute("transform", "rotate(45)")
+
+
+        svg.style.width = "500px";
+        svg.style.height = "250px";
+
+        let len = path.getTotalLength();
+        let pos = path.getPointAtLength(len);
+
+        // -------------------------------------
+
+        let screenPt = pos.matrixTransform(svg.getScreenCTM());
+
+        // -------------------------------------
+        /*let dot = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+        dot.setAttribute("x", "0");
+        dot.setAttribute("y", "0");
+        dot.setAttribute("width", "10");
+        dot.setAttribute("height", "10");
+        dot.setAttribute("fill", "rgba(72,200,55,0.6)");
+        dot.setAttribute("id", "rect-test");
+        svg.appendChild(dot)*/
+
+
+
+
+        let rectBB = rect1.getBBox();
+
+
+        let x1 = pos.x - rectBB.x;
+        let y1 = pos.y - rectBB.y;
+
+        rect1.setAttribute("transform", `translate(${x1} ${y1})`);
+
+
+    }
+
+
+</script>
+
+
+</body>
+</html>
+
+
+
+
+
+
+
+
+
