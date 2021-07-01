@@ -1,8 +1,8 @@
 
 export type TargetType = "dom" | "svg" | "obj";
-export type TweenType = "transform" | "filter" | "other" | "direct" | "obj" | "svg" | "path";
+export type TweenType = "transform" | "directTr" | "filter" | "other" | "direct" | "obj" | "svg" | "path";
 export type ValueType = "null" | "number" | "string";
-export type PropType = "transform" | "filter" | "color" | "matrix" | "other";
+export type PropType = "transform" | "directTr" | "filter" | "color" | "matrix" | "other";
 
 export type Value = {
     value: any;

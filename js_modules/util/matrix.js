@@ -1,5 +1,5 @@
 const PI_180 = Math.PI / 180;
-class Transforms2D {
+class $Trans2D {
     constructor() {
         this.translateX = 0;
         this.translateY = 0;

@@ -543,7 +543,6 @@ export class Animation extends Dispatcher {
 
                             if (tw.twType === "transform" && !transChecked) {
                                 transOldTweens = strToMap(tg.target.getExistingValue("transform"), "transform");
-                                // console.log(transOldTweens)
                                 transTweens = new Map<string, Tween>();
                                 transChecked = true;
                                 oldTweens = transOldTweens;

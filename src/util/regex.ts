@@ -93,6 +93,9 @@ export const is = {
     propTransform(val: any) {
         return (/translate|^rotate|^scale|skew|matrix|x[(xyz]+|y[(xyz]+/i.test(val));
     },
+    propIndividualTr(val: any) {
+        return (/translation|^rotation|^scaling|skewing|/i.test(val));
+    },
     propMatrix(val: any) {
         return (/matrix[3d]*/i.test(val));
     },

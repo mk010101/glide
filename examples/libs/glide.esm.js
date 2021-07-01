@@ -148,6 +148,9 @@ const is = {
     propTransform(val) {
         return (/translate|^rotate|^scale|skew|matrix|x[(xyz]+|y[(xyz]+/i.test(val));
     },
+    propIndividualTr(val) {
+        return (/translation|^rotation|^scaling|skewing|/i.test(val));
+    },
     propMatrix(val) {
         return (/matrix[3d]*/i.test(val));
     },

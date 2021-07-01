@@ -25,7 +25,7 @@ export type Trans2D = {
     scaleY: number;
 }
 
-class Transforms2D {
+class $Trans2D {
     translateX: number = 0;
     translateY: number = 0;
     skewX: number = 0;
