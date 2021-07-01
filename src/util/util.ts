@@ -16,7 +16,6 @@ import {toRgb, toRgbStr} from "./color";
 import Context from "../core/context";
 import {Tween} from "../core/tween";
 import Target from "../core/target";
-import {getSvg} from "./geom";
 
 
 export function minMax(val: number, min: number, max: number): number {
@@ -595,6 +594,18 @@ export function strToMap(str: string, twType: TweenType): Map<string, Tween> {
     }
     // console.log(res)
     return res;
+}
+
+
+export function getSvg(node:Element):Element {
+    let parent = node;
+    while (parent instanceof SVGElement) {
+        if (!(parent.parentNode instanceof SVGElement)) {
+            return parent;
+        }
+        parent = parent.parentNode;
+    }
+    return parent;
 }
 
 

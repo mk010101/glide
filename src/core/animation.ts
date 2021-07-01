@@ -285,8 +285,8 @@ export class Animation extends Dispatcher {
             let a1 = vo.bBox.x;
             let a2 = vo.bBox.y;
             rotStr = ` rotate(${rot}, ${a1}, ${a2})`;
-            tw.tweenable.setAttribute("transform", `translate(${x}, 
-            ${y}) 
+            tw.tweenable.setAttribute("transform",
+                `translate(${x}, ${y}) 
             ${rotStr} 
             translate(${vo.offsetX}, ${vo.offsetX})`);
         } else {

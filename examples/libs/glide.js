@@ -598,17 +598,6 @@
         }
     }
 
-    function getSvg(node) {
-        let parent = node;
-        while (parent instanceof SVGElement) {
-            if (!(parent.parentNode instanceof SVGElement)) {
-                return parent;
-            }
-            parent = parent.parentNode;
-        }
-        return parent;
-    }
-
     function minMax(val, min, max) {
         return Math.min(Math.max(val, min), max);
     }
@@ -995,6 +984,16 @@
         }
         return res;
     }
+    function getSvg(node) {
+        let parent = node;
+        while (parent instanceof SVGElement) {
+            if (!(parent.parentNode instanceof SVGElement)) {
+                return parent;
+            }
+            parent = parent.parentNode;
+        }
+        return parent;
+    }
 
     class Keyframe {
         constructor() {
@@ -1237,8 +1236,7 @@
                 let a1 = vo.bBox.x;
                 let a2 = vo.bBox.y;
                 rotStr = ` rotate(${rot}, ${a1}, ${a2})`;
-                tw.tweenable.setAttribute("transform", `translate(${x}, 
-            ${y}) 
+                tw.tweenable.setAttribute("transform", `translate(${x}, ${y}) 
             ${rotStr} 
             translate(${vo.offsetX}, ${vo.offsetX})`);
             }

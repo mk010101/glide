@@ -3,7 +3,6 @@ import { PathVo, Vo } from "../core/vo";
 import { toRgbStr } from "./color";
 import Context from "../core/context";
 import { Tween } from "../core/tween";
-import { getSvg } from "./geom";
 export function minMax(val, min, max) {
     return Math.min(Math.max(val, min), max);
 }
@@ -414,6 +413,16 @@ export function strToMap(str, twType) {
         }
     }
     return res;
+}
+export function getSvg(node) {
+    let parent = node;
+    while (parent instanceof SVGElement) {
+        if (!(parent.parentNode instanceof SVGElement)) {
+            return parent;
+        }
+        parent = parent.parentNode;
+    }
+    return parent;
 }
 export function print(val) {
     console.log(JSON.stringify(val, null, 4));
