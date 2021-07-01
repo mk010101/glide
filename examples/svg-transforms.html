@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>SVG</title>
+    <title>SVG-transforms</title>
 
     <style>
 
@@ -35,7 +35,7 @@
 
         .el {
             position: absolute;
-            width: 20px;
+            width: 40px;
             height: 20px;
             background-color: rgba(255, 95, 30, 0.78);
             /*top: 0;*/
@@ -142,6 +142,8 @@
 
         rect1.setAttribute("transform", "translate(-10, 100) rotate(45, 150, 70)")
         // rect1.setAttribute("transform", "translate(-10, 100)")
+        el.style.transform = "rotate(10deg) translateX(50px)";
+
 
 
 
@@ -178,9 +180,20 @@
         }
 
 
+        function strToMatrix(str) {
+            let arr = str.match(/[-.\d]+/g);
+            let arrInd = ["a", "b", "c", "d", "e", "f"];
+            let mtx = {};
+            arr.map((v, i)=> {
+                mtx[arrInd[i]] = parseFloat(v);
+            });
+            return mtx;
+        }
 
         console.log(decomposeMatrix(rect1.getCTM()));
 
+        let mtx = strToMatrix(window.getComputedStyle(el).transform);
+        console.log(decomposeMatrix(mtx));
 
 
 
