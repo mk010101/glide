@@ -71,10 +71,10 @@
         const path = document.querySelector("#path-1");
 
 
-        let a = glide.to(["#rect-1"])
+        let a = glide.to(["#rect-1", ".el"])
         //.set({"ztransform-origin": "50% 50%", x:0, y:0})
         // .to(500, {x: 200}, {delay:500})
-            .to(2500, {path: path}, {delay: 500, offset: "-50%"})
+            .to(2500, {path: path}, {delay: 500, offset: "-50%", stagger:500})
             .on("end", () => {
                 // console.log(a)
                 console.log(a.keyframes[0].tgs[0].tweens[0]);
