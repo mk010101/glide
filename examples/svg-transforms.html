@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SVG</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html, body {
+            margin: 20px;
+            padding: 4px;
+            overflow: hidden;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        svg {
+            width: 30%;
+            /*border: 1px solid #3399FF;*/
+            background-color: #e7edf2;
+        }
+
+        line {
+            stroke: #3399FF;
+            stroke-width: 2px;
+        }
+
+        rect {
+            fill: rgba(255, 138, 55, 0.71);
+        }
+
+        .el {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background-color: rgba(255, 95, 30, 0.78);
+            /*top: 0;*/
+            /*left: 0;*/
+            /*margin-left: -10px;*/
+        }
+
+
+    </style>
+
+
+</head>
+<body>
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px"
+     y="0px"
+     viewBox="0 0 600 600" style="enable-background:new 0 0 600 600;" xml:space="preserve">
+	<line x1="0" y1="0" x2="0" y2="600"/>
+    <line x1="0" y1="1" x2="600" y2="1"/>
+
+    <line id="L1" x1="0" y1="79" x2="600" y2="70"/>
+    <line id="L2" x1="90" y1="0" x2="90" y2="600"/>
+
+    <rect id="rect-1" x="90" y="70" width="220" height="110"/>
+
+
+</svg>
+
+<div class="el"></div>
+<div class="pt"></div>
+
+
+<script type="module">
+
+    import glide from "./libs/glide.esm.js";
+
+
+    window.onload = () => {
+
+        const el = document.querySelector(".el");
+
+        const svg = document.querySelector("svg");
+        const rect1 = document.querySelector("#rect-1");
+        const rect2 = document.querySelector("#rect-2");
+
+
+        let a = glide.to(["#rect-1"])
+        //.set({"ztransform-origin": "50% 50%", x:0, y:0})
+        // .to(1500, {transform: "rotate(-45)"}, {delay:500})
+        //     .to(2500, {path: path}, {delay: 500, offset: "-50%"})
+            .on("end", () => {
+                // console.log(a)
+                console.log(a.keyframes[0].tgs[0].tweens[0]);
+
+            });
+
+
+        //-----------------------------------------------------------------
+
+        svg.style.width = "500";
+        svg.style.height = "300";
+
+
+        let bbox = rect1.getBBox();
+        console.log(bbox)
+
+
+        const l1 = document.querySelector("#L1");
+        const l2 = document.querySelector("#L2");
+
+        l1.setAttribute("x1", "0");
+        l1.setAttribute("y1", bbox.y + bbox.height / 2);
+        l1.setAttribute("x2", "600");
+        l1.setAttribute("y2", bbox.y + bbox.height / 2);
+
+        l2.setAttribute("x1", bbox.x + bbox.width / 2);
+        l2.setAttribute("y1", "0");
+        l2.setAttribute("x2", bbox.x + bbox.width / 2);
+        l2.setAttribute("y2", "600");
+
+
+        let trans1 = `translate(${-bbox.x * 2}, ${-bbox.y * 2}) rotate(10) translate(${bbox.x}, ${bbox.y})`;
+        let trans2 = `translate(${-bbox.x - bbox.width / 2}, ${-bbox.y - bbox.height / 2}) rotate(30)`;
+
+        // rect1.setAttribute("transform", trans1);
+        //rect1.setAttribute("transform", trans2);
+
+        let a1 = bbox.x + bbox.width / 2;
+        let a2 = bbox.y + bbox.height / 2;
+
+        let ang = 0;
+
+        function rot() {
+            // rect1.setAttribute("transform", `translate(${-bbox.x - bbox.width/2}, ${-bbox.y - bbox.height/2}) rotate(${ang})`);
+            // rect1.setAttribute("transform", `translate(${-bbox.x}, ${-bbox.y}) rotate(${ang}, 70, 30) translate(${bbox.x}, ${bbox.y})`);
+            rect1.setAttribute("transform", `rotate(${ang}, ${a1}, ${a2})`);
+            ang++;
+            requestAnimationFrame(rot)
+        }
+
+        rot();
+
+    }
+
+
+</script>
+
+
+</body>
+</html>
+
+
+
+
+
+
+
+
+

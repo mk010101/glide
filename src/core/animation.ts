@@ -281,8 +281,14 @@ export class Animation extends Dispatcher {
         if (is.svg(tw.tweenable)) {
             x = pos.x - vo.bBox.x;
             y = pos.y - vo.bBox.y;
-            tw.tweenable.setAttribute("transform", `translate(${x}, ${y})${rotStr}`);
-            // tw.tweenable.setAttribute("transform", `translate(0, 0) ${rotStr} translate(${x}, ${y})`);
+
+            let a1 = vo.bBox.x;
+            let a2 = vo.bBox.y;
+            rotStr = ` rotate(${rot}, ${a1}, ${a2})`;
+            tw.tweenable.setAttribute("transform", `translate(${x}, 
+            ${y}) 
+            ${rotStr} 
+            translate(${vo.offsetX}, ${vo.offsetX})`);
         } else {
             let screenPt = pos.matrixTransform(vo.svg.getScreenCTM());
             let offsetX = box.x - vo.offsetX;
