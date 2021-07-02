@@ -151,8 +151,11 @@
         mixed(val) {
             return /gradient/i.test(val);
         },
-        propTransform(val) {
+        propIndTransform(val) {
             return (/translate|^rotate|^scale|skew|matrix|x[(xyz]+|y[(xyz]+/i.test(val));
+        },
+        propTransform(val) {
+            return (val === "transform");
         },
         propIndividualTr(val) {
             return (/translation|^rotation|^scaling|skewing|/i.test(val));
@@ -214,7 +217,7 @@
                 return this.el[prop];
             }
             else {
-                if (is.propTransform(prop))
+                if (is.propIndTransform(prop))
                     prop = "transform";
                 else if (is.propFilter(prop))
                     prop = "filter";
@@ -607,6 +610,8 @@
     function getTweenType(targetType, prop) {
         if (targetType === "obj")
             return "obj";
+        else if (is.propIndTransform(prop))
+            return "indTransform";
         else if (is.propTransform(prop))
             return "transform";
         else if (is.propFilter(prop))
@@ -620,7 +625,7 @@
         return "other";
     }
     function getPropType(prop) {
-        if (is.propTransform(prop))
+        if (is.propIndTransform(prop))
             return "transform";
         else if (is.propColor(prop))
             return "color";
@@ -680,6 +685,21 @@
         });
         return res;
     }
+    function stringToPropsVals(str) {
+        let arr = [];
+        let parts = str.match(regStrValues);
+        for (let j = 0; j < parts.length; j++) {
+            let part = parts[j];
+            let prop = part.match(regProp)[0];
+            part = part.replace(prop, "");
+            part = part.replace(/^\(|\)$/g, "");
+            arr.push({
+                prop: prop,
+                value: part
+            });
+        }
+        return arr;
+    }
     function unwrapValues(prop, val) {
         const propX = prop + "X";
         const propY = prop + "Y";
@@ -712,7 +732,7 @@
         let vo = new Vo();
         if (val == null)
             return vo;
-        if (is.propFilter(prop) || is.propTransform(prop)) {
+        if (is.propFilter(prop) || is.propIndTransform(prop)) {
             vo.numbers.push(null, val, null);
             vo.floats.push(1, 1, 1);
             vo.units.push(null, null, null);
@@ -729,7 +749,7 @@
         return vo;
     }
     function addBraces(vo, prop) {
-        if (is.propTransform(prop) || is.propFilter(prop)) {
+        if (is.propIndTransform(prop) || is.propFilter(prop)) {
             vo.strings.unshift(prop + "(");
             vo.numbers.unshift(null);
             vo.increments.unshift(null);
@@ -956,30 +976,21 @@
             let prop = part.match(regProp)[0];
             part = part.replace(prop, "");
             part = part.replace(/^\(|\)$/g, "");
-            let vo = getVo(null, prop, part);
             if (is.propDual(prop)) {
-                let propX = prop + "X";
-                let propY = prop + "Y";
-                let part2 = part.replace(prop, "");
-                let vus = part2.match(regValues);
-                if (vus.length === 1)
-                    vus.push(is.valueOne(prop) ? "1" : "0");
-                let vox = getVo(null, propX, vus[0]);
-                let twx = new Tween(twType, propX, null, null, 0, 0, 0);
-                twx.keepOld = true;
-                twx.oldValue = `${propX}(${vus[0]})`;
-                let voy = getVo(null, propY, vus[1]);
-                let twy = new Tween(twType, propX, null, null, 0, 0, 0);
-                twy.keepOld = true;
-                twy.oldValue = `${propY}(${vus[1]})`;
-                twx.from = vox;
-                res.set(propX, twx);
-                twy.from = voy;
-                res.set(propY, twy);
+                let unwrapped = unwrapValues(prop, part);
+                for (let j = 0; j < unwrapped.length; j++) {
+                    const p = unwrapped[j];
+                    let vo = getVo(null, p.prop, p.val);
+                    let tw = new Tween(twType, p.prop, null, null, 0, 0, 0);
+                    tw.keepOld = true;
+                    tw.oldValue = `${p.prop}(${p.val})`;
+                    tw.from = vo;
+                    res.set(p.prop, tw);
+                }
             }
             else {
                 let tw = new Tween(twType, prop, null, null, 0, 0, 0);
-                tw.from = vo;
+                tw.from = getVo(null, prop, part);
                 tw.keepOld = true;
                 tw.oldValue = `${prop}(${part})`;
                 res.set(tw.prop, tw);
@@ -1025,6 +1036,51 @@
         progress: progress,
         end: end,
     };
+
+    function getNormalizedTransforms(str) {
+        return decomposeMtx2D(strToMtx2D(str));
+    }
+    function decomposeMtx2D(matrix) {
+        let px = deltaTransformPoint(matrix, { x: 0, y: 1 });
+        let py = deltaTransformPoint(matrix, { x: 1, y: 0 });
+        let skewX = ((180 / Math.PI) * Math.atan2(px.y, px.x) - 90);
+        let skewY = ((180 / Math.PI) * Math.atan2(py.y, py.x));
+        return {
+            translateX: matrix.e,
+            translateY: matrix.f,
+            skewX: skewX,
+            skewY: skewY,
+            rotate: skewX,
+            scaleX: Math.sqrt(matrix.a * matrix.a + matrix.b * matrix.b),
+            scaleY: Math.sqrt(matrix.c * matrix.c + matrix.d * matrix.d),
+        };
+    }
+    function deltaTransformPoint(matrix, point) {
+        let dx = point.x * matrix.a + point.y * matrix.c;
+        let dy = point.x * matrix.b + point.y * matrix.d;
+        return { x: dx, y: dy };
+    }
+    function strToMtx2D(str) {
+        if (!str || str.indexOf("matrix") === -1)
+            return getMtx2D();
+        let arr = str.match(/[-.\d]+/g);
+        let arrInd = ["a", "b", "c", "d", "e", "f"];
+        let mtx = {};
+        for (let i = 0; i < 6; i++) {
+            mtx[arrInd[i]] = parseFloat(arr[i]);
+        }
+        return mtx;
+    }
+    function getMtx2D() {
+        return {
+            a: 1,
+            b: 0,
+            c: 0,
+            d: 1,
+            e: 0,
+            f: 0,
+        };
+    }
 
     const Ease = ease;
     class Animation extends Dispatcher {
@@ -1335,34 +1391,35 @@
             for (let i = 0; i < keys.length; i++) {
                 let prop = keys[i];
                 let val = params[prop];
-                if (target.type === "dom" && is.propDual(prop)) {
-                    let res = unwrapValues(prop, val);
-                    tg.tweens.push(Animation._getTween(target, res[0].prop, res[0].val, duration, options));
-                    tg.tweens.push(Animation._getTween(target, res[1].prop, res[1].val, duration, options));
+                if (target.type === "dom") {
+                    if (prop === "bg")
+                        prop = "backgroundColor";
+                    else if (prop === "x")
+                        prop = "translateX";
+                    else if (prop === "y")
+                        prop = "translateY";
+                    else if (prop === "hueRotate")
+                        prop = "hue-rotate";
+                    else if (prop === "dropShadow")
+                        prop = "drop-shadow";
                 }
-                else {
-                    let tw = Animation._getTween(target, prop, val, duration, options);
-                    tg.tweens.push(tw);
+                const twType = getTweenType(target.type, prop);
+                if (target.type === "dom" && prop === "transform") {
+                    let propsVals = stringToPropsVals(val);
+                    for (let j = 0; j < propsVals.length; j++) {
+                        let twTr = Animation._getTween("transform", target, propsVals[j].prop, propsVals[j].value, duration, options);
+                        tg.tweens.push(twTr);
+                    }
+                    continue;
                 }
+                let tw = Animation._getTween(twType, target, prop, val, duration, options);
+                tg.tweens.push(tw);
             }
             return tg;
         }
-        static _getTween(target, prop, val, dur, options) {
+        static _getTween(twType, target, prop, val, dur, options) {
             let fromVal;
             let toVal;
-            if (target.type === "dom") {
-                if (prop === "bg")
-                    prop = "backgroundColor";
-                else if (prop === "x")
-                    prop = "translateX";
-                else if (prop === "y")
-                    prop = "translateY";
-                else if (prop === "hueRotate")
-                    prop = "hue-rotate";
-                else if (prop === "dropShadow")
-                    prop = "drop-shadow";
-            }
-            const twType = getTweenType(target.type, prop);
             let optEase = options.ease;
             if (is.array(val)) {
                 fromVal = val[0];
@@ -1434,6 +1491,11 @@
                                     from = getVo(tg.target, tw.prop, tw.fromVal);
                                 else
                                     from = getVo(tg.target, tw.prop, tg.target.getExistingValue(tw.prop));
+                                break;
+                            case "indTransform":
+                                let oldStr = window.getComputedStyle(tg.target.el).transform;
+                                let oldtrans = getNormalizedTransforms(oldStr);
+                                console.log(oldtrans);
                                 break;
                             case "transform":
                             case "filter":

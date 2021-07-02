@@ -40,7 +40,7 @@ class $Trans2D {
  * Decomposes Matrix string (a, b, c, d, e, f..) to individual transforms.
  * @param str string Matrix.
  */
-export function mtx2DtoTransforms(str:string):Trans2D {
+export function getNormalizedTransforms(str: string): Trans2D {
     return decomposeMtx2D(strToMtx2D(str));
 }
 
@@ -77,43 +77,86 @@ function deltaTransformPoint(matrix: Mtx2D, point: Pt) {
 }
 
 function strToMtx2D(str: string): Mtx2D {
+    if (!str || str.indexOf("matrix") === -1)
+        return getMtx2D();
     let arr = str.match(/[-.\d]+/g);
     let arrInd = ["a", "b", "c", "d", "e", "f"];
     let mtx: any = {};
-    arr.map((v: string, i: number) => {
-        mtx[arrInd[i]] = parseFloat(v);
-    });
+    for (let i = 0; i < 6; i++) {
+        mtx[arrInd[i]] = parseFloat(arr[i]);
+    }
+    return mtx;
+}
+
+export function getMtx2D(): Mtx2D {
+    return {
+        a: 1,
+        b: 0,
+        c: 0,
+        d: 1,
+        e: 0,
+        f: 0,
+    }
+}
+
+
+/* =====================================================================================================================
+    MATRIX-2D MATH
+======================================================================================================================*/
+
+
+
+
+export function translateX(mtx: Mtx2D, tx: number): Mtx2D {
+    applyTransform(mtx, 1, 0, 0, 1, tx, 0);
     return mtx;
 }
 
 
-/*
-
-
-
-export function rotToMtx(deg: number, mtx: number[] = null) {
-
-    if (!mtx) mtx = [1, 0, 0, 1, 0, 0];
-    const rad = toRad(deg);
-    mtx[0] = Math.cos(rad);
-    mtx[1] = Math.sin(rad);
-    mtx[2] = -Math.sin(rad);
-    mtx[3] = Math.cos(rad);
+export function translateY(mtx: Mtx2D, ty: number): Mtx2D {
+    applyTransform(mtx, 1, 0, 0, 1, 0, ty);
     return mtx;
 }
 
-export function translateToMtx(x: number = null, y: number = null, mtx: number[] = null) {
-    if (!mtx) mtx = [1, 0, 0, 1, 0, 0];
-    if (x) mtx[4] = x;
-    if (y) mtx[5] = y;
+
+export function rotate(mtx: Mtx2D, deg: number): Mtx2D {
+    let rad = toRad(deg);
+    let cos = Math.cos(rad),
+        sin = Math.sin(rad);
+    applyTransform(mtx, cos, sin, -sin, cos, 0, 0);
     return mtx;
 }
 
-export function skewToMtx(x: number = null, y: number = null, mtx: number[] = null) {
-    if (!mtx) mtx = [1, 0, 0, 1, 0, 0];
-    if (x) mtx[2] = Math.tan(toRad(x));
-    if (y) mtx[1] = Math.tan(toRad(y));
+export function scaleX(mtx: Mtx2D, sx: number): Mtx2D {
+    applyTransform(mtx, sx, 0, 0, 1, 0, 0);
     return mtx;
+}
+
+export function scaleY(mtx: Mtx2D, sy: number): Mtx2D {
+    applyTransform(mtx, 1, 0, 0, sy, 0, 0);
+    return mtx;
+}
+
+
+/**
+ * Multiplies current matrix with new matrix values.
+ * @param {Mtx2D} mtx1 - matrix to apply transforms to.
+ * @param {number} a - scale x
+ * @param {number} b - skew y
+ * @param {number} c - skew x
+ * @param {number} d - scale y
+ * @param {number} e - translate x
+ * @param {number} f - translate y
+ */
+function applyTransform(mtx1: Mtx2D, a: number, b: number, c: number, d: number, e: number, f: number) {
+
+    mtx1.a = mtx1.a * a + mtx1.c * b;
+    mtx1.b = mtx1.b * a + mtx1.d * b;
+    mtx1.c = mtx1.a * c + mtx1.c * d;
+    mtx1.d = mtx1.b * c + mtx1.d * d;
+    mtx1.e = mtx1.a * e + mtx1.c * f + mtx1.e;
+    mtx1.f = mtx1.b * e + mtx1.d * f + mtx1.f;
+
 }
 
 
@@ -122,4 +165,4 @@ function toRad(deg: number) {
 }
 
 
- */
+

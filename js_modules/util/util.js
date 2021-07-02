@@ -17,6 +17,8 @@ export function getTargetType(val) {
 export function getTweenType(targetType, prop) {
     if (targetType === "obj")
         return "obj";
+    else if (is.propIndTransform(prop))
+        return "indTransform";
     else if (is.propTransform(prop))
         return "transform";
     else if (is.propFilter(prop))
@@ -42,7 +44,7 @@ export function getValueType(val = null) {
     return;
 }
 export function getPropType(prop) {
-    if (is.propTransform(prop))
+    if (is.propIndTransform(prop))
         return "transform";
     else if (is.propColor(prop))
         return "color";
@@ -106,6 +108,21 @@ function getNumbers(val) {
     let nums = val.match(/[-.\d]+/g);
     return nums.map((v) => parseFloat(v));
 }
+export function stringToPropsVals(str) {
+    let arr = [];
+    let parts = str.match(regStrValues);
+    for (let j = 0; j < parts.length; j++) {
+        let part = parts[j];
+        let prop = part.match(regProp)[0];
+        part = part.replace(prop, "");
+        part = part.replace(/^\(|\)$/g, "");
+        arr.push({
+            prop: prop,
+            value: part
+        });
+    }
+    return arr;
+}
 export function unwrapValues(prop, val) {
     const propX = prop + "X";
     const propY = prop + "Y";
@@ -138,7 +155,7 @@ function getDefaultVo(prop, val = null) {
     let vo = new Vo();
     if (val == null)
         return vo;
-    if (is.propFilter(prop) || is.propTransform(prop)) {
+    if (is.propFilter(prop) || is.propIndTransform(prop)) {
         vo.numbers.push(null, val, null);
         vo.floats.push(1, 1, 1);
         vo.units.push(null, null, null);
@@ -155,7 +172,7 @@ function getDefaultVo(prop, val = null) {
     return vo;
 }
 function addBraces(vo, prop) {
-    if (is.propTransform(prop) || is.propFilter(prop)) {
+    if (is.propIndTransform(prop) || is.propFilter(prop)) {
         vo.strings.unshift(prop + "(");
         vo.numbers.unshift(null);
         vo.increments.unshift(null);
@@ -383,30 +400,21 @@ export function strToMap(str, twType) {
         let prop = part.match(regProp)[0];
         part = part.replace(prop, "");
         part = part.replace(/^\(|\)$/g, "");
-        let vo = getVo(null, prop, part);
         if (is.propDual(prop)) {
-            let propX = prop + "X";
-            let propY = prop + "Y";
-            let part2 = part.replace(prop, "");
-            let vus = part2.match(regValues);
-            if (vus.length === 1)
-                vus.push(is.valueOne(prop) ? "1" : "0");
-            let vox = getVo(null, propX, vus[0]);
-            let twx = new Tween(twType, propX, null, null, 0, 0, 0);
-            twx.keepOld = true;
-            twx.oldValue = `${propX}(${vus[0]})`;
-            let voy = getVo(null, propY, vus[1]);
-            let twy = new Tween(twType, propX, null, null, 0, 0, 0);
-            twy.keepOld = true;
-            twy.oldValue = `${propY}(${vus[1]})`;
-            twx.from = vox;
-            res.set(propX, twx);
-            twy.from = voy;
-            res.set(propY, twy);
+            let unwrapped = unwrapValues(prop, part);
+            for (let j = 0; j < unwrapped.length; j++) {
+                const p = unwrapped[j];
+                let vo = getVo(null, p.prop, p.val);
+                let tw = new Tween(twType, p.prop, null, null, 0, 0, 0);
+                tw.keepOld = true;
+                tw.oldValue = `${p.prop}(${p.val})`;
+                tw.from = vo;
+                res.set(p.prop, tw);
+            }
         }
         else {
             let tw = new Tween(twType, prop, null, null, 0, 0, 0);
-            tw.from = vo;
+            tw.from = getVo(null, prop, part);
             tw.keepOld = true;
             tw.oldValue = `${prop}(${part})`;
             res.set(tw.prop, tw);

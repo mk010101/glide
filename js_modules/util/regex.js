@@ -82,8 +82,11 @@ export const is = {
     mixed(val) {
         return /gradient/i.test(val);
     },
-    propTransform(val) {
+    propIndTransform(val) {
         return (/translate|^rotate|^scale|skew|matrix|x[(xyz]+|y[(xyz]+/i.test(val));
+    },
+    propTransform(val) {
+        return (val === "transform");
     },
     propIndividualTr(val) {
         return (/translation|^rotation|^scaling|skewing|/i.test(val));

@@ -104,7 +104,7 @@
 
 
         // el.style.transform = strTransform;
-        // el.style.transform = "scale(.8, .7) translateX(50px) rotate(20deg)";
+        el.style.transform = "scale(.8, .7) translateX(50px) rotate(20deg)";
         // el.style.transform = "translate(30%, 50px)";
         // el.style.transform = "scale(2) translate(50px, 50px)";
         // el.style.transform = "translate(50px, 50px) scale(2)    ";
@@ -169,8 +169,9 @@
                     // translateY: 50,
                     // translate: "100",
                     // scale: 1.5
-                    y: {value:100, ease:"cubicOut"},
-                    x: 120,
+                    // y: {value:100, ease:"cubicOut"},
+                    // x: 120,
+                    transform: "rotate(+=33)",
                     // rotate: {value: "2rad", duration: 1000},
                     // rotate: -45,
                     // scaleX: -1,
@@ -182,8 +183,9 @@
                     // color: "rgba(153,215,255,0.8)",
                     // background: "rgb(255, 0, 200)",
                     // background: "linear-gradient(#ff0000, #0000ff)",
+                    // background: ["linear-gradient(#ff0000, #0000ff)", "linear-gradient(#cc00ff, #336699)"],
                     // bg: "hsla(15deg, 100% 50%, .5)",
-                    bg: "rgba(139,210,136,0.7)",
+                    // bg: "rgba(139,210,136,0.7)",
                     // borderColor: "rgba(153,215,255,0.8)",
                     // borderWidth: "4 9 12",
                     // borderWidth: "+=4px",
@@ -206,8 +208,8 @@
                     updRange(a.runningTime)
                 })
                 .on('end', () => {
-                    console.log(a);
-                    // console.log(a.keyframes[0].tgs[0].tweens);
+                    // console.log(a);
+                    console.log(a.keyframes[0].tgs[0].tweens);
                     console.log("end", (performance.now() - t0));
                     // console.log(window.getComputedStyle(el).transform);
                 });
@@ -242,10 +244,11 @@
             TESTS
          =============================================================================================================*/
 
-        //el.style.rotate = "20deg"
+        // console.log(window.getComputedStyle(el).transform);
 
-        // let oo = Object.assign(el.style,{transform:"scale(1,1)"});
-        // console.log(el.style.cssText);
+        setTimeout(()=> {
+            //el.style.transform = "matrix(1, 0, 0, 1, 100, 0)"
+        }, 500)
 
 
         ///MATRIX: matrix(scaleX, skewY, skewX, scaleY, translateX, translateY)

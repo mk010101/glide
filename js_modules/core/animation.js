@@ -1,12 +1,13 @@
 import Target from "./target";
 import Dispatcher from "./dispatcher";
-import { getPropType, getTweenType, getVo, minMax, normalizeTween, strToMap, unwrapValues } from "../util/util";
+import { getPropType, getTweenType, getVo, minMax, normalizeTween, stringToPropsVals, strToMap } from "../util/util";
 import { Keyframe } from "./keyframe";
 import { Tween } from "./tween";
 import { Evt } from "./events";
 import { TweenGroup } from "./vo";
 import { is } from "../util/regex";
 import * as $Ease from "../util/ease";
+import { getNormalizedTransforms } from "../util/matrix";
 const Ease = $Ease;
 export class Animation extends Dispatcher {
     constructor(targets, duration, params, options = {}) {
@@ -317,34 +318,35 @@ export class Animation extends Dispatcher {
         for (let i = 0; i < keys.length; i++) {
             let prop = keys[i];
             let val = params[prop];
-            if (target.type === "dom" && is.propDual(prop)) {
-                let res = unwrapValues(prop, val);
-                tg.tweens.push(Animation._getTween(target, res[0].prop, res[0].val, duration, options));
-                tg.tweens.push(Animation._getTween(target, res[1].prop, res[1].val, duration, options));
+            if (target.type === "dom") {
+                if (prop === "bg")
+                    prop = "backgroundColor";
+                else if (prop === "x")
+                    prop = "translateX";
+                else if (prop === "y")
+                    prop = "translateY";
+                else if (prop === "hueRotate")
+                    prop = "hue-rotate";
+                else if (prop === "dropShadow")
+                    prop = "drop-shadow";
             }
-            else {
-                let tw = Animation._getTween(target, prop, val, duration, options);
-                tg.tweens.push(tw);
+            const twType = getTweenType(target.type, prop);
+            if (target.type === "dom" && prop === "transform") {
+                let propsVals = stringToPropsVals(val);
+                for (let j = 0; j < propsVals.length; j++) {
+                    let twTr = Animation._getTween("transform", target, propsVals[j].prop, propsVals[j].value, duration, options);
+                    tg.tweens.push(twTr);
+                }
+                continue;
             }
+            let tw = Animation._getTween(twType, target, prop, val, duration, options);
+            tg.tweens.push(tw);
         }
         return tg;
     }
-    static _getTween(target, prop, val, dur, options) {
+    static _getTween(twType, target, prop, val, dur, options) {
         let fromVal;
         let toVal;
-        if (target.type === "dom") {
-            if (prop === "bg")
-                prop = "backgroundColor";
-            else if (prop === "x")
-                prop = "translateX";
-            else if (prop === "y")
-                prop = "translateY";
-            else if (prop === "hueRotate")
-                prop = "hue-rotate";
-            else if (prop === "dropShadow")
-                prop = "drop-shadow";
-        }
-        const twType = getTweenType(target.type, prop);
         let optEase = options.ease;
         if (is.array(val)) {
             fromVal = val[0];
@@ -416,6 +418,11 @@ export class Animation extends Dispatcher {
                                 from = getVo(tg.target, tw.prop, tw.fromVal);
                             else
                                 from = getVo(tg.target, tw.prop, tg.target.getExistingValue(tw.prop));
+                            break;
+                        case "indTransform":
+                            let oldStr = window.getComputedStyle(tg.target.el).transform;
+                            let oldtrans = getNormalizedTransforms(oldStr);
+                            console.log(oldtrans);
                             break;
                         case "transform":
                         case "filter":
