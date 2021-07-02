@@ -597,6 +597,7 @@ export function strToMap(str: string, twType: TweenType): Map<string, Tween> {
 }
 
 
+
 export function getSvg(node: Element): Element {
     let parent = node;
     while (parent instanceof SVGElement) {

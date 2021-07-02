@@ -13,6 +13,7 @@ export class Tween {
         this.from = null;
         this.to = null;
         this.ease = quadInOut;
+        this.individualTrans = false;
         this.keepOld = false;
         this.oldValue = "";
         this.orientToPath = true;

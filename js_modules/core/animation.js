@@ -1,13 +1,12 @@
 import Target from "./target";
 import Dispatcher from "./dispatcher";
-import { getPropType, getTweenType, getVo, minMax, normalizeTween, stringToPropsVals, strToMap } from "../util/util";
+import { getPropType, getTweenType, getVo, minMax, normalizeTween, stringToPropsVals, strToMap, unwrapValues } from "../util/util";
 import { Keyframe } from "./keyframe";
 import { Tween } from "./tween";
 import { Evt } from "./events";
 import { TweenGroup } from "./vo";
 import { is } from "../util/regex";
 import * as $Ease from "../util/ease";
-import { getNormalizedTransforms } from "../util/matrix";
 const Ease = $Ease;
 export class Animation extends Dispatcher {
     constructor(targets, duration, params, options = {}) {
@@ -81,8 +80,8 @@ export class Animation extends Dispatcher {
         this.currentTime += t;
         this.runningTime += t;
         const tgs = this._currentKf.tgs;
-        this.dispatch(Evt.progress, null);
         Animation._render(tgs, this.time, this._dir);
+        this.dispatch(Evt.progress, null);
         if (this.currentTime >= this._currentKf.totalDuration) {
             if (this._currentKf.callFunc) {
                 this._currentKf.callFunc(this._currentKf.callParams);
@@ -292,7 +291,6 @@ export class Animation extends Dispatcher {
         }
         let t = [];
         if (is.list(targets)) {
-            let staggerTime = 0;
             for (let i = 0; i < targets.length; i++) {
                 let targ;
                 if (is.string(targets[i]))
@@ -331,18 +329,35 @@ export class Animation extends Dispatcher {
                     prop = "drop-shadow";
             }
             const twType = getTweenType(target.type, prop);
-            if (target.type === "dom" && prop === "transform") {
-                let propsVals = stringToPropsVals(val);
-                for (let j = 0; j < propsVals.length; j++) {
-                    let twTr = Animation._getTween("transform", target, propsVals[j].prop, propsVals[j].value, duration, options);
-                    tg.tweens.push(twTr);
+            if (target.type === "dom") {
+                if (prop === "transform") {
+                    let propsVals = stringToPropsVals(val);
+                    for (let j = 0; j < propsVals.length; j++) {
+                        let p = propsVals[j].prop;
+                        let v = propsVals[j].value;
+                        let unwrapped = Animation._unwrap(target, twType, p, v, duration, options);
+                        tg.tweens.push(...unwrapped);
+                    }
+                    continue;
                 }
-                continue;
             }
             let tw = Animation._getTween(twType, target, prop, val, duration, options);
             tg.tweens.push(tw);
         }
         return tg;
+    }
+    static _unwrap(target, twType, prop, val, duration, options) {
+        let arr = [];
+        if (is.propDual(prop)) {
+            let res = unwrapValues(prop, val);
+            arr.push(Animation._getTween(twType, target, res[0].prop, res[0].val, duration, options));
+            arr.push(Animation._getTween(twType, target, res[1].prop, res[1].val, duration, options));
+        }
+        else {
+            let tw = Animation._getTween(twType, target, prop, val, duration, options);
+            arr.push(tw);
+        }
+        return arr;
     }
     static _getTween(twType, target, prop, val, dur, options) {
         let fromVal;
@@ -410,59 +425,46 @@ export class Animation extends Dispatcher {
                 const tw = tg.tweens[j];
                 let from;
                 let to = getVo(tg.target, tw.prop, tw.toVal, tw.options);
-                if (tg.target.type === "dom") {
-                    switch (tw.twType) {
-                        case "other":
-                        case "direct":
-                            if (tw.fromVal)
-                                from = getVo(tg.target, tw.prop, tw.fromVal);
-                            else
-                                from = getVo(tg.target, tw.prop, tg.target.getExistingValue(tw.prop));
-                            break;
-                        case "indTransform":
-                            let oldStr = window.getComputedStyle(tg.target.el).transform;
-                            let oldtrans = getNormalizedTransforms(oldStr);
-                            console.log(oldtrans);
-                            break;
-                        case "transform":
-                        case "filter":
-                            if (tw.twType === "transform" && !transChecked) {
-                                transOldTweens = strToMap(tg.target.getExistingValue("transform"), "transform");
-                                transTweens = new Map();
-                                transChecked = true;
-                                oldTweens = transOldTweens;
-                                newTweens = transTweens;
-                            }
-                            else if (tw.twType === "filter" && !filterChecked) {
-                                filterOldTweens = strToMap(tg.target.getExistingValue("filter"), "filter");
-                                filterTweens = new Map();
-                                filterChecked = true;
-                                oldTweens = filterOldTweens;
-                                newTweens = filterTweens;
-                            }
-                            if (tw.fromVal) {
-                                from = getVo(tg.target, tw.prop, tw.fromVal);
-                            }
-                            else {
-                                if (oldTweens && oldTweens.has(tw.prop)) {
-                                    from = oldTweens.get(tw.prop).from;
-                                    tw.keepOld = false;
-                                }
-                                else {
-                                    from = from = getVo(tg.target, tw.prop, tw.fromVal);
-                                }
-                            }
-                            newTweens.set(tw.prop, tw);
-                            break;
+                const twType = tw.twType;
+                const multi = twType === "transform" || twType === "indTransform" || twType === "filter";
+                if (multi) {
+                    if (tw.twType === "transform" && !transChecked) {
+                        transOldTweens = strToMap(tg.target.getExistingValue("transform"), "transform");
+                        transTweens = new Map();
+                        transChecked = true;
+                        oldTweens = transOldTweens;
+                        newTweens = transTweens;
                     }
+                    else if (tw.twType === "filter" && !filterChecked) {
+                        filterOldTweens = strToMap(tg.target.getExistingValue("filter"), "filter");
+                        filterTweens = new Map();
+                        filterChecked = true;
+                        oldTweens = filterOldTweens;
+                        newTweens = filterTweens;
+                    }
+                    if (tw.fromVal) {
+                        from = getVo(tg.target, tw.prop, tw.fromVal);
+                    }
+                    else {
+                        if (oldTweens && oldTweens.has(tw.prop)) {
+                            from = oldTweens.get(tw.prop).from;
+                            tw.keepOld = false;
+                        }
+                        else {
+                            from = getVo(tg.target, tw.prop, tw.fromVal);
+                        }
+                    }
+                    tw.from = from;
+                    tw.to = to;
+                    newTweens.set(tw.prop, tw);
                 }
                 else {
                     if (!tw.fromVal)
                         tw.fromVal = tg.target.getExistingValue(tw.prop);
                     from = getVo(tg.target, tw.prop, tw.fromVal);
+                    tw.from = from;
+                    tw.to = to;
                 }
-                tw.from = from;
-                tw.to = to;
                 normalizeTween(tw, tg.target);
             }
             if (transOldTweens)

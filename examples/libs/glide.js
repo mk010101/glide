@@ -590,6 +590,7 @@
             this.from = null;
             this.to = null;
             this.ease = quadInOut;
+            this.individualTrans = false;
             this.keepOld = false;
             this.oldValue = "";
             this.orientToPath = true;
@@ -1037,51 +1038,6 @@
         end: end,
     };
 
-    function getNormalizedTransforms(str) {
-        return decomposeMtx2D(strToMtx2D(str));
-    }
-    function decomposeMtx2D(matrix) {
-        let px = deltaTransformPoint(matrix, { x: 0, y: 1 });
-        let py = deltaTransformPoint(matrix, { x: 1, y: 0 });
-        let skewX = ((180 / Math.PI) * Math.atan2(px.y, px.x) - 90);
-        let skewY = ((180 / Math.PI) * Math.atan2(py.y, py.x));
-        return {
-            translateX: matrix.e,
-            translateY: matrix.f,
-            skewX: skewX,
-            skewY: skewY,
-            rotate: skewX,
-            scaleX: Math.sqrt(matrix.a * matrix.a + matrix.b * matrix.b),
-            scaleY: Math.sqrt(matrix.c * matrix.c + matrix.d * matrix.d),
-        };
-    }
-    function deltaTransformPoint(matrix, point) {
-        let dx = point.x * matrix.a + point.y * matrix.c;
-        let dy = point.x * matrix.b + point.y * matrix.d;
-        return { x: dx, y: dy };
-    }
-    function strToMtx2D(str) {
-        if (!str || str.indexOf("matrix") === -1)
-            return getMtx2D();
-        let arr = str.match(/[-.\d]+/g);
-        let arrInd = ["a", "b", "c", "d", "e", "f"];
-        let mtx = {};
-        for (let i = 0; i < 6; i++) {
-            mtx[arrInd[i]] = parseFloat(arr[i]);
-        }
-        return mtx;
-    }
-    function getMtx2D() {
-        return {
-            a: 1,
-            b: 0,
-            c: 0,
-            d: 1,
-            e: 0,
-            f: 0,
-        };
-    }
-
     const Ease = ease;
     class Animation extends Dispatcher {
         constructor(targets, duration, params, options = {}) {
@@ -1155,8 +1111,8 @@
             this.currentTime += t;
             this.runningTime += t;
             const tgs = this._currentKf.tgs;
-            this.dispatch(Evt.progress, null);
             Animation._render(tgs, this.time, this._dir);
+            this.dispatch(Evt.progress, null);
             if (this.currentTime >= this._currentKf.totalDuration) {
                 if (this._currentKf.callFunc) {
                     this._currentKf.callFunc(this._currentKf.callParams);
@@ -1404,18 +1360,35 @@
                         prop = "drop-shadow";
                 }
                 const twType = getTweenType(target.type, prop);
-                if (target.type === "dom" && prop === "transform") {
-                    let propsVals = stringToPropsVals(val);
-                    for (let j = 0; j < propsVals.length; j++) {
-                        let twTr = Animation._getTween("transform", target, propsVals[j].prop, propsVals[j].value, duration, options);
-                        tg.tweens.push(twTr);
+                if (target.type === "dom") {
+                    if (prop === "transform") {
+                        let propsVals = stringToPropsVals(val);
+                        for (let j = 0; j < propsVals.length; j++) {
+                            let p = propsVals[j].prop;
+                            let v = propsVals[j].value;
+                            let unwrapped = Animation._unwrap(target, twType, p, v, duration, options);
+                            tg.tweens.push(...unwrapped);
+                        }
+                        continue;
                     }
-                    continue;
                 }
                 let tw = Animation._getTween(twType, target, prop, val, duration, options);
                 tg.tweens.push(tw);
             }
             return tg;
+        }
+        static _unwrap(target, twType, prop, val, duration, options) {
+            let arr = [];
+            if (is.propDual(prop)) {
+                let res = unwrapValues(prop, val);
+                arr.push(Animation._getTween(twType, target, res[0].prop, res[0].val, duration, options));
+                arr.push(Animation._getTween(twType, target, res[1].prop, res[1].val, duration, options));
+            }
+            else {
+                let tw = Animation._getTween(twType, target, prop, val, duration, options);
+                arr.push(tw);
+            }
+            return arr;
         }
         static _getTween(twType, target, prop, val, dur, options) {
             let fromVal;
@@ -1483,59 +1456,46 @@
                     const tw = tg.tweens[j];
                     let from;
                     let to = getVo(tg.target, tw.prop, tw.toVal, tw.options);
-                    if (tg.target.type === "dom") {
-                        switch (tw.twType) {
-                            case "other":
-                            case "direct":
-                                if (tw.fromVal)
-                                    from = getVo(tg.target, tw.prop, tw.fromVal);
-                                else
-                                    from = getVo(tg.target, tw.prop, tg.target.getExistingValue(tw.prop));
-                                break;
-                            case "indTransform":
-                                let oldStr = window.getComputedStyle(tg.target.el).transform;
-                                let oldtrans = getNormalizedTransforms(oldStr);
-                                console.log(oldtrans);
-                                break;
-                            case "transform":
-                            case "filter":
-                                if (tw.twType === "transform" && !transChecked) {
-                                    transOldTweens = strToMap(tg.target.getExistingValue("transform"), "transform");
-                                    transTweens = new Map();
-                                    transChecked = true;
-                                    oldTweens = transOldTweens;
-                                    newTweens = transTweens;
-                                }
-                                else if (tw.twType === "filter" && !filterChecked) {
-                                    filterOldTweens = strToMap(tg.target.getExistingValue("filter"), "filter");
-                                    filterTweens = new Map();
-                                    filterChecked = true;
-                                    oldTweens = filterOldTweens;
-                                    newTweens = filterTweens;
-                                }
-                                if (tw.fromVal) {
-                                    from = getVo(tg.target, tw.prop, tw.fromVal);
-                                }
-                                else {
-                                    if (oldTweens && oldTweens.has(tw.prop)) {
-                                        from = oldTweens.get(tw.prop).from;
-                                        tw.keepOld = false;
-                                    }
-                                    else {
-                                        from = from = getVo(tg.target, tw.prop, tw.fromVal);
-                                    }
-                                }
-                                newTweens.set(tw.prop, tw);
-                                break;
+                    const twType = tw.twType;
+                    const multi = twType === "transform" || twType === "indTransform" || twType === "filter";
+                    if (multi) {
+                        if (tw.twType === "transform" && !transChecked) {
+                            transOldTweens = strToMap(tg.target.getExistingValue("transform"), "transform");
+                            transTweens = new Map();
+                            transChecked = true;
+                            oldTweens = transOldTweens;
+                            newTweens = transTweens;
                         }
+                        else if (tw.twType === "filter" && !filterChecked) {
+                            filterOldTweens = strToMap(tg.target.getExistingValue("filter"), "filter");
+                            filterTweens = new Map();
+                            filterChecked = true;
+                            oldTweens = filterOldTweens;
+                            newTweens = filterTweens;
+                        }
+                        if (tw.fromVal) {
+                            from = getVo(tg.target, tw.prop, tw.fromVal);
+                        }
+                        else {
+                            if (oldTweens && oldTweens.has(tw.prop)) {
+                                from = oldTweens.get(tw.prop).from;
+                                tw.keepOld = false;
+                            }
+                            else {
+                                from = getVo(tg.target, tw.prop, tw.fromVal);
+                            }
+                        }
+                        tw.from = from;
+                        tw.to = to;
+                        newTweens.set(tw.prop, tw);
                     }
                     else {
                         if (!tw.fromVal)
                             tw.fromVal = tg.target.getExistingValue(tw.prop);
                         from = getVo(tg.target, tw.prop, tw.fromVal);
+                        tw.from = from;
+                        tw.to = to;
                     }
-                    tw.from = from;
-                    tw.to = to;
                     normalizeTween(tw, tg.target);
                 }
                 if (transOldTweens)
@@ -1564,7 +1524,6 @@
             if (!Glide.context && document)
                 Glide.setContext(document.body);
             options.context = options.context ? new Context(options.context) : Glide.context;
-            options.computeStyle = options.computeStyle !== (void 0) ? options.computeStyle : Glide._computeStyle;
             let a = new Animation(targets, duration, params, options);
             Glide.items.push(a);
             return a;
@@ -1590,7 +1549,6 @@
     Glide.items = [];
     Glide.lastTick = 0;
     Glide.ease = ease;
-    Glide._computeStyle = true;
     Glide.tick(performance.now());
     const glide = Glide;
 

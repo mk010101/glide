@@ -17,6 +17,7 @@ export class Tween {
     from: Vo = null;
     to: Vo = null;
     ease: Function = quadInOut;
+    individualTrans = false;
 
     options:any;
 
