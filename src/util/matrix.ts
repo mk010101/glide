@@ -1,3 +1,5 @@
+import {getDefaultUnit} from "./util";
+
 const PI_180 = Math.PI / 180;
 
 
@@ -40,12 +42,18 @@ class $Trans2D {
  * Decomposes Matrix string (a, b, c, d, e, f..) to individual transforms.
  * @param str string Matrix.
  */
-export function getNormalizedTransforms(str: string): Trans2D {
-    return decomposeMtx2D(strToMtx2D(str));
+export function getNormalizedTransforms(str: string): string {
+    const decomp = decomposeMtx2D(strToMtx2D(str));
+    let res = "";
+    decomp.forEach((v, k)=> {
+        let unit = getDefaultUnit(k, "dom");
+        res += `${k}(${v}${unit}) `;
+    });
+    return res;
 }
 
 
-export function decomposeMtx2D(matrix: Mtx2D): Trans2D {
+export function decomposeMtx2D(matrix: Mtx2D): Map<string, number> {
 
     // @see https://gist.github.com/2052247
 
@@ -57,15 +65,16 @@ export function decomposeMtx2D(matrix: Mtx2D): Trans2D {
     let skewX = ((180 / Math.PI) * Math.atan2(px.y, px.x) - 90);
     let skewY = ((180 / Math.PI) * Math.atan2(py.y, py.x));
 
-    return {
-        translateX: matrix.e,
-        translateY: matrix.f,
-        skewX: skewX,
-        skewY: skewY,
-        rotate: skewX, // rotation is the same as skew x
-        scaleX: Math.sqrt(matrix.a * matrix.a + matrix.b * matrix.b),
-        scaleY: Math.sqrt(matrix.c * matrix.c + matrix.d * matrix.d),
-    };
+    let map:Map<string, number> = new Map<string, number>();
+    map.set("translateX", matrix.e);
+    map.set("translateY", matrix.f);
+    map.set("skewX", skewX);
+    map.set("skewY", skewY);
+    map.set("rotate", skewX);
+    map.set("scaleX", Math.sqrt(matrix.a * matrix.a + matrix.b * matrix.b));
+    map.set("scaleY", Math.sqrt(matrix.c * matrix.c + matrix.d * matrix.d));
+
+    return map;
 }
 
 

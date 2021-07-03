@@ -7,7 +7,6 @@ import { Evt } from "./events";
 import { TweenGroup } from "./vo";
 import { is } from "../util/regex";
 import * as $Ease from "../util/ease";
-import { getNormalizedTransforms } from "../util/matrix";
 const Ease = $Ease;
 export class Animation extends Dispatcher {
     constructor(targets, duration, params, options = {}) {
@@ -438,9 +437,11 @@ export class Animation extends Dispatcher {
                 if (multi) {
                     if (twType === "transform" && !transChecked) {
                         if (tw.isIndividualTrans) {
-                            let old = getNormalizedTransforms(tg.target.computedStyle.transform);
+                            transOldTweens = strToMap(tg.target.getExistingValue("transform"), "transform");
                         }
-                        transOldTweens = strToMap(tg.target.getExistingValue("transform"), "transform");
+                        else {
+                            transOldTweens = strToMap(tg.target.getExistingValue("transform"), "transform");
+                        }
                         transTweens = new Map();
                         transChecked = true;
                         oldTweens = transOldTweens;

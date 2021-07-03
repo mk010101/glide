@@ -1027,51 +1027,6 @@ const Evt = {
     end: end,
 };
 
-function getNormalizedTransforms(str) {
-    return decomposeMtx2D(strToMtx2D(str));
-}
-function decomposeMtx2D(matrix) {
-    let px = deltaTransformPoint(matrix, { x: 0, y: 1 });
-    let py = deltaTransformPoint(matrix, { x: 1, y: 0 });
-    let skewX = ((180 / Math.PI) * Math.atan2(px.y, px.x) - 90);
-    let skewY = ((180 / Math.PI) * Math.atan2(py.y, py.x));
-    return {
-        translateX: matrix.e,
-        translateY: matrix.f,
-        skewX: skewX,
-        skewY: skewY,
-        rotate: skewX,
-        scaleX: Math.sqrt(matrix.a * matrix.a + matrix.b * matrix.b),
-        scaleY: Math.sqrt(matrix.c * matrix.c + matrix.d * matrix.d),
-    };
-}
-function deltaTransformPoint(matrix, point) {
-    let dx = point.x * matrix.a + point.y * matrix.c;
-    let dy = point.x * matrix.b + point.y * matrix.d;
-    return { x: dx, y: dy };
-}
-function strToMtx2D(str) {
-    if (!str || str.indexOf("matrix") === -1)
-        return getMtx2D();
-    let arr = str.match(/[-.\d]+/g);
-    let arrInd = ["a", "b", "c", "d", "e", "f"];
-    let mtx = {};
-    for (let i = 0; i < 6; i++) {
-        mtx[arrInd[i]] = parseFloat(arr[i]);
-    }
-    return mtx;
-}
-function getMtx2D() {
-    return {
-        a: 1,
-        b: 0,
-        c: 0,
-        d: 1,
-        e: 0,
-        f: 0,
-    };
-}
-
 const Ease = ease;
 class Animation extends Dispatcher {
     constructor(targets, duration, params, options = {}) {
@@ -1502,9 +1457,11 @@ class Animation extends Dispatcher {
                 if (multi) {
                     if (twType === "transform" && !transChecked) {
                         if (tw.isIndividualTrans) {
-                            getNormalizedTransforms(tg.target.computedStyle.transform);
+                            transOldTweens = strToMap(tg.target.getExistingValue("transform"), "transform");
                         }
-                        transOldTweens = strToMap(tg.target.getExistingValue("transform"), "transform");
+                        else {
+                            transOldTweens = strToMap(tg.target.getExistingValue("transform"), "transform");
+                        }
                         transTweens = new Map();
                         transChecked = true;
                         oldTweens = transOldTweens;

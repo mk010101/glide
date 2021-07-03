@@ -567,16 +567,18 @@ export class Animation extends Dispatcher {
 
                 const twType = tw.twType;
 
-                const multi = twType === "transform" ||  twType === "filter";
+                const multi = twType === "transform" || twType === "filter";
 
                 if (multi) {
 
                     if (twType === "transform" && !transChecked) {
                         if (tw.isIndividualTrans) {
-                            let old = getNormalizedTransforms(tg.target.computedStyle.transform);
-                            //console.log(old)
+                            // let old = getNormalizedTransforms(tg.target.computedStyle.transform);
+                            // transOldTweens = strToMap(old, "transform");
+                            transOldTweens = strToMap(tg.target.getExistingValue("transform"), "transform");
+                        } else {
+                            transOldTweens = strToMap(tg.target.getExistingValue("transform"), "transform");
                         }
-                        transOldTweens = strToMap(tg.target.getExistingValue("transform"), "transform");
                         transTweens = new Map<string, Tween>();
                         transChecked = true;
                         oldTweens = transOldTweens;

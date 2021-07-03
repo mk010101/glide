@@ -1,3 +1,4 @@
+import { getDefaultUnit } from "./util";
 const PI_180 = Math.PI / 180;
 class $Trans2D {
     constructor() {
@@ -11,22 +12,28 @@ class $Trans2D {
     }
 }
 export function getNormalizedTransforms(str) {
-    return decomposeMtx2D(strToMtx2D(str));
+    const decomp = decomposeMtx2D(strToMtx2D(str));
+    let res = "";
+    decomp.forEach((v, k) => {
+        let unit = getDefaultUnit(k, "dom");
+        res += `${k}(${v}${unit}) `;
+    });
+    return res;
 }
 export function decomposeMtx2D(matrix) {
     let px = deltaTransformPoint(matrix, { x: 0, y: 1 });
     let py = deltaTransformPoint(matrix, { x: 1, y: 0 });
     let skewX = ((180 / Math.PI) * Math.atan2(px.y, px.x) - 90);
     let skewY = ((180 / Math.PI) * Math.atan2(py.y, py.x));
-    return {
-        translateX: matrix.e,
-        translateY: matrix.f,
-        skewX: skewX,
-        skewY: skewY,
-        rotate: skewX,
-        scaleX: Math.sqrt(matrix.a * matrix.a + matrix.b * matrix.b),
-        scaleY: Math.sqrt(matrix.c * matrix.c + matrix.d * matrix.d),
-    };
+    let map = new Map();
+    map.set("translateX", matrix.e);
+    map.set("translateY", matrix.f);
+    map.set("skewX", skewX);
+    map.set("skewY", skewY);
+    map.set("rotate", skewX);
+    map.set("scaleX", Math.sqrt(matrix.a * matrix.a + matrix.b * matrix.b));
+    map.set("scaleY", Math.sqrt(matrix.c * matrix.c + matrix.d * matrix.d));
+    return map;
 }
 function deltaTransformPoint(matrix, point) {
     let dx = point.x * matrix.a + point.y * matrix.c;
