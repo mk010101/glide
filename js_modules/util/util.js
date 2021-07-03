@@ -17,8 +17,6 @@ export function getTargetType(val) {
 export function getTweenType(targetType, prop) {
     if (targetType === "obj")
         return "obj";
-    else if (is.propIndTransform(prop))
-        return "indTransform";
     else if (is.propTransform(prop))
         return "transform";
     else if (is.propFilter(prop))
@@ -44,7 +42,7 @@ export function getValueType(val = null) {
     return;
 }
 export function getPropType(prop) {
-    if (is.propIndTransform(prop))
+    if (is.propTransform(prop))
         return "transform";
     else if (is.propColor(prop))
         return "color";
@@ -155,7 +153,7 @@ function getDefaultVo(prop, val = null) {
     let vo = new Vo();
     if (val == null)
         return vo;
-    if (is.propFilter(prop) || is.propIndTransform(prop)) {
+    if (is.propFilter(prop) || is.propTransform(prop)) {
         vo.numbers.push(null, val, null);
         vo.floats.push(1, 1, 1);
         vo.units.push(null, null, null);
@@ -172,7 +170,7 @@ function getDefaultVo(prop, val = null) {
     return vo;
 }
 function addBraces(vo, prop) {
-    if (is.propIndTransform(prop) || is.propFilter(prop)) {
+    if (is.propTransform(prop) || is.propFilter(prop)) {
         vo.strings.unshift(prop + "(");
         vo.numbers.unshift(null);
         vo.increments.unshift(null);

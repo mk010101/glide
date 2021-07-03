@@ -30,7 +30,7 @@ export default class Target {
             return this.el[prop];
         }
         else {
-            if (is.propIndTransform(prop))
+            if (is.propTransform(prop))
                 prop = "transform";
             else if (is.propFilter(prop))
                 prop = "filter";

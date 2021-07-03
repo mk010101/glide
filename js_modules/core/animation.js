@@ -7,6 +7,7 @@ import { Evt } from "./events";
 import { TweenGroup } from "./vo";
 import { is } from "../util/regex";
 import * as $Ease from "../util/ease";
+import { getNormalizedTransforms } from "../util/matrix";
 const Ease = $Ease;
 export class Animation extends Dispatcher {
     constructor(targets, duration, params, options = {}) {
@@ -340,6 +341,14 @@ export class Animation extends Dispatcher {
                     }
                     continue;
                 }
+                else if (is.propTransform(prop)) {
+                    let unwrapped = Animation._unwrap(target, twType, prop, val, duration, options);
+                    for (let j = 0; j < unwrapped.length; j++) {
+                        unwrapped[j].isIndividualTrans = true;
+                    }
+                    tg.tweens.push(...unwrapped);
+                    continue;
+                }
             }
             let tw = Animation._getTween(twType, target, prop, val, duration, options);
             tg.tweens.push(tw);
@@ -354,8 +363,7 @@ export class Animation extends Dispatcher {
             arr.push(Animation._getTween(twType, target, res[1].prop, res[1].val, duration, options));
         }
         else {
-            let tw = Animation._getTween(twType, target, prop, val, duration, options);
-            arr.push(tw);
+            arr.push(Animation._getTween(twType, target, prop, val, duration, options));
         }
         return arr;
     }
@@ -426,16 +434,19 @@ export class Animation extends Dispatcher {
                 let from;
                 let to = getVo(tg.target, tw.prop, tw.toVal, tw.options);
                 const twType = tw.twType;
-                const multi = twType === "transform" || twType === "indTransform" || twType === "filter";
+                const multi = twType === "transform" || twType === "filter";
                 if (multi) {
-                    if (tw.twType === "transform" && !transChecked) {
+                    if (twType === "transform" && !transChecked) {
+                        if (tw.isIndividualTrans) {
+                            let old = getNormalizedTransforms(tg.target.computedStyle.transform);
+                        }
                         transOldTweens = strToMap(tg.target.getExistingValue("transform"), "transform");
                         transTweens = new Map();
                         transChecked = true;
                         oldTweens = transOldTweens;
                         newTweens = transTweens;
                     }
-                    else if (tw.twType === "filter" && !filterChecked) {
+                    else if (twType === "filter" && !filterChecked) {
                         filterOldTweens = strToMap(tg.target.getExistingValue("filter"), "filter");
                         filterTweens = new Map();
                         filterChecked = true;

@@ -454,20 +454,16 @@ export class Animation extends Dispatcher {
                         tg.tweens.push(...unwrapped);
                     }
                     continue;
+                } else if (is.propTransform(prop)) {
+                    let unwrapped = Animation._unwrap(target, twType, prop, val, duration, options);
+                    for (let j = 0; j < unwrapped.length; j++) {
+                        unwrapped[j].isIndividualTrans = true;
+                    }
+                    tg.tweens.push(...unwrapped);
+                    continue;
                 }
             }
 
-            /*
-            // If value is like scale(2) or translate(20px 5rem), unwrap it.
-            if (target.type === "dom" && is.propDual(prop)) {
-                let res = unwrapValues(prop, val);
-                tg.tweens.push(Animation._getTween(twType, target, res[0].prop, res[0].val, duration, options));
-                tg.tweens.push(Animation._getTween(twType, target, res[1].prop, res[1].val, duration, options));
-            } else {
-                let tw = Animation._getTween(twType, target, prop, val, duration, options);
-                tg.tweens.push(tw);
-            }
-            //*/
 
             let tw = Animation._getTween(twType, target, prop, val, duration, options);
             tg.tweens.push(tw);
@@ -485,8 +481,7 @@ export class Animation extends Dispatcher {
             arr.push(Animation._getTween(twType, target, res[0].prop, res[0].val, duration, options));
             arr.push(Animation._getTween(twType, target, res[1].prop, res[1].val, duration, options));
         } else {
-            let tw = Animation._getTween(twType, target, prop, val, duration, options);
-            arr.push(tw);
+            arr.push(Animation._getTween(twType, target, prop, val, duration, options));
         }
         return arr;
     }
@@ -572,17 +567,21 @@ export class Animation extends Dispatcher {
 
                 const twType = tw.twType;
 
-                const multi = twType === "transform" || twType === "indTransform" || twType === "filter";
+                const multi = twType === "transform" ||  twType === "filter";
 
                 if (multi) {
 
-                    if (tw.twType === "transform" && !transChecked) {
+                    if (twType === "transform" && !transChecked) {
+                        if (tw.isIndividualTrans) {
+                            let old = getNormalizedTransforms(tg.target.computedStyle.transform);
+                            //console.log(old)
+                        }
                         transOldTweens = strToMap(tg.target.getExistingValue("transform"), "transform");
                         transTweens = new Map<string, Tween>();
                         transChecked = true;
                         oldTweens = transOldTweens;
                         newTweens = transTweens;
-                    } else if (tw.twType === "filter" && !filterChecked) {
+                    } else if (twType === "filter" && !filterChecked) {
                         filterOldTweens = strToMap(tg.target.getExistingValue("filter"), "filter");
                         filterTweens = new Map<string, Tween>();
                         filterChecked = true;

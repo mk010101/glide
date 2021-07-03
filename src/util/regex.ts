@@ -90,12 +90,12 @@ export const is = {
     mixed(val: any) {
         return /gradient/i.test(val);
     },
-    propIndTransform(val: any) {
-        return (/translate|^rotate|^scale|skew|matrix|x[(xyz]+|y[(xyz]+/i.test(val));
-    },
     propTransform(val: any) {
-        return (val === "transform");
+        return (/transform|translate|^rotate|^scale|skew|matrix|x[(xyz]+|y[(xyz]+/i.test(val));
     },
+    // propTransform(val: any) {
+    //     return (val === "transform|");
+    // },
     propIndividualTr(val: any) {
         return (/translation|^rotation|^scaling|skewing|/i.test(val));
     },

@@ -46,7 +46,7 @@ export default class Target {
         if (this.type === "obj" || is.propDirect(prop)) {
             return this.el[prop];
         } else {
-            if (is.propIndTransform(prop))
+            if (is.propTransform(prop))
                 prop = "transform";
             else if (is.propFilter(prop))
                 prop = "filter";

@@ -145,11 +145,8 @@ const is = {
     mixed(val) {
         return /gradient/i.test(val);
     },
-    propIndTransform(val) {
-        return (/translate|^rotate|^scale|skew|matrix|x[(xyz]+|y[(xyz]+/i.test(val));
-    },
     propTransform(val) {
-        return (val === "transform");
+        return (/transform|translate|^rotate|^scale|skew|matrix|x[(xyz]+|y[(xyz]+/i.test(val));
     },
     propIndividualTr(val) {
         return (/translation|^rotation|^scaling|skewing|/i.test(val));
@@ -211,7 +208,7 @@ class Target {
             return this.el[prop];
         }
         else {
-            if (is.propIndTransform(prop))
+            if (is.propTransform(prop))
                 prop = "transform";
             else if (is.propFilter(prop))
                 prop = "filter";
@@ -584,7 +581,7 @@ class Tween {
         this.from = null;
         this.to = null;
         this.ease = quadInOut;
-        this.individualTrans = false;
+        this.isIndividualTrans = false;
         this.keepOld = false;
         this.oldValue = "";
         this.orientToPath = true;
@@ -605,8 +602,6 @@ function minMax(val, min, max) {
 function getTweenType(targetType, prop) {
     if (targetType === "obj")
         return "obj";
-    else if (is.propIndTransform(prop))
-        return "indTransform";
     else if (is.propTransform(prop))
         return "transform";
     else if (is.propFilter(prop))
@@ -620,7 +615,7 @@ function getTweenType(targetType, prop) {
     return "other";
 }
 function getPropType(prop) {
-    if (is.propIndTransform(prop))
+    if (is.propTransform(prop))
         return "transform";
     else if (is.propColor(prop))
         return "color";
@@ -727,7 +722,7 @@ function getDefaultVo(prop, val = null) {
     let vo = new Vo();
     if (val == null)
         return vo;
-    if (is.propFilter(prop) || is.propIndTransform(prop)) {
+    if (is.propFilter(prop) || is.propTransform(prop)) {
         vo.numbers.push(null, val, null);
         vo.floats.push(1, 1, 1);
         vo.units.push(null, null, null);
@@ -744,7 +739,7 @@ function getDefaultVo(prop, val = null) {
     return vo;
 }
 function addBraces(vo, prop) {
-    if (is.propIndTransform(prop) || is.propFilter(prop)) {
+    if (is.propTransform(prop) || is.propFilter(prop)) {
         vo.strings.unshift(prop + "(");
         vo.numbers.unshift(null);
         vo.increments.unshift(null);
@@ -1031,6 +1026,51 @@ const Evt = {
     progress: progress,
     end: end,
 };
+
+function getNormalizedTransforms(str) {
+    return decomposeMtx2D(strToMtx2D(str));
+}
+function decomposeMtx2D(matrix) {
+    let px = deltaTransformPoint(matrix, { x: 0, y: 1 });
+    let py = deltaTransformPoint(matrix, { x: 1, y: 0 });
+    let skewX = ((180 / Math.PI) * Math.atan2(px.y, px.x) - 90);
+    let skewY = ((180 / Math.PI) * Math.atan2(py.y, py.x));
+    return {
+        translateX: matrix.e,
+        translateY: matrix.f,
+        skewX: skewX,
+        skewY: skewY,
+        rotate: skewX,
+        scaleX: Math.sqrt(matrix.a * matrix.a + matrix.b * matrix.b),
+        scaleY: Math.sqrt(matrix.c * matrix.c + matrix.d * matrix.d),
+    };
+}
+function deltaTransformPoint(matrix, point) {
+    let dx = point.x * matrix.a + point.y * matrix.c;
+    let dy = point.x * matrix.b + point.y * matrix.d;
+    return { x: dx, y: dy };
+}
+function strToMtx2D(str) {
+    if (!str || str.indexOf("matrix") === -1)
+        return getMtx2D();
+    let arr = str.match(/[-.\d]+/g);
+    let arrInd = ["a", "b", "c", "d", "e", "f"];
+    let mtx = {};
+    for (let i = 0; i < 6; i++) {
+        mtx[arrInd[i]] = parseFloat(arr[i]);
+    }
+    return mtx;
+}
+function getMtx2D() {
+    return {
+        a: 1,
+        b: 0,
+        c: 0,
+        d: 1,
+        e: 0,
+        f: 0,
+    };
+}
 
 const Ease = ease;
 class Animation extends Dispatcher {
@@ -1365,6 +1405,14 @@ class Animation extends Dispatcher {
                     }
                     continue;
                 }
+                else if (is.propTransform(prop)) {
+                    let unwrapped = Animation._unwrap(target, twType, prop, val, duration, options);
+                    for (let j = 0; j < unwrapped.length; j++) {
+                        unwrapped[j].isIndividualTrans = true;
+                    }
+                    tg.tweens.push(...unwrapped);
+                    continue;
+                }
             }
             let tw = Animation._getTween(twType, target, prop, val, duration, options);
             tg.tweens.push(tw);
@@ -1379,8 +1427,7 @@ class Animation extends Dispatcher {
             arr.push(Animation._getTween(twType, target, res[1].prop, res[1].val, duration, options));
         }
         else {
-            let tw = Animation._getTween(twType, target, prop, val, duration, options);
-            arr.push(tw);
+            arr.push(Animation._getTween(twType, target, prop, val, duration, options));
         }
         return arr;
     }
@@ -1451,16 +1498,19 @@ class Animation extends Dispatcher {
                 let from;
                 let to = getVo(tg.target, tw.prop, tw.toVal, tw.options);
                 const twType = tw.twType;
-                const multi = twType === "transform" || twType === "indTransform" || twType === "filter";
+                const multi = twType === "transform" || twType === "filter";
                 if (multi) {
-                    if (tw.twType === "transform" && !transChecked) {
+                    if (twType === "transform" && !transChecked) {
+                        if (tw.isIndividualTrans) {
+                            getNormalizedTransforms(tg.target.computedStyle.transform);
+                        }
                         transOldTweens = strToMap(tg.target.getExistingValue("transform"), "transform");
                         transTweens = new Map();
                         transChecked = true;
                         oldTweens = transOldTweens;
                         newTweens = transTweens;
                     }
-                    else if (tw.twType === "filter" && !filterChecked) {
+                    else if (twType === "filter" && !filterChecked) {
                         filterOldTweens = strToMap(tg.target.getExistingValue("filter"), "filter");
                         filterTweens = new Map();
                         filterChecked = true;
