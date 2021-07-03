@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>matrix</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        html, body {
+            margin: 0;
+            padding: 20px;
+            overflow: hidden;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+            width: 100vw;
+            height: 100vh;
+        }
+
+
+
+        .el {
+            position: relative;
+            float: left;
+            width: 50px;
+            height: 50px;
+            padding: 2px;
+            background-color: #5c98cd;
+            border: 1px solid #ff0000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
+</head>
+<body>
+<div class="el"></div>
+
+<script>
+
+    window.onload = ()=> {
+
+        function decomposeM2d (a) {
+            let angle = Math.atan2(a[1], a[0]),
+                denom = Math.pow(a[0], 2) + Math.pow(a[1], 2),
+                scaleX = Math.sqrt(denom),
+                scaleY = (a[0] * a[3] - a[2] * a[1]) / scaleX,
+                skewX = Math.atan2(a[0] * a[2] + a[1] * a[3], denom);
+            return {
+                rotate: angle / (Math.PI / 180),  // this is rotation angle in degrees
+                scaleX: scaleX,                  // scaleX factor
+                scaleY: scaleY,                  // scaleY factor
+                skewX: skewX / (Math.PI / 180),  // skewX angle degrees
+                skewY: 0,                        // skewY angle degrees
+                translateX: a[4],                // translation point  x
+                translateY: a[5]                 // translation point  y
+            };
+        }
+
+        function strToM2d(str) {
+
+            const parts = str.match(/[-.\d]+/g);
+            let arr = [];
+            for (let i = 0; i < parts.length; i++) {
+                arr.push(parseFloat(parts[i]));
+            }
+            return decomposeM2d(arr);
+
+        }
+
+        function setPos(mtx) {
+            el.style.transform = `
+            translateX(${mtx.translateX+0}px)
+            translateY(${mtx.translateY}px)
+            rotate(${mtx.rotate}deg)
+            scaleX(${mtx.scaleX})
+            scaleY(${mtx.scaleY})
+            `
+        }
+
+
+
+        const el = document.querySelector(".el");
+
+        // el.style.transform = "rotate(45deg) translate(100px)";
+        el.style.transform = "rotate(45deg) translate(100px, 20px) scale(.5, 1.5)";
+
+        const elTrans = window.getComputedStyle(el).transform;
+        let dec = strToM2d(elTrans);
+        console.log(dec)
+
+        setTimeout(()=> {
+            setPos(dec);
+        }, 500)
+
+
+
+    }
+
+
+</script>
+
+</body>
+</html>

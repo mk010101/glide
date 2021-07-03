@@ -573,9 +573,10 @@ export class Animation extends Dispatcher {
 
                     if (twType === "transform" && !transChecked) {
                         if (tw.isIndividualTrans) {
+                            //TODO: Need a solution for decomposing matrices.
+                            transOldTweens = strToMap(tg.target.getExistingValue("transform"), "transform");
                             // let old = getNormalizedTransforms(tg.target.computedStyle.transform);
                             // transOldTweens = strToMap(old, "transform");
-                            transOldTweens = strToMap(tg.target.getExistingValue("transform"), "transform");
                         } else {
                             transOldTweens = strToMap(tg.target.getExistingValue("transform"), "transform");
                         }
