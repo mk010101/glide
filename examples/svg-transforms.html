@@ -30,7 +30,7 @@
         }
 
         rect {
-            fill: rgba(255, 138, 55, 0.71);
+            /*fill: rgba(255, 138, 55, 0.71);*/
         }
 
         .el {
@@ -61,7 +61,7 @@
     <line id="L3" x1="0" y1="79" x2="600" y2="70"/>
     <line id="L4" x1="90" y1="0" x2="90" y2="600"/>
 
-    <rect id="rect-1" x="90" y="70" width="220" height="110"/>
+    <rect id="rect-1" x="90" y="70" width="220" height="110" fill="rgba(255, 138, 55, 0.71)"/>
 
 
 </svg>
@@ -89,14 +89,17 @@
 
         let a = glide.to(["#rect-1"])
         // .set({"transform-origin": "-110 -55"})
+        // .set({"fill": "rgba(255,117,249,0.69)"})
         // .to(1500, {transform: "rotate(-45)"}, {delay:500})
-        .to(1500, {translate:"-200", rotate:180}, {delay:500})
-        .to(800, {translate:"-200, 110",rotate:{value:-90, duration:1500}}, {delay:50})
+        // .to(500, {fill:"#ffcc00"}, {delay:500, repeat:0})
+        // .to(500, {fill:"#ffcc00"}, {delay:500, repeat:0})
+        .to(1500, {translate:"-200", rotate:180, fill:"rgba(234,64,255,0.68)"}, {delay:500, repeat:2})
+        .to(800, {translate:"-200, 110",rotate:{value:-90, duration:1500}, fill:"rgba(60,84,255,0.68)"}, {delay:50})
         // .to(500, {x:500}, {delay:500})
         //     .to(2500, {path: path}, {delay: 500, offset: "-50%"})
             .on("end", () => {
-                console.log(a)
-                // console.log(a.keyframes[0].tgs[0].tweens[0]);
+                // console.log(a)
+                console.log(a.keyframes[0].tgs[0].tweens[0]);
 
             });
 

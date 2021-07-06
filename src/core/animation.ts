@@ -46,11 +46,8 @@ export class Animation extends Dispatcher {
     constructor(targets: any, duration: number, params: any, options: any = {}) {
         super();
 
-        if (duration !== void 0) {
-            this.repeat = (options.repeat != (void 0) && options.repeat > 0) ? options.repeat + 1 : 1;
-            this.loop = options.loop != (void 0) ? options.loop : true;
-            this.paused = options.paused != (void 0) ? options.paused : false;
-            this.keep = options.keep != (void 0) ? options.keep : false;
+        if (duration != void 0) {
+
         } else {
             this.status = 0;
         }
@@ -71,6 +68,11 @@ export class Animation extends Dispatcher {
     to(duration: number, params: any, options: any = {}) {
 
         let kf = new Keyframe();
+
+        this.repeat = (options.repeat != (void 0) && options.repeat > 0) ? options.repeat + 1 : this.repeat;
+        this.loop = options.loop != (void 0) ? options.loop : this.loop;
+        this.paused = options.paused != (void 0) ? options.paused : this.paused;
+        this.keep = options.keep != (void 0) ? options.keep : this.keep;
 
         for (let i = 0; i < this.targets.length; i++) {
             const tg = Animation._getTweens(this.targets[i], duration, params, options);
@@ -104,7 +106,7 @@ export class Animation extends Dispatcher {
 
     update(t: number) {
 
-        if ((this.paused && !this._seeking) || this.status < 1) return;
+        if ((this.paused || this.status < 1) && !this._seeking) return;
 
         //*
         if (!this._currentKf.initialized) {
@@ -237,6 +239,13 @@ export class Animation extends Dispatcher {
 
         this.status = this._preSeekState;
         this._seeking = false;
+    }
+
+    _setOptions(options:any) {
+        this.repeat = (options.repeat != (void 0) && options.repeat > 0) ? options.repeat + 1 : this.repeat;
+        this.loop = options.loop != (void 0) ? options.loop : this.loop;
+        this.paused = options.paused != (void 0) ? options.paused : this.paused;
+        this.keep = options.keep != (void 0) ? options.keep : this.keep;
     }
 
     /* =================================================================================================================

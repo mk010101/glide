@@ -1064,12 +1064,7 @@ class Animation extends Dispatcher {
         this._seeking = false;
         this._preSeekState = 1;
         this._dir = 1;
-        if (duration !== void 0) {
-            this.repeat = (options.repeat != (void 0) && options.repeat > 0) ? options.repeat + 1 : 1;
-            this.loop = options.loop != (void 0) ? options.loop : true;
-            this.paused = options.paused != (void 0) ? options.paused : false;
-            this.keep = options.keep != (void 0) ? options.keep : false;
-        }
+        if (duration != void 0) ;
         else {
             this.status = 0;
         }
@@ -1083,6 +1078,10 @@ class Animation extends Dispatcher {
     }
     to(duration, params, options = {}) {
         let kf = new Keyframe();
+        this.repeat = (options.repeat != (void 0) && options.repeat > 0) ? options.repeat + 1 : this.repeat;
+        this.loop = options.loop != (void 0) ? options.loop : this.loop;
+        this.paused = options.paused != (void 0) ? options.paused : this.paused;
+        this.keep = options.keep != (void 0) ? options.keep : this.keep;
         for (let i = 0; i < this.targets.length; i++) {
             const tg = Animation._getTweens(this.targets[i], duration, params, options);
             kf.push(tg);
@@ -1108,7 +1107,7 @@ class Animation extends Dispatcher {
         return this;
     }
     update(t) {
-        if ((this.paused && !this._seeking) || this.status < 1)
+        if ((this.paused || this.status < 1) && !this._seeking)
             return;
         if (!this._currentKf.initialized) {
             Animation._initTweens(this._currentKf);
@@ -1213,6 +1212,12 @@ class Animation extends Dispatcher {
         }
         this.status = this._preSeekState;
         this._seeking = false;
+    }
+    _setOptions(options) {
+        this.repeat = (options.repeat != (void 0) && options.repeat > 0) ? options.repeat + 1 : this.repeat;
+        this.loop = options.loop != (void 0) ? options.loop : this.loop;
+        this.paused = options.paused != (void 0) ? options.paused : this.paused;
+        this.keep = options.keep != (void 0) ? options.keep : this.keep;
     }
     static _getRenderStr(tw, t) {
         let str = "";

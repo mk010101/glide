@@ -79,7 +79,7 @@
 
         let stage = document.querySelector(".stage");
 
-        const num = 1;
+        const num = 10;
 
         let str = "";
         for (let i = 0; i < num; i++) {
@@ -104,13 +104,13 @@
 
 
         // el.style.transform = strTransform;
-        el.style.transform = "scale(.8, .7) translateX(50px) rotate(20deg)";
+        // el.style.transform = "scale(1.2, 1.2) translateX(50px) rotate(20deg)";
         // el.style.transform = "translate(30%, 50px)";
         // el.style.transform = "scale(2) translate(50px, 50px)";
         // el.style.transform = "translate(50px, 50px) scale(2)    ";
         // el.style.filter = strFilter;
         // el.style.filter = "drop-shadow(#333333 -2px -2px 4px)";
-        el.style.filter = "drop-shadow(rgba(51, 0, 51, .3) -6px -6px 1px) ";
+        // el.style.filter = "drop-shadow(rgba(51, 0, 51, .3) -6px -6px 1px) ";
         // el.style.filter = "drop-shadow(-2px -2px 4px #333333)";
         // el.style.filter = "drop-shadow(-2px -2px 4px rgba(10,10,10,.8))";
         // el.style.margin = strMargins;
@@ -185,7 +185,7 @@
                     // background: "linear-gradient(#ff0000, #0000ff)",
                     // background: ["linear-gradient(#ff0000, #0000ff)", "linear-gradient(#cc00ff, #336699)"],
                     // bg: "hsla(15deg, 100% 50%, .5)",
-                    // bg: "rgba(139,210,136,0.7)",
+                    bg: "rgba(139, 210, 136, 0.5)",
                     // borderColor: "rgba(153,215,255,0.8)",
                     // borderWidth: "4 9 12",
                     // borderWidth: "+=4px",
@@ -247,17 +247,17 @@
 
         function testObj() {
             let obj = {
-                x:10,
+                x: 10,
                 y: "50% 10"
             };
-            glide.to(obj, 500, {x:"+=45", y:"30 70 55"}, {delay:500})
-                .on("progress", ()=> console.log(obj))
+            glide.to(obj, 500, {x: "+=45", y: "30 70 55"}, {delay: 500})
+                .on("progress", () => console.log(obj))
         }
+
         // testObj();
 
 
-
-        setTimeout(()=> {
+        setTimeout(() => {
             //el.style.transform = "matrix(1, 0, 0, 1, 100, 0)"
         }, 500);
 
