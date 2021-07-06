@@ -1203,6 +1203,8 @@ class Animation extends Dispatcher {
         ms = minMax(ms, 0, this.totalDuration);
         this._seeking = true;
         this._preSeekState = this.status;
+        this.runningTime = 0;
+        this.playedTimes = 0;
         this.status = 0;
         this.reset();
         while (ms >= 0) {

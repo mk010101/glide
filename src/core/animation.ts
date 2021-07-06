@@ -229,6 +229,8 @@ export class Animation extends Dispatcher {
 
         this._seeking = true;
         this._preSeekState = this.status;
+        this.runningTime = 0;
+        this.playedTimes = 0;
         this.status = 0;
 
         this.reset();
