@@ -457,6 +457,7 @@ export function normalizeTween(tw: Tween, target: Target) {
     // return;
 
 
+    /// Making sure SVGs are rotated around their centre.
     if (prop === "rotate" && target.type === "svg") {
         let bbox: any = target.el.getBBox();
         let a1 = bbox.x + bbox.width / 2;
