@@ -138,6 +138,7 @@ export class Animation extends Dispatcher {
     }
     reset() {
         this.stop();
+        this.status = 1;
         for (let i = this.keyframes.length - 1; i >= 0; i--) {
             const tgs = this.keyframes[i].tgs;
             if (this.keyframes[i].initialized) {
@@ -152,8 +153,6 @@ export class Animation extends Dispatcher {
         this._pos = 0;
         this._currentKf = this.keyframes[0];
         this.currentTime = 0;
-        this.runningTime = 0;
-        this.playedTimes = 0;
         this._dir = 1;
         this.time = 0;
     }
