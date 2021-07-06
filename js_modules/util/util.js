@@ -370,6 +370,9 @@ export function normalizeTween(tw, target) {
                     from.numbers[i] = Context.convertUnits(from.numbers[i], from.units[i], to.units[i], target.context.units);
                 }
             }
+            else {
+                to.units[i] = "";
+            }
             let incr = to.increments[i];
             if (incr === "-") {
                 to.numbers[i] = from.numbers[i] - to.numbers[i];

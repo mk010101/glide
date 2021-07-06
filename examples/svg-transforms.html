@@ -82,8 +82,10 @@
 
 
         let a = glide.to(["#rect-1"])
-        //.set({"ztransform-origin": "50% 50%", x:0, y:0})
+        .set({"transform-origin": "190 130"})
         // .to(1500, {transform: "rotate(-45)"}, {delay:500})
+        .to(1500, {rotate:180}, {delay:500})
+        // .to(500, {x:500}, {delay:500})
         //     .to(2500, {path: path}, {delay: 500, offset: "-50%"})
             .on("end", () => {
                 // console.log(a)
@@ -135,7 +137,7 @@
             // requestAnimationFrame(rot)
         }
 
-        rot();
+        // rot();
 
 
         // -------------------------------------------------------------
@@ -210,7 +212,7 @@
             rotate(${dec.rotate}deg)
             scaleX(${dec.scaleX})
             scaleY(${dec.scaleY})`;
-            el.style.transform = str;
+            //el.style.transform = str;
             console.log(str);
         }, 500)
 

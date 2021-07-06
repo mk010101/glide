@@ -279,10 +279,15 @@ export class Animation extends Dispatcher {
                         break;
                 }
             }
-            if (transStr)
-                tg.target.tweenable.transform = transStr;
+            const tweenable = tg.target.tweenable;
+            if (transStr) {
+                if (tg.target.type === "dom")
+                    tweenable.transform = transStr;
+                else if (tg.target.type === "svg")
+                    tweenable.setAttribute("transform", transStr);
+            }
             if (filtersStr)
-                tg.target.tweenable.filter = filtersStr;
+                tweenable.filter = filtersStr;
         }
     }
     static _getTargets(targets, options) {

@@ -98,7 +98,6 @@ export class Animation extends Dispatcher {
             Animation._initTweens(kf);
             Animation._render(kf.tgs, 1, 1)
         }
-
         return this;
     }
 
@@ -316,7 +315,7 @@ export class Animation extends Dispatcher {
         for (let i = 0, k = tgs.length; i < k; i++) {
 
             const tg = tgs[i];
-            // const tweenable = tg.tweenable;
+            // const tweenable = tg.target.tweenable;
             // const type = tg.type;
             // let obj:any = {};
 
@@ -378,11 +377,19 @@ export class Animation extends Dispatcher {
 
             }
 
+            const tweenable: any = tg.target.tweenable;
+
             // console.log(filtersStr)
-            if (transStr)
-                tg.target.tweenable.transform = transStr;
+            if (transStr) {
+                // console.log(transStr)
+                if (tg.target.type === "dom")
+                    tweenable.transform = transStr;
+                else if(tg.target.type === "svg")
+                    tweenable.setAttribute("transform", transStr);
+            }
+
             if (filtersStr)
-                tg.target.tweenable.filter = filtersStr;
+                tweenable.filter = filtersStr;
 
         }
 

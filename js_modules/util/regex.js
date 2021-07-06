@@ -83,7 +83,7 @@ export const is = {
         return /gradient/i.test(val);
     },
     propTransform(val) {
-        return (/transform|translate|^rotate|^scale|skew|matrix|x[(xyz]+|y[(xyz]+/i.test(val));
+        return (/^transform$|translate|^rotate|^scale|skew|matrix|x[(xyz]+|y[(xyz]+/i.test(val));
     },
     propIndividualTr(val) {
         return (/translation|^rotation|^scaling|skewing|/i.test(val));

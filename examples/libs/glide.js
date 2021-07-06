@@ -152,7 +152,7 @@
             return /gradient/i.test(val);
         },
         propTransform(val) {
-            return (/transform|translate|^rotate|^scale|skew|matrix|x[(xyz]+|y[(xyz]+/i.test(val));
+            return (/^transform$|translate|^rotate|^scale|skew|matrix|x[(xyz]+|y[(xyz]+/i.test(val));
         },
         propIndividualTr(val) {
             return (/translation|^rotation|^scaling|skewing|/i.test(val));
@@ -944,6 +944,9 @@
                         from.numbers[i] = Context.convertUnits(from.numbers[i], from.units[i], to.units[i], target.context.units);
                     }
                 }
+                else {
+                    to.units[i] = "";
+                }
                 let incr = to.increments[i];
                 if (incr === "-") {
                     to.numbers[i] = from.numbers[i] - to.numbers[i];
@@ -1305,10 +1308,15 @@
                             break;
                     }
                 }
-                if (transStr)
-                    tg.target.tweenable.transform = transStr;
+                const tweenable = tg.target.tweenable;
+                if (transStr) {
+                    if (tg.target.type === "dom")
+                        tweenable.transform = transStr;
+                    else if (tg.target.type === "svg")
+                        tweenable.setAttribute("transform", transStr);
+                }
                 if (filtersStr)
-                    tg.target.tweenable.filter = filtersStr;
+                    tweenable.filter = filtersStr;
             }
         }
         static _getTargets(targets, options) {

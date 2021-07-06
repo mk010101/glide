@@ -91,7 +91,7 @@ export const is = {
         return /gradient/i.test(val);
     },
     propTransform(val: any) {
-        return (/transform|translate|^rotate|^scale|skew|matrix|x[(xyz]+|y[(xyz]+/i.test(val));
+        return (/^transform$|translate|^rotate|^scale|skew|matrix|x[(xyz]+|y[(xyz]+/i.test(val));
     },
     // propTransform(val: any) {
     //     return (val === "transform|");

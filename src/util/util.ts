@@ -519,6 +519,8 @@ export function normalizeTween(tw: Tween, target: Target) {
                 if (from.units[i] !== to.units[i]) {
                     from.numbers[i] = Context.convertUnits(from.numbers[i], from.units[i], to.units[i], target.context.units);
                 }
+            } else {
+                to.units[i] = "";
             }
 
 
