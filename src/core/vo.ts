@@ -14,7 +14,7 @@ export class Vo {
 }
 
 
-export class PathVo extends Vo {
+export class SvgVo extends Vo {
     path: SVGPathElement = null;
     offsetX:number = 0;
     offsetY:number = 0;

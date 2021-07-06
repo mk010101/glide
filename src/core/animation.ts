@@ -15,7 +15,7 @@ import {Keyframe} from "./keyframe";
 import {Tween} from "./tween";
 import {Evt} from "./events";
 import {TweenType, Value} from "../types";
-import {PathVo, TweenGroup, Vo} from "./vo";
+import {SvgVo, TweenGroup, Vo} from "./vo";
 import {is, regProp, regStrValues, regVUs} from "../util/regex";
 import * as $Ease from "../util/ease";
 import {getNormalizedTransforms} from "../util/matrix";
@@ -270,7 +270,7 @@ export class Animation extends Dispatcher {
 
     static _getPathStr(tw: Tween, t: number) {
 
-        const vo: PathVo = <PathVo>tw.to;
+        const vo: SvgVo = <SvgVo>tw.to;
         const path = vo.path;
         const box: any = vo.bBox;
         const pos = path.getPointAtLength(vo.len * t);

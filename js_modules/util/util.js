@@ -1,5 +1,5 @@
 import { getObjType, is, regColors, regIncrements, regNumsUnits, regProp, regStrValues, regTypes, regValues, regVUs } from "./regex";
-import { PathVo, Vo } from "../core/vo";
+import { SvgVo, Vo } from "../core/vo";
 import { toRgbStr } from "./color";
 import Context from "../core/context";
 import { Tween } from "../core/tween";
@@ -194,7 +194,7 @@ export function getVo(target, prop, val, options = null) {
         return getDefaultVo(prop, val);
     }
     if (prop === "path") {
-        const pVo = new PathVo();
+        const pVo = new SvgVo();
         let path;
         if (is.svg(val)) {
             path = val;
@@ -332,6 +332,21 @@ export function normalizeTween(tw, target) {
     const defaultValue = getDefaultValue(prop);
     if (twType === "path")
         return;
+    if (prop === "rotate" && target.type === "svg") {
+        let bbox = target.el.getBBox();
+        let a1 = bbox.x + bbox.width / 2;
+        let a2 = bbox.y + bbox.height / 2;
+        tw.to.numbers.push(a1, null, a2, null);
+        if (tw.from.numbers.length === 0) {
+            tw.from.numbers = tw.to.numbers.concat();
+            tw.from.numbers[1] = 0;
+        }
+        else {
+            tw.from.numbers.push(a1, null, a2, null);
+        }
+        tw.to.strings.splice(2, 0, ", ", null, ", ", null);
+        tw.to.units.push("", "", "", "");
+    }
     if (from.numbers.length !== to.numbers.length) {
         let shorter = from.numbers.length > to.numbers.length ? to : from;
         let longer = shorter === from ? to : from;

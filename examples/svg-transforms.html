@@ -82,7 +82,7 @@
 
 
         let a = glide.to(["#rect-1"])
-        .set({"transform-origin": "190 130"})
+        // .set({"transform-origin": "0% 0%"})
         // .to(1500, {transform: "rotate(-45)"}, {delay:500})
         .to(1500, {rotate:180}, {delay:500})
         // .to(500, {x:500}, {delay:500})
@@ -127,14 +127,14 @@
         let a1 = bbox.x + bbox.width / 2;
         let a2 = bbox.y + bbox.height / 2;
 
-        let ang = 40;
+        let ang = 4;
 
         function rot() {
             // rect1.setAttribute("transform", `translate(${-bbox.x - bbox.width/2}, ${-bbox.y - bbox.height/2}) rotate(${ang})`);
             // rect1.setAttribute("transform", `translate(${-bbox.x}, ${-bbox.y}) rotate(${ang}, 70, 30) translate(${bbox.x}, ${bbox.y})`);
             rect1.setAttribute("transform", `rotate(${ang}, ${a1}, ${a2})`);
             ang++;
-            // requestAnimationFrame(rot)
+            requestAnimationFrame(rot)
         }
 
         // rot();
