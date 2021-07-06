@@ -466,8 +466,8 @@ export function normalizeTween(tw: Tween, target: Target) {
         if (tw.from.numbers.length === 0) {
             tw.from.numbers = tw.to.numbers.concat();
             tw.from.numbers[1] = 0;
-        } else {
-            tw.from.numbers.push(a1, null, a2, null);
+        } else if (tw.from.numbers.length === 3) {
+            tw.from.numbers.push(0, null, 0, null);
         }
 
         tw.to.strings.splice(2, 0, ", ", null, ", ", null);

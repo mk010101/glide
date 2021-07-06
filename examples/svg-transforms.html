@@ -83,18 +83,20 @@
         const rect1 = document.querySelector("#rect-1");
         const rect2 = document.querySelector("#rect-2");
 
-        rect1.setAttribute("transform", "translate(110, 80)");
+        // rect1.setAttribute("transform", "rotate(30)");
+        // rect1.setAttribute("transform", "translate(130, 70)");
 
 
         let a = glide.to(["#rect-1"])
         // .set({"transform-origin": "-110 -55"})
         // .to(1500, {transform: "rotate(-45)"}, {delay:500})
-        .to(1500, {rotate:180}, {delay:500})
+        .to(1500, {translate:"-200", rotate:180}, {delay:500})
+        .to(800, {translate:"-200, 110",rotate:{value:-90, duration:1500}}, {delay:50})
         // .to(500, {x:500}, {delay:500})
         //     .to(2500, {path: path}, {delay: 500, offset: "-50%"})
             .on("end", () => {
-                // console.log(a)
-                console.log(a.keyframes[0].tgs[0].tweens[0]);
+                console.log(a)
+                // console.log(a.keyframes[0].tgs[0].tweens[0]);
 
             });
 
