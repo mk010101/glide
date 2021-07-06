@@ -978,7 +978,7 @@
             }
         }
     }
-    function strToMap(str, twType) {
+    function strToMap(str, twType, targetType) {
         let res = new Map();
         if (!str || str === "" || str === "none")
             return null;
@@ -990,7 +990,7 @@
             let prop = part.match(regProp)[0];
             part = part.replace(prop, "");
             part = part.replace(/^\(|\)$/g, "");
-            if (is.propDual(prop)) {
+            if (is.propDual(prop) && targetType !== "svg") {
                 let unwrapped = unwrapValues(prop, part);
                 for (let j = 0; j < unwrapped.length; j++) {
                     const p = unwrapped[j];
@@ -1486,10 +1486,10 @@
                     if (multi) {
                         if (twType === "transform" && !transChecked) {
                             if (tw.isIndividualTrans) {
-                                transOldTweens = strToMap(tg.target.getExistingValue("transform"), "transform");
+                                transOldTweens = strToMap(tg.target.getExistingValue("transform"), "transform", tg.target.type);
                             }
                             else {
-                                transOldTweens = strToMap(tg.target.getExistingValue("transform"), "transform");
+                                transOldTweens = strToMap(tg.target.getExistingValue("transform"), "transform", tg.target.type);
                             }
                             transTweens = new Map();
                             transChecked = true;
@@ -1497,7 +1497,7 @@
                             newTweens = transTweens;
                         }
                         else if (twType === "filter" && !filterChecked) {
-                            filterOldTweens = strToMap(tg.target.getExistingValue("filter"), "filter");
+                            filterOldTweens = strToMap(tg.target.getExistingValue("filter"), "filter", tg.target.type);
                             filterTweens = new Map();
                             filterChecked = true;
                             oldTweens = filterOldTweens;

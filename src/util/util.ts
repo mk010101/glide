@@ -483,21 +483,6 @@ export function normalizeTween(tw: Tween, target: Target) {
 
         shorter.strings = longer.strings;
 
-        /*
-        let firstNumIndex = -1;
-        for (let i = 0; i < shorter.numbers.length; i++) {
-            if (shorter.numbers[i] != null) {
-                firstNumIndex = i;
-                break;
-            }
-        }
-        let startVal = firstNumIndex > -1 ? shorter.numbers[firstNumIndex] : defaultValue;
-        let startUnit = firstNumIndex > -1 ? shorter.units[firstNumIndex] : defaultUnit;
-        if (shorter === from) {
-
-        }
-         */
-
         for (let i = shorter.numbers.length; i < longer.numbers.length; i++) {
 
             if (longer.numbers[i] != null) {
@@ -562,7 +547,7 @@ export function normalizeTween(tw: Tween, target: Target) {
 }
 
 
-export function strToMap(str: string, twType: TweenType): Map<string, Tween> {
+export function strToMap(str: string, twType: TweenType, targetType:TargetType): Map<string, Tween> {
 
     let res: Map<string, Tween> = new Map();
 
@@ -580,7 +565,7 @@ export function strToMap(str: string, twType: TweenType): Map<string, Tween> {
         part = part.replace(/^\(|\)$/g, "");
 
         //*
-        if (is.propDual(prop)) {
+        if (is.propDual(prop) && targetType !== "svg") {
 
             let unwrapped = unwrapValues(prop, part);
             for (let j = 0; j < unwrapped.length; j++) {

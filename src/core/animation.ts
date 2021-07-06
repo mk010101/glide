@@ -577,22 +577,21 @@ export class Animation extends Dispatcher {
                 const multi = twType === "transform" || twType === "filter";
 
                 if (multi) {
-
                     if (twType === "transform" && !transChecked) {
                         if (tw.isIndividualTrans) {
                             //TODO: Need a solution for decomposing matrices.
-                            transOldTweens = strToMap(tg.target.getExistingValue("transform"), "transform");
+                            transOldTweens = strToMap(tg.target.getExistingValue("transform"), "transform", tg.target.type);
                             // let old = getNormalizedTransforms(tg.target.computedStyle.transform);
                             // transOldTweens = strToMap(old, "transform");
                         } else {
-                            transOldTweens = strToMap(tg.target.getExistingValue("transform"), "transform");
+                            transOldTweens = strToMap(tg.target.getExistingValue("transform"), "transform", tg.target.type);
                         }
                         transTweens = new Map<string, Tween>();
                         transChecked = true;
                         oldTweens = transOldTweens;
                         newTweens = transTweens;
                     } else if (twType === "filter" && !filterChecked) {
-                        filterOldTweens = strToMap(tg.target.getExistingValue("filter"), "filter");
+                        filterOldTweens = strToMap(tg.target.getExistingValue("filter"), "filter", tg.target.type);
                         filterTweens = new Map<string, Tween>();
                         filterChecked = true;
                         oldTweens = filterOldTweens;

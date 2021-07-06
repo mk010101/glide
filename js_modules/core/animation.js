@@ -442,10 +442,10 @@ export class Animation extends Dispatcher {
                 if (multi) {
                     if (twType === "transform" && !transChecked) {
                         if (tw.isIndividualTrans) {
-                            transOldTweens = strToMap(tg.target.getExistingValue("transform"), "transform");
+                            transOldTweens = strToMap(tg.target.getExistingValue("transform"), "transform", tg.target.type);
                         }
                         else {
-                            transOldTweens = strToMap(tg.target.getExistingValue("transform"), "transform");
+                            transOldTweens = strToMap(tg.target.getExistingValue("transform"), "transform", tg.target.type);
                         }
                         transTweens = new Map();
                         transChecked = true;
@@ -453,7 +453,7 @@ export class Animation extends Dispatcher {
                         newTweens = transTweens;
                     }
                     else if (twType === "filter" && !filterChecked) {
-                        filterOldTweens = strToMap(tg.target.getExistingValue("filter"), "filter");
+                        filterOldTweens = strToMap(tg.target.getExistingValue("filter"), "filter", tg.target.type);
                         filterTweens = new Map();
                         filterChecked = true;
                         oldTweens = filterOldTweens;
