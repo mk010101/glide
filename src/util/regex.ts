@@ -91,7 +91,13 @@ export const is = {
         return /gradient/i.test(val);
     },
     propTransform(val: any) {
-        return (/translate|^rotate|^scale|skew|matrix|x[(xyz]+|y[(xyz]+/i.test(val));
+        return (/^transform$|translate|^rotate|^scale|skew|matrix|x[(xyz]+|y[(xyz]+/i.test(val));
+    },
+    // propTransform(val: any) {
+    //     return (val === "transform|");
+    // },
+    propIndividualTr(val: any) {
+        return (/translation|^rotation|^scaling|skewing|/i.test(val));
     },
     propMatrix(val: any) {
         return (/matrix[3d]*/i.test(val));

@@ -6,7 +6,6 @@ class Glide {
         if (!Glide.context && document)
             Glide.setContext(document.body);
         options.context = options.context ? new Context(options.context) : Glide.context;
-        options.computeStyle = options.computeStyle !== (void 0) ? options.computeStyle : Glide._computeStyle;
         let a = new Animation(targets, duration, params, options);
         Glide.items.push(a);
         return a;
@@ -32,7 +31,6 @@ class Glide {
 Glide.items = [];
 Glide.lastTick = 0;
 Glide.ease = ease;
-Glide._computeStyle = true;
 Glide.tick(performance.now());
 const glide = Glide;
 export default glide;

@@ -16,3 +16,7 @@ export type ValueUnit = {
     increment: string;
 }
 
+export type PropValue = {
+    prop:string;
+    value:any;
+}

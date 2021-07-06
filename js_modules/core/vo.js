@@ -7,7 +7,7 @@ export class Vo {
         this.strings = [];
     }
 }
-export class PathVo extends Vo {
+export class SvgVo extends Vo {
     constructor() {
         super(...arguments);
         this.path = null;

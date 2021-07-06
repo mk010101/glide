@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>SVG</title>
+    <title>SVG-transforms</title>
 
     <style>
 
@@ -35,7 +35,7 @@
 
         .el {
             position: absolute;
-            width: 20px;
+            width: 40px;
             height: 20px;
             background-color: rgba(255, 95, 30, 0.78);
             /*top: 0;*/
@@ -57,6 +57,9 @@
 
     <line id="L1" x1="0" y1="79" x2="600" y2="70"/>
     <line id="L2" x1="90" y1="0" x2="90" y2="600"/>
+
+    <line id="L3" x1="0" y1="79" x2="600" y2="70"/>
+    <line id="L4" x1="90" y1="0" x2="90" y2="600"/>
 
     <rect id="rect-1" x="90" y="70" width="220" height="110"/>
 
@@ -82,8 +85,10 @@
 
 
         let a = glide.to(["#rect-1"])
-        //.set({"ztransform-origin": "50% 50%", x:0, y:0})
+        // .set({"transform-origin": "-110 -55"})
         // .to(1500, {transform: "rotate(-45)"}, {delay:500})
+        .to(1500, {rotate:180}, {delay:500})
+        // .to(500, {x:500}, {delay:500})
         //     .to(2500, {path: path}, {delay: 500, offset: "-50%"})
             .on("end", () => {
                 // console.log(a)
@@ -99,11 +104,13 @@
 
 
         let bbox = rect1.getBBox();
-        console.log(bbox)
+        // console.log(bbox)
 
 
         const l1 = document.querySelector("#L1");
         const l2 = document.querySelector("#L2");
+        const l3 = document.querySelector("#L3");
+        const l4 = document.querySelector("#L4");
 
         l1.setAttribute("x1", "0");
         l1.setAttribute("y1", bbox.y + bbox.height / 2);
@@ -115,6 +122,16 @@
         l2.setAttribute("x2", bbox.x + bbox.width / 2);
         l2.setAttribute("y2", "600");
 
+        l3.setAttribute("x1", bbox.x);
+        l3.setAttribute("y1", 0);
+        l3.setAttribute("x2", bbox.x);
+        l3.setAttribute("y2", 600);
+
+        l4.setAttribute("x1", "0");
+        l4.setAttribute("y1", bbox.y);
+        l4.setAttribute("x2", "600");
+        l4.setAttribute("y2", bbox.y);
+
 
         let trans1 = `translate(${-bbox.x * 2}, ${-bbox.y * 2}) rotate(10) translate(${bbox.x}, ${bbox.y})`;
         let trans2 = `translate(${-bbox.x - bbox.width / 2}, ${-bbox.y - bbox.height / 2}) rotate(30)`;
@@ -125,7 +142,7 @@
         let a1 = bbox.x + bbox.width / 2;
         let a2 = bbox.y + bbox.height / 2;
 
-        let ang = 0;
+        let ang = 4;
 
         function rot() {
             // rect1.setAttribute("transform", `translate(${-bbox.x - bbox.width/2}, ${-bbox.y - bbox.height/2}) rotate(${ang})`);
@@ -135,8 +152,95 @@
             requestAnimationFrame(rot)
         }
 
-        rot();
+        // rot();
 
+
+        // -------------------------------------------------------------
+
+        // rect1.setAttribute("transform", "translate(-10, 100) rotate(45, 150, 70)")
+        // rect1.setAttribute("transform", "translate(-10, 100)")
+        // el.style.transform = "skewX(-45deg)";
+
+
+
+
+
+
+        function deltaTransformPoint(matrix, point)  {
+
+            let dx = point.x * matrix.a + point.y * matrix.c + 0;
+            let dy = point.x * matrix.b + point.y * matrix.d + 0;
+            return { x: dx, y: dy };
+        }
+
+
+        function decomposeMatrix(matrix) {
+
+            // @see https://gist.github.com/2052247
+
+            // calculate delta transform point
+            let px = deltaTransformPoint(matrix, { x: 0, y: 1 });
+            let py = deltaTransformPoint(matrix, { x: 1, y: 0 });
+
+            // calculate skew
+            let skewX = ((180 / Math.PI) * Math.atan2(px.y, px.x) - 90);
+            let skewY = ((180 / Math.PI) * Math.atan2(py.y, py.x));
+
+            return {
+
+                translateX: matrix.e,
+                translateY: matrix.f,
+                scaleX: Math.sqrt(matrix.a * matrix.a + matrix.b * matrix.b),
+                scaleY: Math.sqrt(matrix.c * matrix.c + matrix.d * matrix.d),
+                skewX: skewX,
+                skewY: skewY,
+                rotate: skewX // rotation is the same as skew x
+            };
+        }
+
+
+        function strToMatrix(str) {
+            let arr = str.match(/[-.\d]+/g);
+            let arrInd = ["a", "b", "c", "d", "e", "f"];
+            let mtx = {};
+            arr.map((v, i)=> {
+                mtx[arrInd[i]] = parseFloat(v);
+            });
+            return mtx;
+        }
+
+        //console.log(decomposeMatrix(rect1.getCTM()));
+
+        // ---------------------------------------
+        // Use to convert diminishing small numbers to zero.
+        //console.log(.0000003 > 1e-6)
+        //----------------------------------------
+
+        function testTransform() {
+            el.style.transform = "translateY(2rem) rotate(45deg) scale(1.2, .8) translateX(50px)";
+
+            let mtx = strToMatrix(window.getComputedStyle(el).transform);
+            let dec = decomposeMatrix(mtx);
+
+            setTimeout(() => {
+                let str = `translateX(${dec.translateX}px)
+            translateY(${dec.translateY}px)
+            rotate(${dec.rotate}deg)
+            scaleX(${dec.scaleX})
+            scaleY(${dec.scaleY})`;
+                //el.style.transform = str;
+                console.log(str);
+            }, 500)
+        }
+
+
+
+
+
+
+
+
+        
     }
 
 

@@ -152,7 +152,10 @@
             return /gradient/i.test(val);
         },
         propTransform(val) {
-            return (/translate|^rotate|^scale|skew|matrix|x[(xyz]+|y[(xyz]+/i.test(val));
+            return (/^transform$|translate|^rotate|^scale|skew|matrix|x[(xyz]+|y[(xyz]+/i.test(val));
+        },
+        propIndividualTr(val) {
+            return (/translation|^rotation|^scaling|skewing|/i.test(val));
         },
         propMatrix(val) {
             return (/matrix[3d]*/i.test(val));
@@ -283,7 +286,7 @@
             this.strings = [];
         }
     }
-    class PathVo extends Vo {
+    class SvgVo extends Vo {
         constructor() {
             super(...arguments);
             this.path = null;
@@ -584,6 +587,7 @@
             this.from = null;
             this.to = null;
             this.ease = quadInOut;
+            this.isIndividualTrans = false;
             this.keepOld = false;
             this.oldValue = "";
             this.orientToPath = true;
@@ -596,17 +600,6 @@
             this.start = start;
             this.totalDuration = duration + delay;
         }
-    }
-
-    function getSvg(node) {
-        let parent = node;
-        while (parent instanceof SVGElement) {
-            if (!(parent.parentNode instanceof SVGElement)) {
-                return parent;
-            }
-            parent = parent.parentNode;
-        }
-        return parent;
     }
 
     function minMax(val, min, max) {
@@ -688,6 +681,21 @@
         });
         return res;
     }
+    function stringToPropsVals(str) {
+        let arr = [];
+        let parts = str.match(regStrValues);
+        for (let j = 0; j < parts.length; j++) {
+            let part = parts[j];
+            let prop = part.match(regProp)[0];
+            part = part.replace(prop, "");
+            part = part.replace(/^\(|\)$/g, "");
+            arr.push({
+                prop: prop,
+                value: part
+            });
+        }
+        return arr;
+    }
     function unwrapValues(prop, val) {
         const propX = prop + "X";
         const propY = prop + "Y";
@@ -761,7 +769,7 @@
             return getDefaultVo(prop, val);
         }
         if (prop === "path") {
-            const pVo = new PathVo();
+            const pVo = new SvgVo();
             let path;
             if (is.svg(val)) {
                 path = val;
@@ -898,6 +906,21 @@
         const defaultValue = getDefaultValue(prop);
         if (twType === "path")
             return;
+        if (prop === "rotate" && target.type === "svg") {
+            let bbox = target.el.getBBox();
+            let a1 = bbox.x + bbox.width / 2;
+            let a2 = bbox.y + bbox.height / 2;
+            tw.to.numbers.push(a1, null, a2, null);
+            if (tw.from.numbers.length === 0) {
+                tw.from.numbers = tw.to.numbers.concat();
+                tw.from.numbers[1] = 0;
+            }
+            else {
+                tw.from.numbers.push(a1, null, a2, null);
+            }
+            tw.to.strings.splice(2, 0, ", ", null, ", ", null);
+            tw.to.units.push("", "", "", "");
+        }
         if (from.numbers.length !== to.numbers.length) {
             let shorter = from.numbers.length > to.numbers.length ? to : from;
             let longer = shorter === from ? to : from;
@@ -936,6 +959,9 @@
                         from.numbers[i] = Context.convertUnits(from.numbers[i], from.units[i], to.units[i], target.context.units);
                     }
                 }
+                else {
+                    to.units[i] = "";
+                }
                 let incr = to.increments[i];
                 if (incr === "-") {
                     to.numbers[i] = from.numbers[i] - to.numbers[i];
@@ -964,36 +990,37 @@
             let prop = part.match(regProp)[0];
             part = part.replace(prop, "");
             part = part.replace(/^\(|\)$/g, "");
-            let vo = getVo(null, prop, part);
             if (is.propDual(prop)) {
-                let propX = prop + "X";
-                let propY = prop + "Y";
-                let part2 = part.replace(prop, "");
-                let vus = part2.match(regValues);
-                if (vus.length === 1)
-                    vus.push(is.valueOne(prop) ? "1" : "0");
-                let vox = getVo(null, propX, vus[0]);
-                let twx = new Tween(twType, propX, null, null, 0, 0, 0);
-                twx.keepOld = true;
-                twx.oldValue = `${propX}(${vus[0]})`;
-                let voy = getVo(null, propY, vus[1]);
-                let twy = new Tween(twType, propX, null, null, 0, 0, 0);
-                twy.keepOld = true;
-                twy.oldValue = `${propY}(${vus[1]})`;
-                twx.from = vox;
-                res.set(propX, twx);
-                twy.from = voy;
-                res.set(propY, twy);
+                let unwrapped = unwrapValues(prop, part);
+                for (let j = 0; j < unwrapped.length; j++) {
+                    const p = unwrapped[j];
+                    let vo = getVo(null, p.prop, p.val);
+                    let tw = new Tween(twType, p.prop, null, null, 0, 0, 0);
+                    tw.keepOld = true;
+                    tw.oldValue = `${p.prop}(${p.val})`;
+                    tw.from = vo;
+                    res.set(p.prop, tw);
+                }
             }
             else {
                 let tw = new Tween(twType, prop, null, null, 0, 0, 0);
-                tw.from = vo;
+                tw.from = getVo(null, prop, part);
                 tw.keepOld = true;
                 tw.oldValue = `${prop}(${part})`;
                 res.set(tw.prop, tw);
             }
         }
         return res;
+    }
+    function getSvg(node) {
+        let parent = node;
+        while (parent instanceof SVGElement) {
+            if (!(parent.parentNode instanceof SVGElement)) {
+                return parent;
+            }
+            parent = parent.parentNode;
+        }
+        return parent;
     }
 
     class Keyframe {
@@ -1097,8 +1124,8 @@
             this.currentTime += t;
             this.runningTime += t;
             const tgs = this._currentKf.tgs;
-            this.dispatch(Evt.progress, null);
             Animation._render(tgs, this.time, this._dir);
+            this.dispatch(Evt.progress, null);
             if (this.currentTime >= this._currentKf.totalDuration) {
                 if (this._currentKf.callFunc) {
                     this._currentKf.callFunc(this._currentKf.callParams);
@@ -1237,8 +1264,7 @@
                 let a1 = vo.bBox.x;
                 let a2 = vo.bBox.y;
                 rotStr = ` rotate(${rot}, ${a1}, ${a2})`;
-                tw.tweenable.setAttribute("transform", `translate(${x}, 
-            ${y}) 
+                tw.tweenable.setAttribute("transform", `translate(${x}, ${y}) 
             ${rotStr} 
             translate(${vo.offsetX}, ${vo.offsetX})`);
             }
@@ -1297,10 +1323,15 @@
                             break;
                     }
                 }
-                if (transStr)
-                    tg.target.tweenable.transform = transStr;
+                const tweenable = tg.target.tweenable;
+                if (transStr) {
+                    if (tg.target.type === "dom")
+                        tweenable.transform = transStr;
+                    else if (tg.target.type === "svg")
+                        tweenable.setAttribute("transform", transStr);
+                }
                 if (filtersStr)
-                    tg.target.tweenable.filter = filtersStr;
+                    tweenable.filter = filtersStr;
             }
         }
         static _getTargets(targets, options) {
@@ -1334,34 +1365,59 @@
             for (let i = 0; i < keys.length; i++) {
                 let prop = keys[i];
                 let val = params[prop];
-                if (target.type === "dom" && is.propDual(prop)) {
-                    let res = unwrapValues(prop, val);
-                    tg.tweens.push(Animation._getTween(target, res[0].prop, res[0].val, duration, options));
-                    tg.tweens.push(Animation._getTween(target, res[1].prop, res[1].val, duration, options));
+                if (target.type === "dom") {
+                    if (prop === "bg")
+                        prop = "backgroundColor";
+                    else if (prop === "x")
+                        prop = "translateX";
+                    else if (prop === "y")
+                        prop = "translateY";
+                    else if (prop === "hueRotate")
+                        prop = "hue-rotate";
+                    else if (prop === "dropShadow")
+                        prop = "drop-shadow";
                 }
-                else {
-                    let tw = Animation._getTween(target, prop, val, duration, options);
-                    tg.tweens.push(tw);
+                const twType = getTweenType(target.type, prop);
+                if (target.type === "dom") {
+                    if (prop === "transform") {
+                        let propsVals = stringToPropsVals(val);
+                        for (let j = 0; j < propsVals.length; j++) {
+                            let p = propsVals[j].prop;
+                            let v = propsVals[j].value;
+                            let unwrapped = Animation._unwrap(target, twType, p, v, duration, options);
+                            tg.tweens.push(...unwrapped);
+                        }
+                        continue;
+                    }
+                    else if (is.propTransform(prop)) {
+                        let unwrapped = Animation._unwrap(target, twType, prop, val, duration, options);
+                        for (let j = 0; j < unwrapped.length; j++) {
+                            unwrapped[j].isIndividualTrans = true;
+                        }
+                        tg.tweens.push(...unwrapped);
+                        continue;
+                    }
                 }
+                let tw = Animation._getTween(twType, target, prop, val, duration, options);
+                tg.tweens.push(tw);
             }
             return tg;
         }
-        static _getTween(target, prop, val, dur, options) {
+        static _unwrap(target, twType, prop, val, duration, options) {
+            let arr = [];
+            if (is.propDual(prop)) {
+                let res = unwrapValues(prop, val);
+                arr.push(Animation._getTween(twType, target, res[0].prop, res[0].val, duration, options));
+                arr.push(Animation._getTween(twType, target, res[1].prop, res[1].val, duration, options));
+            }
+            else {
+                arr.push(Animation._getTween(twType, target, prop, val, duration, options));
+            }
+            return arr;
+        }
+        static _getTween(twType, target, prop, val, dur, options) {
             let fromVal;
             let toVal;
-            if (target.type === "dom") {
-                if (prop === "bg")
-                    prop = "backgroundColor";
-                else if (prop === "x")
-                    prop = "translateX";
-                else if (prop === "y")
-                    prop = "translateY";
-                else if (prop === "hueRotate")
-                    prop = "hue-rotate";
-                else if (prop === "dropShadow")
-                    prop = "drop-shadow";
-            }
-            const twType = getTweenType(target.type, prop);
             let optEase = options.ease;
             if (is.array(val)) {
                 fromVal = val[0];
@@ -1425,54 +1481,51 @@
                     const tw = tg.tweens[j];
                     let from;
                     let to = getVo(tg.target, tw.prop, tw.toVal, tw.options);
-                    if (tg.target.type === "dom") {
-                        switch (tw.twType) {
-                            case "other":
-                            case "direct":
-                                if (tw.fromVal)
-                                    from = getVo(tg.target, tw.prop, tw.fromVal);
-                                else
-                                    from = getVo(tg.target, tw.prop, tg.target.getExistingValue(tw.prop));
-                                break;
-                            case "transform":
-                            case "filter":
-                                if (tw.twType === "transform" && !transChecked) {
-                                    transOldTweens = strToMap(tg.target.getExistingValue("transform"), "transform");
-                                    transTweens = new Map();
-                                    transChecked = true;
-                                    oldTweens = transOldTweens;
-                                    newTweens = transTweens;
-                                }
-                                else if (tw.twType === "filter" && !filterChecked) {
-                                    filterOldTweens = strToMap(tg.target.getExistingValue("filter"), "filter");
-                                    filterTweens = new Map();
-                                    filterChecked = true;
-                                    oldTweens = filterOldTweens;
-                                    newTweens = filterTweens;
-                                }
-                                if (tw.fromVal) {
-                                    from = getVo(tg.target, tw.prop, tw.fromVal);
-                                }
-                                else {
-                                    if (oldTweens && oldTweens.has(tw.prop)) {
-                                        from = oldTweens.get(tw.prop).from;
-                                        tw.keepOld = false;
-                                    }
-                                    else {
-                                        from = from = getVo(tg.target, tw.prop, tw.fromVal);
-                                    }
-                                }
-                                newTweens.set(tw.prop, tw);
-                                break;
+                    const twType = tw.twType;
+                    const multi = twType === "transform" || twType === "filter";
+                    if (multi) {
+                        if (twType === "transform" && !transChecked) {
+                            if (tw.isIndividualTrans) {
+                                transOldTweens = strToMap(tg.target.getExistingValue("transform"), "transform");
+                            }
+                            else {
+                                transOldTweens = strToMap(tg.target.getExistingValue("transform"), "transform");
+                            }
+                            transTweens = new Map();
+                            transChecked = true;
+                            oldTweens = transOldTweens;
+                            newTweens = transTweens;
                         }
+                        else if (twType === "filter" && !filterChecked) {
+                            filterOldTweens = strToMap(tg.target.getExistingValue("filter"), "filter");
+                            filterTweens = new Map();
+                            filterChecked = true;
+                            oldTweens = filterOldTweens;
+                            newTweens = filterTweens;
+                        }
+                        if (tw.fromVal) {
+                            from = getVo(tg.target, tw.prop, tw.fromVal);
+                        }
+                        else {
+                            if (oldTweens && oldTweens.has(tw.prop)) {
+                                from = oldTweens.get(tw.prop).from;
+                                tw.keepOld = false;
+                            }
+                            else {
+                                from = getVo(tg.target, tw.prop, tw.fromVal);
+                            }
+                        }
+                        tw.from = from;
+                        tw.to = to;
+                        newTweens.set(tw.prop, tw);
                     }
                     else {
                         if (!tw.fromVal)
                             tw.fromVal = tg.target.getExistingValue(tw.prop);
                         from = getVo(tg.target, tw.prop, tw.fromVal);
+                        tw.from = from;
+                        tw.to = to;
                     }
-                    tw.from = from;
-                    tw.to = to;
                     normalizeTween(tw, tg.target);
                 }
                 if (transOldTweens)
@@ -1501,7 +1554,6 @@
             if (!Glide.context && document)
                 Glide.setContext(document.body);
             options.context = options.context ? new Context(options.context) : Glide.context;
-            options.computeStyle = options.computeStyle !== (void 0) ? options.computeStyle : Glide._computeStyle;
             let a = new Animation(targets, duration, params, options);
             Glide.items.push(a);
             return a;
@@ -1527,7 +1579,6 @@
     Glide.items = [];
     Glide.lastTick = 0;
     Glide.ease = ease;
-    Glide._computeStyle = true;
     Glide.tick(performance.now());
     const glide = Glide;
 

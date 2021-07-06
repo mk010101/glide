@@ -14,7 +14,7 @@ export class Vo {
 }
 
 
-export class PathVo extends Vo {
+export class SvgVo extends Vo {
     path: SVGPathElement = null;
     offsetX:number = 0;
     offsetY:number = 0;
@@ -26,14 +26,14 @@ export class PathVo extends Vo {
 
 export class TweenGroup {
     target: Target = null;
-    // tweenable:any = null;
-    // targetType:TargetType = "dom";
+
     tweens: Tween[] = [];
+    // transforms: Map<string, Tween> = new Map<string, Tween>();
+    // directTransforms: Map<string, Tween> = new Map<string, Tween>();
+    // filters: Map<string, Tween> = new Map<string, Tween>();
 
     constructor(target: any) {
         this.target = target;
-        // this.tweenable = target.tweenable;
-        // this.targetType = target.type;
     }
 
 }

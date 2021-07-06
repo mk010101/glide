@@ -9,14 +9,14 @@ class Glide {
     static lastTick = 0;
     static ease = ease;
     static context: Context;
-    static _computeStyle = true;
+    //static _computeStyle = true;
 
 
     static to(targets: any, duration: number, params: any, options: any = {}) {
 
         if (!Glide.context && document) Glide.setContext(document.body);
         options.context = options.context ? new Context(options.context) : Glide.context;
-        options.computeStyle = options.computeStyle !== (void 0)? options.computeStyle : Glide._computeStyle;
+        //options.computeStyle = options.computeStyle !== (void 0)? options.computeStyle : Glide._computeStyle;
         let a = new Animation(targets, duration, params, options);
         Glide.items.push(a);
         return a;

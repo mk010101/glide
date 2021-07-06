@@ -1,13 +1,24 @@
 import Target from "./target";
 import Dispatcher from "./dispatcher";
-import {getPropType, getTweenType, getVo, minMax, normalizeTween, print, strToMap, unwrapValues} from "../util/util";
+import {
+    getPropType,
+    getTweenType,
+    getVo,
+    minMax,
+    normalizeTween,
+    print,
+    stringToPropsVals,
+    strToMap,
+    unwrapValues
+} from "../util/util";
 import {Keyframe} from "./keyframe";
 import {Tween} from "./tween";
 import {Evt} from "./events";
 import {TweenType, Value} from "../types";
-import {PathVo, TweenGroup, Vo} from "./vo";
-import {is} from "../util/regex";
+import {SvgVo, TweenGroup, Vo} from "./vo";
+import {is, regProp, regStrValues, regVUs} from "../util/regex";
 import * as $Ease from "../util/ease";
+import {getNormalizedTransforms} from "../util/matrix";
 
 const Ease: { [key: string]: any } = $Ease;
 
@@ -87,7 +98,6 @@ export class Animation extends Dispatcher {
             Animation._initTweens(kf);
             Animation._render(kf.tgs, 1, 1)
         }
-
         return this;
     }
 
@@ -111,8 +121,9 @@ export class Animation extends Dispatcher {
 
         const tgs = this._currentKf.tgs;
 
-        this.dispatch(Evt.progress, null);
+        //this.dispatch(Evt.progress, null);
         Animation._render(tgs, this.time, this._dir);
+        this.dispatch(Evt.progress, null);
 
         if (this.currentTime >= this._currentKf.totalDuration) {
 
@@ -259,7 +270,7 @@ export class Animation extends Dispatcher {
 
     static _getPathStr(tw: Tween, t: number) {
 
-        const vo: PathVo = <PathVo>tw.to;
+        const vo: SvgVo = <SvgVo>tw.to;
         const path = vo.path;
         const box: any = vo.bBox;
         const pos = path.getPointAtLength(vo.len * t);
@@ -285,8 +296,8 @@ export class Animation extends Dispatcher {
             let a1 = vo.bBox.x;
             let a2 = vo.bBox.y;
             rotStr = ` rotate(${rot}, ${a1}, ${a2})`;
-            tw.tweenable.setAttribute("transform", `translate(${x}, 
-            ${y}) 
+            tw.tweenable.setAttribute("transform",
+                `translate(${x}, ${y}) 
             ${rotStr} 
             translate(${vo.offsetX}, ${vo.offsetX})`);
         } else {
@@ -304,7 +315,7 @@ export class Animation extends Dispatcher {
         for (let i = 0, k = tgs.length; i < k; i++) {
 
             const tg = tgs[i];
-            // const tweenable = tg.tweenable;
+            // const tweenable = tg.target.tweenable;
             // const type = tg.type;
             // let obj:any = {};
 
@@ -366,11 +377,19 @@ export class Animation extends Dispatcher {
 
             }
 
+            const tweenable: any = tg.target.tweenable;
+
             // console.log(filtersStr)
-            if (transStr)
-                tg.target.tweenable.transform = transStr;
+            if (transStr) {
+                // console.log(transStr)
+                if (tg.target.type === "dom")
+                    tweenable.transform = transStr;
+                else if(tg.target.type === "svg")
+                    tweenable.setAttribute("transform", transStr);
+            }
+
             if (filtersStr)
-                tg.target.tweenable.filter = filtersStr;
+                tweenable.filter = filtersStr;
 
         }
 
@@ -385,9 +404,8 @@ export class Animation extends Dispatcher {
         let t: Target[] = [];
 
         if (is.list(targets)) {
-            let staggerTime = 0;
             for (let i = 0; i < targets.length; i++) {
-                let targ:any;
+                let targ: any;
 
                 if (is.string(targets[i]))
                     targ = document.querySelector(targets[i]);
@@ -417,20 +435,45 @@ export class Animation extends Dispatcher {
             let prop: any = keys[i];
             let val: any = params[prop];
 
-            //*
-            // If value is like scale(2) or translate(20px 5rem), unwrap it.
-            if (target.type === "dom" && is.propDual(prop)) {
-                let res = unwrapValues(prop, val);
-                tg.tweens.push(Animation._getTween(target, res[0].prop, res[0].val, duration, options));
-                tg.tweens.push(Animation._getTween(target, res[1].prop, res[1].val, duration, options));
-            } else {
-                let tw = Animation._getTween(target, prop, val, duration, options);
-                tg.tweens.push(tw);
+            if (target.type === "dom") {
+                if (prop === "bg")
+                    prop = "backgroundColor";
+                else if (prop === "x")
+                    prop = "translateX";
+                else if (prop === "y")
+                    prop = "translateY";
+                else if (prop === "hueRotate")
+                    prop = "hue-rotate";
+                else if (prop === "dropShadow")
+                    prop = "drop-shadow";
             }
-            //*/
 
-            // let tw = Animation._getTween(target, prop, val, duration, options);
-            // tg.tweens.push(tw);
+            const twType = getTweenType(target.type, prop);
+
+            if (target.type === "dom") {
+
+                if (prop === "transform") {
+                    let propsVals = stringToPropsVals(val);
+                    for (let j = 0; j < propsVals.length; j++) {
+                        let p = propsVals[j].prop;
+                        let v = propsVals[j].value;
+                        let unwrapped = Animation._unwrap(target, twType, p, v, duration, options);
+                        tg.tweens.push(...unwrapped);
+                    }
+                    continue;
+                } else if (is.propTransform(prop)) {
+                    let unwrapped = Animation._unwrap(target, twType, prop, val, duration, options);
+                    for (let j = 0; j < unwrapped.length; j++) {
+                        unwrapped[j].isIndividualTrans = true;
+                    }
+                    tg.tweens.push(...unwrapped);
+                    continue;
+                }
+            }
+
+
+            let tw = Animation._getTween(twType, target, prop, val, duration, options);
+            tg.tweens.push(tw);
 
 
         }
@@ -438,24 +481,23 @@ export class Animation extends Dispatcher {
     }
 
 
-    static _getTween(target: Target, prop: string, val: any, dur: number, options: any): Tween {
+    static _unwrap(target: Target, twType: TweenType, prop: string, val: any, duration: number, options: any): Tween[] {
+        let arr: Tween[] = [];
+        if (is.propDual(prop)) {
+            let res = unwrapValues(prop, val);
+            arr.push(Animation._getTween(twType, target, res[0].prop, res[0].val, duration, options));
+            arr.push(Animation._getTween(twType, target, res[1].prop, res[1].val, duration, options));
+        } else {
+            arr.push(Animation._getTween(twType, target, prop, val, duration, options));
+        }
+        return arr;
+    }
+
+
+    static _getTween(twType: TweenType, target: Target, prop: string, val: any, dur: number, options: any): Tween {
+
         let fromVal: any;
         let toVal: any;
-
-        if (target.type === "dom") {
-            if (prop === "bg")
-                prop = "backgroundColor";
-            else if (prop === "x")
-                prop = "translateX";
-            else if (prop === "y")
-                prop = "translateY";
-            else if (prop === "hueRotate")
-                prop = "hue-rotate";
-            else if (prop === "dropShadow")
-                prop = "drop-shadow";
-        }
-
-        const twType = getTweenType(target.type, prop);
 
         let optEase = options.ease;
         if (is.array(val)) {
@@ -506,9 +548,11 @@ export class Animation extends Dispatcher {
 
     static _initTweens(kf: Keyframe) {
 
+
         for (let i = 0; i < kf.tgs.length; i++) {
 
             const tg = kf.tgs[i];
+
 
             let transTweens: Map<string, Tween>;
             let transOldTweens: Map<string, Tween>;
@@ -521,67 +565,62 @@ export class Animation extends Dispatcher {
             let oldTweens: Map<string, Tween>;
             let newTweens: Map<string, Tween>;
 
+
             for (let j = 0; j < tg.tweens.length; j++) {
                 const tw = tg.tweens[j];
 
                 let from: Vo;
                 let to: Vo = getVo(tg.target, tw.prop, tw.toVal, tw.options);
 
-                if (tg.target.type === "dom") {
+                const twType = tw.twType;
 
-                    switch (tw.twType) {
+                const multi = twType === "transform" || twType === "filter";
 
-                        case "other":
-                        case "direct":
-                            if (tw.fromVal) from = getVo(tg.target, tw.prop, tw.fromVal);
-                            else
-                                from = getVo(tg.target, tw.prop, tg.target.getExistingValue(tw.prop));
-                            break;
+                if (multi) {
 
-                        case "transform":
-                        case "filter":
-
-                            if (tw.twType === "transform" && !transChecked) {
-                                transOldTweens = strToMap(tg.target.getExistingValue("transform"), "transform");
-                                // console.log(transOldTweens)
-                                transTweens = new Map<string, Tween>();
-                                transChecked = true;
-                                oldTweens = transOldTweens;
-                                newTweens = transTweens;
-                            } else if (tw.twType === "filter" && !filterChecked) {
-                                filterOldTweens = strToMap(tg.target.getExistingValue("filter"), "filter");
-                                filterTweens = new Map<string, Tween>();
-                                filterChecked = true;
-                                oldTweens = filterOldTweens;
-                                newTweens = filterTweens;
-                            }
-
-                            if (tw.fromVal) {
-                                from = getVo(tg.target, tw.prop, tw.fromVal);
-                            } else {
-                                if (oldTweens && oldTweens.has(tw.prop)) {
-                                    // console.log(tw.prop)
-                                    from = oldTweens.get(tw.prop).from;
-                                    tw.keepOld = false;
-                                } else {
-                                    from = from = getVo(tg.target, tw.prop, tw.fromVal);
-                                }
-                            }
-                            newTweens.set(tw.prop, tw);
-                            break;
-
-
+                    if (twType === "transform" && !transChecked) {
+                        if (tw.isIndividualTrans) {
+                            //TODO: Need a solution for decomposing matrices.
+                            transOldTweens = strToMap(tg.target.getExistingValue("transform"), "transform");
+                            // let old = getNormalizedTransforms(tg.target.computedStyle.transform);
+                            // transOldTweens = strToMap(old, "transform");
+                        } else {
+                            transOldTweens = strToMap(tg.target.getExistingValue("transform"), "transform");
+                        }
+                        transTweens = new Map<string, Tween>();
+                        transChecked = true;
+                        oldTweens = transOldTweens;
+                        newTweens = transTweens;
+                    } else if (twType === "filter" && !filterChecked) {
+                        filterOldTweens = strToMap(tg.target.getExistingValue("filter"), "filter");
+                        filterTweens = new Map<string, Tween>();
+                        filterChecked = true;
+                        oldTweens = filterOldTweens;
+                        newTweens = filterTweens;
                     }
+
+                    if (tw.fromVal) {
+                        from = getVo(tg.target, tw.prop, tw.fromVal);
+                    } else {
+                        if (oldTweens && oldTweens.has(tw.prop)) {
+                            from = oldTweens.get(tw.prop).from;
+                            tw.keepOld = false;
+                        } else {
+                            from = getVo(tg.target, tw.prop, tw.fromVal);
+                        }
+                    }
+                    tw.from = from;
+                    tw.to = to;
+                    newTweens.set(tw.prop, tw);
                 } else {
                     if (!tw.fromVal) tw.fromVal = tg.target.getExistingValue(tw.prop);
                     from = getVo(tg.target, tw.prop, tw.fromVal);
+                    tw.from = from;
+                    tw.to = to;
                 }
-
-                tw.from = from;
-                tw.to = to;
-                // console.log(from, to)
                 normalizeTween(tw, tg.target);
             }
+
 
             if (transOldTweens) Animation._arrangeMaps(transOldTweens, transTweens, tg, "transform");
             if (filterOldTweens) Animation._arrangeMaps(filterOldTweens, filterTweens, tg, "filter");

@@ -1,9 +1,8 @@
 import { getObjType, is, regColors, regIncrements, regNumsUnits, regProp, regStrValues, regTypes, regValues, regVUs } from "./regex";
-import { PathVo, Vo } from "../core/vo";
+import { SvgVo, Vo } from "../core/vo";
 import { toRgbStr } from "./color";
 import Context from "../core/context";
 import { Tween } from "../core/tween";
-import { getSvg } from "./geom";
 export function minMax(val, min, max) {
     return Math.min(Math.max(val, min), max);
 }
@@ -107,6 +106,21 @@ function getNumbers(val) {
     let nums = val.match(/[-.\d]+/g);
     return nums.map((v) => parseFloat(v));
 }
+export function stringToPropsVals(str) {
+    let arr = [];
+    let parts = str.match(regStrValues);
+    for (let j = 0; j < parts.length; j++) {
+        let part = parts[j];
+        let prop = part.match(regProp)[0];
+        part = part.replace(prop, "");
+        part = part.replace(/^\(|\)$/g, "");
+        arr.push({
+            prop: prop,
+            value: part
+        });
+    }
+    return arr;
+}
 export function unwrapValues(prop, val) {
     const propX = prop + "X";
     const propY = prop + "Y";
@@ -180,7 +194,7 @@ export function getVo(target, prop, val, options = null) {
         return getDefaultVo(prop, val);
     }
     if (prop === "path") {
-        const pVo = new PathVo();
+        const pVo = new SvgVo();
         let path;
         if (is.svg(val)) {
             path = val;
@@ -318,6 +332,21 @@ export function normalizeTween(tw, target) {
     const defaultValue = getDefaultValue(prop);
     if (twType === "path")
         return;
+    if (prop === "rotate" && target.type === "svg") {
+        let bbox = target.el.getBBox();
+        let a1 = bbox.x + bbox.width / 2;
+        let a2 = bbox.y + bbox.height / 2;
+        tw.to.numbers.push(a1, null, a2, null);
+        if (tw.from.numbers.length === 0) {
+            tw.from.numbers = tw.to.numbers.concat();
+            tw.from.numbers[1] = 0;
+        }
+        else {
+            tw.from.numbers.push(a1, null, a2, null);
+        }
+        tw.to.strings.splice(2, 0, ", ", null, ", ", null);
+        tw.to.units.push("", "", "", "");
+    }
     if (from.numbers.length !== to.numbers.length) {
         let shorter = from.numbers.length > to.numbers.length ? to : from;
         let longer = shorter === from ? to : from;
@@ -356,6 +385,9 @@ export function normalizeTween(tw, target) {
                     from.numbers[i] = Context.convertUnits(from.numbers[i], from.units[i], to.units[i], target.context.units);
                 }
             }
+            else {
+                to.units[i] = "";
+            }
             let incr = to.increments[i];
             if (incr === "-") {
                 to.numbers[i] = from.numbers[i] - to.numbers[i];
@@ -384,36 +416,37 @@ export function strToMap(str, twType) {
         let prop = part.match(regProp)[0];
         part = part.replace(prop, "");
         part = part.replace(/^\(|\)$/g, "");
-        let vo = getVo(null, prop, part);
         if (is.propDual(prop)) {
-            let propX = prop + "X";
-            let propY = prop + "Y";
-            let part2 = part.replace(prop, "");
-            let vus = part2.match(regValues);
-            if (vus.length === 1)
-                vus.push(is.valueOne(prop) ? "1" : "0");
-            let vox = getVo(null, propX, vus[0]);
-            let twx = new Tween(twType, propX, null, null, 0, 0, 0);
-            twx.keepOld = true;
-            twx.oldValue = `${propX}(${vus[0]})`;
-            let voy = getVo(null, propY, vus[1]);
-            let twy = new Tween(twType, propX, null, null, 0, 0, 0);
-            twy.keepOld = true;
-            twy.oldValue = `${propY}(${vus[1]})`;
-            twx.from = vox;
-            res.set(propX, twx);
-            twy.from = voy;
-            res.set(propY, twy);
+            let unwrapped = unwrapValues(prop, part);
+            for (let j = 0; j < unwrapped.length; j++) {
+                const p = unwrapped[j];
+                let vo = getVo(null, p.prop, p.val);
+                let tw = new Tween(twType, p.prop, null, null, 0, 0, 0);
+                tw.keepOld = true;
+                tw.oldValue = `${p.prop}(${p.val})`;
+                tw.from = vo;
+                res.set(p.prop, tw);
+            }
         }
         else {
             let tw = new Tween(twType, prop, null, null, 0, 0, 0);
-            tw.from = vo;
+            tw.from = getVo(null, prop, part);
             tw.keepOld = true;
             tw.oldValue = `${prop}(${part})`;
             res.set(tw.prop, tw);
         }
     }
     return res;
+}
+export function getSvg(node) {
+    let parent = node;
+    while (parent instanceof SVGElement) {
+        if (!(parent.parentNode instanceof SVGElement)) {
+            return parent;
+        }
+        parent = parent.parentNode;
+    }
+    return parent;
 }
 export function print(val) {
     console.log(JSON.stringify(val, null, 4));
