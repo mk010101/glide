@@ -58,6 +58,9 @@
     <line id="L1" x1="0" y1="79" x2="600" y2="70"/>
     <line id="L2" x1="90" y1="0" x2="90" y2="600"/>
 
+    <line id="L3" x1="0" y1="79" x2="600" y2="70"/>
+    <line id="L4" x1="90" y1="0" x2="90" y2="600"/>
+
     <rect id="rect-1" x="90" y="70" width="220" height="110"/>
 
 
@@ -82,7 +85,7 @@
 
 
         let a = glide.to(["#rect-1"])
-        // .set({"transform-origin": "0% 0%"})
+        // .set({"transform-origin": "-110 -55"})
         // .to(1500, {transform: "rotate(-45)"}, {delay:500})
         .to(1500, {rotate:180}, {delay:500})
         // .to(500, {x:500}, {delay:500})
@@ -101,11 +104,13 @@
 
 
         let bbox = rect1.getBBox();
-        console.log(bbox)
+        // console.log(bbox)
 
 
         const l1 = document.querySelector("#L1");
         const l2 = document.querySelector("#L2");
+        const l3 = document.querySelector("#L3");
+        const l4 = document.querySelector("#L4");
 
         l1.setAttribute("x1", "0");
         l1.setAttribute("y1", bbox.y + bbox.height / 2);
@@ -116,6 +121,16 @@
         l2.setAttribute("y1", "0");
         l2.setAttribute("x2", bbox.x + bbox.width / 2);
         l2.setAttribute("y2", "600");
+
+        l3.setAttribute("x1", bbox.x);
+        l3.setAttribute("y1", 0);
+        l3.setAttribute("x2", bbox.x);
+        l3.setAttribute("y2", 600);
+
+        l4.setAttribute("x1", "0");
+        l4.setAttribute("y1", bbox.y);
+        l4.setAttribute("x2", "600");
+        l4.setAttribute("y2", bbox.y);
 
 
         let trans1 = `translate(${-bbox.x * 2}, ${-bbox.y * 2}) rotate(10) translate(${bbox.x}, ${bbox.y})`;
@@ -201,20 +216,22 @@
         //console.log(.0000003 > 1e-6)
         //----------------------------------------
 
-        el.style.transform = "translateY(2rem) rotate(45deg) scale(1.2, .8) translateX(50px)";
+        function testTransform() {
+            el.style.transform = "translateY(2rem) rotate(45deg) scale(1.2, .8) translateX(50px)";
 
-        let mtx = strToMatrix(window.getComputedStyle(el).transform);
-        let dec = decomposeMatrix(mtx);
+            let mtx = strToMatrix(window.getComputedStyle(el).transform);
+            let dec = decomposeMatrix(mtx);
 
-        setTimeout(()=> {
-            let str = `translateX(${dec.translateX}px)
+            setTimeout(() => {
+                let str = `translateX(${dec.translateX}px)
             translateY(${dec.translateY}px)
             rotate(${dec.rotate}deg)
             scaleX(${dec.scaleX})
             scaleY(${dec.scaleY})`;
-            //el.style.transform = str;
-            console.log(str);
-        }, 500)
+                //el.style.transform = str;
+                console.log(str);
+            }, 500)
+        }
 
 
 
