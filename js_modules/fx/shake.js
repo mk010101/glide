@@ -32,3 +32,40 @@ export function flap(target, options = null) {
             .on("end", () => glide.to(target, t / 2, { [prop]: 0 }));
     });
 }
+export class Flip {
+    constructor(el, side1, side2, options = null) {
+        this.prop = "rotateY";
+        this.time = 500;
+        this.continuous = false;
+        this.deg = "+=90";
+        this.incr = "+=";
+        this.el = el;
+        this.side1 = side1;
+        this.side2 = side2;
+        this.side2.style.display = "none";
+        if (this.prop === "rotateX") {
+            this.side2.style.transform = "scale(1, -1)";
+        }
+        else {
+            this.side2.style.transform = "scale(-1, 1)";
+        }
+        this.continuous = (options === null || options === void 0 ? void 0 : options.continuous) != void 0 ? options.continuous : false;
+        this.time = (options === null || options === void 0 ? void 0 : options.time) != void 0 ? options.time : this.time;
+    }
+    flip() {
+        glide.to(this.el, this.time, { [this.prop]: this.deg }, { ease: "quadIn" })
+            .on("end", () => {
+            this.side1.style.display = "none";
+            this.side2.style.display = "block";
+            glide.to(this.el, this.time, { [this.prop]: this.deg }, { ease: "quadOut" })
+                .on("end", () => {
+                let tmp = this.side2;
+                this.side2 = this.side1;
+                this.side1 = tmp;
+                if (!this.continuous) {
+                    this.deg = this.deg === "+=90" ? "-=90" : "+=90";
+                }
+            });
+        });
+    }
+}

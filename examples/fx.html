@@ -15,7 +15,7 @@
             overflow: hidden;
             box-sizing: border-box;
             font-family: Arial, sans-serif;
-            perspective: 500px;
+            perspective: 700px;
         }
 
 
@@ -28,9 +28,29 @@
             left: 100px;
             background-color: #5c98cd;
             border: 1px solid #607385;
-            display: flex;
+            display: none;
             align-items: center;
             justify-content: center;
+            /*display: none;*/
+        }
+
+        .el-flip {
+            position: relative;
+            left: 100px;
+            width: 250px;
+            height: 150px;
+            border: 1px solid #333333;
+            background-color: #e7edf2;
+        }
+        .face {
+            width: 250px;
+            height: 150px;
+            position: absolute;
+            padding: 10px;
+            /*top:0;*/
+        }
+        .f2 {
+            /*display: none;*/
         }
 
 
@@ -40,15 +60,27 @@
 <body>
 <div class="el">El</div>
 
+<div class="el-flip">
+    <div class="face f1">Side 1</div>
+    <div class="face f2">Side 2</div>
+</div>
+
 <script type="module">
 
     import glide from "./libs/glide.esm.js";
 
     const el = document.querySelector(".el");
+    const flipEl = document.querySelector(".el-flip");
+    const side1 = document.querySelector(".f1");
+    const side2 = document.querySelector(".f2");
 
 
     // glide.fx.shake(el);
-    glide.fx.flap(el);
+    // glide.fx.flap(el, {speed:60, axis:"z"});
+
+    const flip = new glide.fx.Flip(flipEl, side1, side2);
+    flip.flip();
+    flipEl.addEventListener("click", ()=> flip.flip());
 
 
 </script>
