@@ -9,7 +9,7 @@ class Glide {
     static lastTick = 0;
     static ease = ease;
     static context: Context;
-    //static _computeStyle = true;
+    static fx:any;
 
 
     static to(targets: any, duration: number, params: any, options: any = {}) {
@@ -52,3 +52,15 @@ Glide.tick(performance.now());
 
 const glide = Glide;
 export default glide;
+
+import * as fx from "./fx/shake";
+fx.int(glide);
+glide.fx = fx;
+
+// export * from "./fx/shake";
+
+
+
+
+
+

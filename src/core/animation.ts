@@ -6,7 +6,6 @@ import {
     getVo,
     minMax,
     normalizeTween,
-    print,
     stringToPropsVals,
     strToMap,
     unwrapValues
@@ -16,9 +15,8 @@ import {Tween} from "./tween";
 import {Evt} from "./events";
 import {TweenType, Value} from "../types";
 import {SvgVo, TweenGroup, Vo} from "./vo";
-import {is, regProp, regStrValues, regVUs} from "../util/regex";
+import {is} from "../util/regex";
 import * as $Ease from "../util/ease";
-import {getNormalizedTransforms} from "../util/matrix";
 
 const Ease: { [key: string]: any } = $Ease;
 

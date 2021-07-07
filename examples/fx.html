@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>fx</title>
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html, body {
+            margin: 0;
+            padding: 20px;
+            overflow: hidden;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+            perspective: 500px;
+        }
+
+
+        .el {
+            position: relative;
+            float: left;
+            width: 80px;
+            height: 50px;
+            padding: 2px;
+            left: 100px;
+            background-color: #5c98cd;
+            border: 1px solid #607385;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+
+    </style>
+
+</head>
+<body>
+<div class="el">El</div>
+
+<script type="module">
+
+    import glide from "./libs/glide.esm.js";
+
+    const el = document.querySelector(".el");
+
+
+    // glide.fx.shake(el);
+    glide.fx.flap(el);
+
+
+</script>
+
+</body>
+</html>

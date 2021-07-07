@@ -54,7 +54,7 @@ const outputEsm = {
     file: "./examples/libs/glide.esm.js",
     name: "glide", // exposed name of the lib.
     exports: "named",
-    globals: "window"
+    globals: "window",
 };
 
 const outputUmd = {
