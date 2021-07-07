@@ -50,7 +50,7 @@
             /*top:0;*/
         }
         .f2 {
-            /*display: none;*/
+            display: none;
         }
 
 
@@ -78,7 +78,7 @@
     // glide.fx.shake(el);
     // glide.fx.flap(el, {speed:60, axis:"z"});
 
-    const flip = new glide.fx.Flip(flipEl, side1, side2);
+    const flip = new glide.fx.Flip(flipEl, side1, side2, {continuous:true});
     flip.flip();
     flipEl.addEventListener("click", ()=> flip.flip());
 

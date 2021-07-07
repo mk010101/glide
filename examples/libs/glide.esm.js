@@ -1590,6 +1590,7 @@ class Flip {
         this.continuous = false;
         this.deg = "+=90";
         this.incr = "+=";
+        this.originalStyle = "block";
         this.el = el;
         this.side1 = side1;
         this.side2 = side2;
@@ -1602,12 +1603,13 @@ class Flip {
         }
         this.continuous = (options === null || options === void 0 ? void 0 : options.continuous) != void 0 ? options.continuous : false;
         this.time = (options === null || options === void 0 ? void 0 : options.time) != void 0 ? options.time : this.time;
+        this.originalStyle = window.getComputedStyle(this.side1).display;
     }
     flip() {
         glide$1.to(this.el, this.time, { [this.prop]: this.deg }, { ease: "quadIn" })
             .on("end", () => {
             this.side1.style.display = "none";
-            this.side2.style.display = "block";
+            this.side2.style.display = this.originalStyle;
             glide$1.to(this.el, this.time, { [this.prop]: this.deg }, { ease: "quadOut" })
                 .on("end", () => {
                 let tmp = this.side2;

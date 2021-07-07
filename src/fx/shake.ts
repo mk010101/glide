@@ -64,19 +64,23 @@ export class Flip {
     continuous = false;
     deg = "+=90";
     incr = "+=";
+    originalStyle = "block";
 
     constructor(el: HTMLElement, side1: HTMLElement, side2: HTMLElement, options:any = null) {
         this.el = el;
         this.side1 = side1;
         this.side2 = side2;
         this.side2.style.display = "none";
+
         if (this.prop === "rotateX") {
             this.side2.style.transform = "scale(1, -1)";
         } else {
             this.side2.style.transform = "scale(-1, 1)";
         }
+
         this.continuous = options?.continuous != void 0? options.continuous : false;
         this.time = options?.time != void 0? options.time : this.time;
+        this.originalStyle = window.getComputedStyle(this.side1).display;
 
     }
 
@@ -84,7 +88,7 @@ export class Flip {
         glide.to(this.el, this.time, {[this.prop]: this.deg}, {ease: "quadIn"})
             .on("end", () => {
                 this.side1.style.display = "none";
-                this.side2.style.display = "block";
+                this.side2.style.display = this.originalStyle;
                 glide.to(this.el, this.time, {[this.prop]: this.deg}, {ease: "quadOut"})
                     .on("end", () => {
                         let tmp = this.side2;
