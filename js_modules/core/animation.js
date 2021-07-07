@@ -26,11 +26,7 @@ export class Animation extends Dispatcher {
         this._seeking = false;
         this._preSeekState = 1;
         this._dir = 1;
-        if (duration !== void 0) {
-            this.repeat = (options.repeat != (void 0) && options.repeat > 0) ? options.repeat + 1 : 1;
-            this.loop = options.loop != (void 0) ? options.loop : true;
-            this.paused = options.paused != (void 0) ? options.paused : false;
-            this.keep = options.keep != (void 0) ? options.keep : false;
+        if (duration != void 0) {
         }
         else {
             this.status = 0;
@@ -45,6 +41,10 @@ export class Animation extends Dispatcher {
     }
     to(duration, params, options = {}) {
         let kf = new Keyframe();
+        this.repeat = (options.repeat != (void 0) && options.repeat > 0) ? options.repeat + 1 : this.repeat;
+        this.loop = options.loop != (void 0) ? options.loop : this.loop;
+        this.paused = options.paused != (void 0) ? options.paused : this.paused;
+        this.keep = options.keep != (void 0) ? options.keep : this.keep;
         for (let i = 0; i < this.targets.length; i++) {
             const tg = Animation._getTweens(this.targets[i], duration, params, options);
             kf.push(tg);
@@ -70,7 +70,7 @@ export class Animation extends Dispatcher {
         return this;
     }
     update(t) {
-        if ((this.paused && !this._seeking) || this.status < 1)
+        if ((this.paused || this.status < 1) && !this._seeking)
             return;
         if (!this._currentKf.initialized) {
             Animation._initTweens(this._currentKf);
@@ -138,6 +138,7 @@ export class Animation extends Dispatcher {
     }
     reset() {
         this.stop();
+        this.status = 1;
         for (let i = this.keyframes.length - 1; i >= 0; i--) {
             const tgs = this.keyframes[i].tgs;
             if (this.keyframes[i].initialized) {
@@ -152,8 +153,6 @@ export class Animation extends Dispatcher {
         this._pos = 0;
         this._currentKf = this.keyframes[0];
         this.currentTime = 0;
-        this.runningTime = 0;
-        this.playedTimes = 0;
         this._dir = 1;
         this.time = 0;
     }
@@ -167,6 +166,8 @@ export class Animation extends Dispatcher {
         ms = minMax(ms, 0, this.totalDuration);
         this._seeking = true;
         this._preSeekState = this.status;
+        this.runningTime = 0;
+        this.playedTimes = 0;
         this.status = 0;
         this.reset();
         while (ms >= 0) {
@@ -175,6 +176,12 @@ export class Animation extends Dispatcher {
         }
         this.status = this._preSeekState;
         this._seeking = false;
+    }
+    _setOptions(options) {
+        this.repeat = (options.repeat != (void 0) && options.repeat > 0) ? options.repeat + 1 : this.repeat;
+        this.loop = options.loop != (void 0) ? options.loop : this.loop;
+        this.paused = options.paused != (void 0) ? options.paused : this.paused;
+        this.keep = options.keep != (void 0) ? options.keep : this.keep;
     }
     static _getRenderStr(tw, t) {
         let str = "";
@@ -442,10 +449,10 @@ export class Animation extends Dispatcher {
                 if (multi) {
                     if (twType === "transform" && !transChecked) {
                         if (tw.isIndividualTrans) {
-                            transOldTweens = strToMap(tg.target.getExistingValue("transform"), "transform");
+                            transOldTweens = strToMap(tg.target.getExistingValue("transform"), "transform", tg.target.type);
                         }
                         else {
-                            transOldTweens = strToMap(tg.target.getExistingValue("transform"), "transform");
+                            transOldTweens = strToMap(tg.target.getExistingValue("transform"), "transform", tg.target.type);
                         }
                         transTweens = new Map();
                         transChecked = true;
@@ -453,7 +460,7 @@ export class Animation extends Dispatcher {
                         newTweens = transTweens;
                     }
                     else if (twType === "filter" && !filterChecked) {
-                        filterOldTweens = strToMap(tg.target.getExistingValue("filter"), "filter");
+                        filterOldTweens = strToMap(tg.target.getExistingValue("filter"), "filter", tg.target.type);
                         filterTweens = new Map();
                         filterChecked = true;
                         oldTweens = filterOldTweens;

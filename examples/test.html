@@ -104,13 +104,13 @@
 
 
         // el.style.transform = strTransform;
-        el.style.transform = "scale(.8, .7) translateX(50px) rotate(20deg)";
+        // el.style.transform = "scale(1.2, 1.2) translateX(50px) rotate(20deg)";
         // el.style.transform = "translate(30%, 50px)";
         // el.style.transform = "scale(2) translate(50px, 50px)";
         // el.style.transform = "translate(50px, 50px) scale(2)    ";
         // el.style.filter = strFilter;
         // el.style.filter = "drop-shadow(#333333 -2px -2px 4px)";
-        el.style.filter = "drop-shadow(rgba(51, 0, 51, .3) -6px -6px 1px) ";
+        // el.style.filter = "drop-shadow(rgba(51, 0, 51, .3) -6px -6px 1px) ";
         // el.style.filter = "drop-shadow(-2px -2px 4px #333333)";
         // el.style.filter = "drop-shadow(-2px -2px 4px rgba(10,10,10,.8))";
         // el.style.margin = strMargins;
@@ -136,7 +136,7 @@
 
         function run() {
             let t0 = performance.now();
-            let a = glide.to(els, 500,
+            let a = glide.to(els, 1000,
                 {
                     // opacity: .5,
                     // left: "150px",
@@ -163,7 +163,7 @@
                     // translateX: "14rem",
                     // x: 270,
                     // x: "+=270px",
-                    // x: {value: "12rem", ease: "bounceOut", duration: 1200},
+                    x: {value: "12rem", ease: "bounceOut", duration: 2000},
                     // y: 50,
                     // y: "+=20",
                     // translateY: 50,
@@ -172,7 +172,7 @@
                     // y: {value:100, ease:"cubicOut"},
                     // x: 120,
                     // transform: "rotate(+=33) translate(50, 70)",
-                    // rotate: {value: "2rad", duration: 1000},
+                    // rotate: {value: "2rad", duration: 1500},
                     rotate: -45,
                     // scaleX: -1,
                     // scale: "1.75, 1.75",
@@ -185,7 +185,7 @@
                     // background: "linear-gradient(#ff0000, #0000ff)",
                     // background: ["linear-gradient(#ff0000, #0000ff)", "linear-gradient(#cc00ff, #336699)"],
                     // bg: "hsla(15deg, 100% 50%, .5)",
-                    // bg: "rgba(139,210,136,0.7)",
+                    bg: "rgba(139, 210, 136, 0.5)",
                     // borderColor: "rgba(153,215,255,0.8)",
                     // borderWidth: "4 9 12",
                     // borderWidth: "+=4px",
@@ -193,9 +193,9 @@
                 }, {
                     delay: 500,
                     // repeat: 1,
+                    // loop: false,
                     // ease: "stepped(5)",
                     stagger: 50,
-                    // loop: false,
                     // paused: true,
                     // keep: true
                 })
@@ -208,8 +208,8 @@
                     updRange(a.runningTime)
                 })
                 .on('end', () => {
-                    // console.log(a);
-                    console.log(a.keyframes[0].tgs[0].tweens);
+                    console.log(a);
+                    // console.log(a.keyframes[0].tgs[0].tweens);
                     console.log("end", (performance.now() - t0));
                     // console.log(window.getComputedStyle(el).transform);
                 });
@@ -219,7 +219,7 @@
                 // a.reset();
                 // a.seek(0)
                 // a.remove(document.querySelector(".el"))
-            }, 1200);
+            }, 600);
 
             const r = document.createElement("input");
             r.type = "range";
@@ -247,17 +247,17 @@
 
         function testObj() {
             let obj = {
-                x:10,
+                x: 10,
                 y: "50% 10"
             };
-            glide.to(obj, 500, {x:"+=45", y:"30 70 55"}, {delay:500})
-                .on("progress", ()=> console.log(obj))
+            glide.to(obj, 500, {x: "+=45", y: "30 70 55"}, {delay: 500})
+                .on("progress", () => console.log(obj))
         }
+
         // testObj();
 
 
-
-        setTimeout(()=> {
+        setTimeout(() => {
             //el.style.transform = "matrix(1, 0, 0, 1, 100, 0)"
         }, 500);
 

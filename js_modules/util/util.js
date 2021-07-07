@@ -341,8 +341,8 @@ export function normalizeTween(tw, target) {
             tw.from.numbers = tw.to.numbers.concat();
             tw.from.numbers[1] = 0;
         }
-        else {
-            tw.from.numbers.push(a1, null, a2, null);
+        else if (tw.from.numbers.length === 3) {
+            tw.from.numbers.push(0, null, 0, null);
         }
         tw.to.strings.splice(2, 0, ", ", null, ", ", null);
         tw.to.units.push("", "", "", "");
@@ -404,7 +404,7 @@ export function normalizeTween(tw, target) {
         }
     }
 }
-export function strToMap(str, twType) {
+export function strToMap(str, twType, targetType) {
     let res = new Map();
     if (!str || str === "" || str === "none")
         return null;
@@ -416,7 +416,7 @@ export function strToMap(str, twType) {
         let prop = part.match(regProp)[0];
         part = part.replace(prop, "");
         part = part.replace(/^\(|\)$/g, "");
-        if (is.propDual(prop)) {
+        if (is.propDual(prop) && targetType !== "svg") {
             let unwrapped = unwrapValues(prop, part);
             for (let j = 0; j < unwrapped.length; j++) {
                 const p = unwrapped[j];
