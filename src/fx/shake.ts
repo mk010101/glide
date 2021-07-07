@@ -60,7 +60,7 @@ export class Flip {
     side1: HTMLElement;
     side2: HTMLElement;
     prop = "rotateY";
-    time = 500;
+    time = 400;
     continuous = false;
     deg = "+=90";
     incr = "+=";

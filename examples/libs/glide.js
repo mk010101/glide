@@ -1220,12 +1220,6 @@
             this.status = this._preSeekState;
             this._seeking = false;
         }
-        _setOptions(options) {
-            this.repeat = (options.repeat != (void 0) && options.repeat > 0) ? options.repeat + 1 : this.repeat;
-            this.loop = options.loop != (void 0) ? options.loop : this.loop;
-            this.paused = options.paused != (void 0) ? options.paused : this.paused;
-            this.keep = options.keep != (void 0) ? options.keep : this.keep;
-        }
         static _getRenderStr(tw, t) {
             let str = "";
             let from = tw.from;
@@ -1592,7 +1586,7 @@
     class Flip {
         constructor(el, side1, side2, options = null) {
             this.prop = "rotateY";
-            this.time = 500;
+            this.time = 400;
             this.continuous = false;
             this.deg = "+=90";
             this.incr = "+=";

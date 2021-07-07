@@ -35,7 +35,7 @@ export function flap(target, options = null) {
 export class Flip {
     constructor(el, side1, side2, options = null) {
         this.prop = "rotateY";
-        this.time = 500;
+        this.time = 400;
         this.continuous = false;
         this.deg = "+=90";
         this.incr = "+=";
