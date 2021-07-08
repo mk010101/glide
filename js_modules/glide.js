@@ -34,3 +34,6 @@ Glide.ease = ease;
 Glide.tick(performance.now());
 const glide = Glide;
 export default glide;
+import * as fx from "./fx/shake";
+fx.int(glide);
+glide.fx = fx;

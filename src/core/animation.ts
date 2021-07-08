@@ -6,7 +6,6 @@ import {
     getVo,
     minMax,
     normalizeTween,
-    print,
     stringToPropsVals,
     strToMap,
     unwrapValues
@@ -16,9 +15,8 @@ import {Tween} from "./tween";
 import {Evt} from "./events";
 import {TweenType, Value} from "../types";
 import {SvgVo, TweenGroup, Vo} from "./vo";
-import {is, regProp, regStrValues, regVUs} from "../util/regex";
+import {is} from "../util/regex";
 import * as $Ease from "../util/ease";
-import {getNormalizedTransforms} from "../util/matrix";
 
 const Ease: { [key: string]: any } = $Ease;
 
@@ -141,6 +139,7 @@ export class Animation extends Dispatcher {
                 this._pos--;
                 this._currentKf = this.keyframes[this._pos];
                 this.time = this._currentKf.totalDuration;
+                this.dispatch(Evt.loopend, null);
             } else {
                 this.playedTimes++;
                 if (this.playedTimes < this.repeat) {
@@ -242,13 +241,6 @@ export class Animation extends Dispatcher {
 
         this.status = this._preSeekState;
         this._seeking = false;
-    }
-
-    _setOptions(options:any) {
-        this.repeat = (options.repeat != (void 0) && options.repeat > 0) ? options.repeat + 1 : this.repeat;
-        this.loop = options.loop != (void 0) ? options.loop : this.loop;
-        this.paused = options.paused != (void 0) ? options.paused : this.paused;
-        this.keep = options.keep != (void 0) ? options.keep : this.keep;
     }
 
     /* =================================================================================================================
