@@ -2,19 +2,25 @@
     VARS
 ======================================================================================================================*/
 :root {
-    --width-left: 13rem;
-    --width-right: calc(100vw - 14rem);
+    --border-color: #686868;
     --border: 1px solid #b8c6cc;
-    --txt-color: #4b4b4b;
+    --txt-color: #ececec;
     --highlight-color: #087cc4;
 }
 
 
 @font-face {
-    font-family: Body;
+    font-family: Mfont;
     src: url(fonts/OpenSans-Regular.ttf);
-    /*font-weight: normal;*/
+    font-weight: normal;
 }
+
+@font-face {
+    font-family: Mfont;
+    src: url(fonts/OpenSans-Bold.ttf);
+    font-weight: bold;
+}
+
 /* =====================================================================================================================
     RESET
 ======================================================================================================================*/
@@ -60,42 +66,67 @@ html, body, main {
     width: 100vw;
     height: 100vh;
     overflow: hidden;
+    font-family: Mfont, Arial, sans-serif;
+    font-size: 16px;
+    color: var(--txt-color);
 }
 
 main {
     display: grid;
     grid-template-columns: 12rem 3fr 2fr;
     grid-template-rows: 2rem 60vh calc(40vh - 2rem);
+    background-color: #444444;
 }
 
 main > * {
-    border: #cccccc 1px solid;
+    zborder: #cccccc 1px solid;
 }
 
 header {
     grid-column-start: 1;
     grid-column-end: -1;
+    border-bottom: var(--border);
+}
+
+nav, .side {
+    padding: 10px;
 }
 
 nav {
     grid-row-start: 2;
     grid-row-end: -1;
-    background-color: #cccccc;
+    border-right: var(--border);
 }
 
 .stage {
+    background-size: 25px 25px;
+    background-image: linear-gradient(to right, var(--border-color) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--border-color) 1px, transparent 1px);
+    border-right: var(--border);
+    padding: 25px;
+}
+
+.side {
 
 }
 
 .code {
     grid-column-start: 2;
     grid-column-end: -1;
+    border-top: var(--border);
 }
 
 
+/* =====================================================================================================================
+    ANIMATIONS
+======================================================================================================================*/
 
-
-
+.el {
+    width: 20px;
+    height: 20px;
+    background-color: #C3E88D;
+    border: var(--border);
+}
 
 
 
