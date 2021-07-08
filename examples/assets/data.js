@@ -61,6 +61,7 @@ glide.to(els[3], 1000, {x:['10rem', 0]}); // from - to.
                     numItems: 4,
                     text: "{{i}}",
                     css: `left:100px;`,
+                    cssProp: "left",
                     code: `const els = document.querySelectorAll(".el");
 glide.to(els[0], 1000, {left:'+=100'});
 glide.to(els[1], 1000, {left:'-=4rem'});
@@ -121,7 +122,7 @@ glide.to(els[3], 1000, {width: '150px'});
 glide.to(els[0], 1000, {width:200});
 glide.to(els[1], 1000, {marginLeft:'8rem', width:50});
 glide.to(els[2], 1000, {color:'#ff0000'});
-glide.to(els[3], 1000, {height:50, width:50, fontSize:24});
+glide.to(els[3], 1000, {height:50, width:50, fontSize:36});
 `,
                 },
                 {
@@ -168,11 +169,56 @@ glide.to(els[3], 1000, {x:200, skewX:-25, rotate:0});
                 },
             ]
         },
+
+
+        {
+            title: "SVG",
+            content: [
+                {
+                    title: "SVG",
+                    doc: `Glide can animate all SVG elements' properties.`,
+                    numItems: 0,
+                    innerHTML: `<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" 
+xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+     viewBox="0 0 600 600" style="enable-background:new 0 0 600 600;" xml:space="preserve">
+    <text x="10" y="50">SVG</text>
+    <rect id="rect-1" x="10" y="80" width="100" height="50" fill="rgba(255, 138, 55, 0.7)"/>
+    <rect id="rect-2" x="10" y="160" width="100" height="50" fill="rgba(255, 255, 0, 0.7)"/>
+    <ellipse id="ellipse" cx="60" cy="280" rx="100" ry="40" fill="rgba(0, 138, 55, 0.7)"/>
+</svg>`,
+                    css: ``,
+                    code: `glide.to("#rect-1", 1000, {x:200});
+glide.to("#rect-2", 1000, {rx:20, translate:190});
+glide.to("#ellipse", 1000, {rx:60, ry:70, translate:"190, 20", fill:'rgba(255, 0, 0, 0.7)'});
+`,
+                },
+                {
+                    title: "Path",
+                    doc: `For elements, you can specify offset value in the options: <code>{offset:'-50%'}</code>. 
+                    This useful to keep elements centred on the path.`,
+                    numItems: 1,
+                    innerHTML: `<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px"
+     y="0px"
+     viewBox="0 0 600 600" style="enable-background:new 0 0 600 600;" xml:space="preserve">
+     <text x="10" y="50">SVG</text>
+     <path id="path-1" d="M59.1,458.8C59.1,352.3,164.3,266,294.1,266 
+C397.9,266,482,335,482,420.2c0,68.1-67.3,123.4-150.4,123.4c-66.4,0-120.3-44.2-120.3-98.7c0-43.6,43.1-79,96.2-79 
+c42.5,0,77,28.3,77,63.2" fill="none" stroke="#3399FF" stroke-width="4"/>
+    <rect id="rect-1" x="20" y="100" width="40" height="40" fill="rgba(51, 153, 255, 0.73)"/>
+</svg>`,
+                    css: `background-color: rgba(255, 36, 252, 0.73); position:absolute;`,
+                    code: `const path = document.querySelector('#path-1');
+                    
+glide.to("#rect-1", 3000, {path: path}, {offset:'-50%'});
+glide.to(".el", 3000, {path: path}, {offset:'-50%', delay:500});
+`,
+                },
+            ]
+        }
     ]
 
 
 };
-
 
 
 export default data;

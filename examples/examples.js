@@ -77,23 +77,28 @@ function runAnimation() {
         str += `<div class="el" ${style}>${itemTxt}</div>`;
     }
 
+    if (item.innerHTML) str = str + item.innerHTML;
+
     stage.innerHTML = str;
     location.hash = "#" + currentId;
 
     if (item.cssProp) {
         const st = document.querySelector(".el").style[item.cssProp];
-        cssEl.innerHTML = "CSS: " + st;
+        cssEl.innerHTML = "CSS: " + item.cssProp + " " + st + ";";
     } else {
         cssEl.innerHTML = "";
     }
 
-    try {
-        eval(codeMirror.getValue());
+    setTimeout(()=> {
+        try {
+            eval(codeMirror.getValue());
 
-    } catch (err) {
-        console.log(err);
-        alert(err);
-    }
+        } catch (err) {
+            console.log(err);
+            alert(err);
+        }
+    }, 50);
+
 }
 
 
