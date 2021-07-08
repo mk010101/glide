@@ -1,0 +1,107 @@
+/* =====================================================================================================================
+    VARS
+======================================================================================================================*/
+:root {
+    --width-left: 13rem;
+    --width-right: calc(100vw - 14rem);
+    --border: 1px solid #b8c6cc;
+    --txt-color: #4b4b4b;
+    --highlight-color: #087cc4;
+}
+
+
+@font-face {
+    font-family: Body;
+    src: url(fonts/OpenSans-Regular.ttf);
+    /*font-weight: normal;*/
+}
+/* =====================================================================================================================
+    RESET
+======================================================================================================================*/
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+body,
+h1,
+h2,
+h3,
+h4,
+p,
+ul[class],
+ol[class],
+li,
+figure,
+figcaption,
+blockquote,
+dl,
+dd {
+    margin: 0;
+}
+
+
+
+input,
+button,
+textarea,
+select {
+    font: inherit;
+    outline: none;
+    border: var(--border);
+}
+
+/* =====================================================================================================================
+    LAYOUT
+======================================================================================================================*/
+
+html, body, main {
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+}
+
+main {
+    display: grid;
+    grid-template-columns: 12rem 3fr 2fr;
+    grid-template-rows: 2rem 60vh calc(40vh - 2rem);
+}
+
+main > * {
+    border: #cccccc 1px solid;
+}
+
+header {
+    grid-column-start: 1;
+    grid-column-end: -1;
+}
+
+nav {
+    grid-row-start: 2;
+    grid-row-end: -1;
+    background-color: #cccccc;
+}
+
+.stage {
+
+}
+
+.code {
+    grid-column-start: 2;
+    grid-column-end: -1;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
