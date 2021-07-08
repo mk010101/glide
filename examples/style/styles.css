@@ -2,8 +2,8 @@
     VARS
 ======================================================================================================================*/
 :root {
-    --border-color: #686868;
-    --border: 1px solid #b8c6cc;
+    --grid-color: #686868;
+    --border-color: #acacac;
     --txt-color: #ececec;
     --highlight-color: #087cc4;
 }
@@ -55,7 +55,7 @@ textarea,
 select {
     font: inherit;
     outline: none;
-    border: var(--border);
+    border: var(--border-color) 1px solid;;
 }
 
 /* =====================================================================================================================
@@ -78,14 +78,12 @@ main {
     background-color: #444444;
 }
 
-main > * {
-    zborder: #cccccc 1px solid;
-}
+
 
 header {
     grid-column-start: 1;
     grid-column-end: -1;
-    border-bottom: var(--border);
+    border-bottom: var(--border-color) 1px solid;
 }
 
 nav, .side {
@@ -95,14 +93,14 @@ nav, .side {
 nav {
     grid-row-start: 2;
     grid-row-end: -1;
-    border-right: var(--border);
+    border-right: var(--border-color) 1px solid;
 }
 
 .stage {
     background-size: 25px 25px;
-    background-image: linear-gradient(to right, var(--border-color) 1px, transparent 1px),
-    linear-gradient(to bottom, var(--border-color) 1px, transparent 1px);
-    border-right: var(--border);
+    background-image: linear-gradient(to right, var(--grid-color) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--grid-color) 1px, transparent 1px);
+    border-right: var(--border-color) 1px solid;
     padding: 25px;
 }
 
@@ -113,7 +111,7 @@ nav {
 .code {
     grid-column-start: 2;
     grid-column-end: -1;
-    border-top: var(--border);
+    border-top: var(--border-color) 1px solid;;
 }
 
 
@@ -122,10 +120,12 @@ nav {
 ======================================================================================================================*/
 
 .el {
-    width: 20px;
-    height: 20px;
+    width: 25px;
+    height: 25px;
     background-color: #C3E88D;
-    border: var(--border);
+    border: var(--grid-color) 1px solid;;
+    position: relative;
+    float: left;
 }
 
 

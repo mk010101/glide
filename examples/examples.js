@@ -1,6 +1,7 @@
 import data from "./assets/data.js";
+import glide from "./libs/glide.esm.js";
 
-let nav, stage, codeMirror, aside, dataMap = {};
+let nav, stage, codeMirror, aside, dataMap = {}, currentId = 0;
 
 function setEditor() {
     codeMirror = CodeMirror(document.querySelector(".code"), {
@@ -41,14 +42,42 @@ function parseData() {
 }
 
 function setListeners() {
-    nav.addEventListener("click", loadAnimation);
+
+    nav.addEventListener("click", (e)=> {
+        const id = e.target.getAttribute("data-id");
+        if (!id) return;
+        loadAnimation(id);
+        runAnimation();
+    });
+
+    stage.addEventListener("click", runAnimation);
+
 }
 
-function loadAnimation(e) {
-    const id = e.target.getAttribute("data-id");
-    if (!id) return;
+function loadAnimation(id) {
+
     let item = dataMap[id];
     codeMirror.setValue(item.code);
+    aside.innerHTML = item.doc;
+    currentId = id;
+}
+
+function runAnimation() {
+
+    let item = dataMap[currentId];
+    let str = "";
+    for (let i = 0; i < item.numItems; i++) {
+        str += `<div class="el"></div>`;
+    }
+    stage.innerHTML = str;
+
+    try {
+        eval(codeMirror.getValue());
+
+    } catch (err) {
+        console.log(err);
+        alert(err);
+    }
 }
 
 
