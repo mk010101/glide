@@ -2,11 +2,13 @@
     VARS
 ======================================================================================================================*/
 :root {
-    --grid-color: #686868;
+    --bg-color: #373737;
+    --grid-color: #4c4c4c;
     --border-color: #acacac;
     --txt-color: #ececec;
     --highlight-color: #a8d153;
     --highlight2-color: #C3E88D;
+    --test: #61b5a4;
 }
 
 
@@ -49,7 +51,6 @@ dd {
 }
 
 
-
 input,
 button,
 textarea,
@@ -74,11 +75,10 @@ html, body, main {
 
 main {
     display: grid;
-    grid-template-columns: 12rem 3fr 2fr;
+    grid-template-columns: 12rem 3fr 3fr;
     grid-template-rows: 2rem 60vh calc(40vh - 2rem);
-    background-color: #444444;
+    background-color: var(--bg-color);
 }
-
 
 
 header {
@@ -95,6 +95,22 @@ nav {
     grid-row-start: 2;
     grid-row-end: -1;
     border-right: var(--border-color) 1px solid;
+    overflow-y: auto;
+}
+
+.stage, .css {
+    grid-column-start: 2;
+    grid-column-end: 2;
+    grid-row-start: 2;
+    grid-row-end: 2;
+    padding: 25px;
+}
+
+.css {
+    align-self: end;
+    color: var(--border-color);
+    font-size: .9rem;
+    padding-bottom: 4px;
 }
 
 .stage {
@@ -102,7 +118,6 @@ nav {
     background-image: linear-gradient(to right, var(--grid-color) 1px, transparent 1px),
     linear-gradient(to bottom, var(--grid-color) 1px, transparent 1px);
     border-right: var(--border-color) 1px solid;
-    padding: 25px;
 }
 
 .side {
@@ -120,11 +135,27 @@ code {
 }
 
 /* =====================================================================================================================
-    Text
+    Elements
 ======================================================================================================================*/
 p {
     margin-bottom: 1rem;
 }
+
+h4 {
+    font-weight: normal;
+    /*color: #849cae;*/
+    color: #787878;
+    font-size: 1rem;
+}
+
+ul {
+    padding: 1rem;
+}
+
+li {
+    margin-bottom: .5rem;
+}
+
 
 /* =====================================================================================================================
     ANIMATIONS
@@ -133,9 +164,15 @@ p {
     width: 25px;
     height: 25px;
     background-color: var(--highlight-color);
-    border: var(--grid-color) 1px solid;;
+    border: var(--grid-color) 1px solid;
     position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--bg-color);
+    font-size: .8rem;
 }
+
 
 /* =====================================================================================================================
     NAV
@@ -143,8 +180,13 @@ p {
 .nav-item {
     cursor: pointer;
 }
+
 .nav-item:hover {
     color: var(--highlight2-color);
+}
+
+.nav-section {
+    margin-bottom: 1rem;
 }
 
 .selected {

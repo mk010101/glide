@@ -1,7 +1,7 @@
 import data from "./assets/data.js";
 import glide from "./libs/glide.esm.js";
 
-let nav, stage, codeMirror, aside, dataMap = {}, currentId = 0;
+let nav, stage, cssEl, codeMirror, aside, dataMap = {}, currentId = 0;
 
 function setEditor() {
     codeMirror = CodeMirror(document.querySelector(".code"), {
@@ -28,13 +28,14 @@ function parseData() {
     let n = 0;
     for (let i = 0; i < data.sections.length; i++) {
         const section = data.sections[i];
-        str += `<h3>${section.title}</h3>`;
+        str += `<div class="nav-section"><h4>${section.title}</h4>`;
         for (let j = 0; j < section.content.length; j++) {
             const item = section.content[j];
             str += `<div class="nav-item" data-id="${n}">${item.title}</div>`;
             dataMap[n] = item;
             n++;
         }
+        str += "</div>";
 
     }
 
@@ -71,10 +72,20 @@ function runAnimation() {
     let item = dataMap[currentId];
     let str = "";
     for (let i = 0; i < item.numItems; i++) {
+        let itemTxt = item.text? item.text === "{{i}}"? i : item.text : "";
         const style = item.css? `style='${item.css}'` : "";
-        str += `<div class="el" ${style}></div>`;
+        str += `<div class="el" ${style}>${itemTxt}</div>`;
     }
+
     stage.innerHTML = str;
+    location.hash = "#" + currentId;
+
+    if (item.cssProp) {
+        const st = document.querySelector(".el").style[item.cssProp];
+        cssEl.innerHTML = "CSS: " + st;
+    } else {
+        cssEl.innerHTML = "";
+    }
 
     try {
         eval(codeMirror.getValue());
@@ -91,12 +102,18 @@ window.onload = ()=> {
 
     nav = document.querySelector("nav");
     stage = document.querySelector(".stage");
+    cssEl = document.querySelector(".css");
     aside = document.querySelector("aside");
 
     setEditor();
     parseData();
     setListeners();
-    loadAnimation("0");
+    const hash = location.hash;
+    let id = "0";
+    if (hash) {
+        id = hash.replace("#", "");
+    }
+    loadAnimation(id);
     runAnimation();
 
 };
