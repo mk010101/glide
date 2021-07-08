@@ -139,6 +139,7 @@ export class Animation extends Dispatcher {
                 this._pos--;
                 this._currentKf = this.keyframes[this._pos];
                 this.time = this._currentKf.totalDuration;
+                this.dispatch(Evt.loopend, null);
             } else {
                 this.playedTimes++;
                 if (this.playedTimes < this.repeat) {

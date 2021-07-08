@@ -1046,9 +1046,11 @@
 
     const progress = "progress";
     const end = "end";
+    const loopend = "loopend";
     const Evt = {
         progress: progress,
         end: end,
+        loopend: loopend,
     };
 
     const Ease = ease;
@@ -1138,6 +1140,7 @@
                     this._pos--;
                     this._currentKf = this.keyframes[this._pos];
                     this.time = this._currentKf.totalDuration;
+                    this.dispatch(Evt.loopend, null);
                 }
                 else {
                     this.playedTimes++;
@@ -1589,21 +1592,24 @@
             this.time = 400;
             this.continuous = false;
             this.deg = "+=90";
-            this.incr = "+=";
             this.originalStyle = "block";
             this.el = el;
             this.side1 = side1;
             this.side2 = side2;
             this.side2.style.display = "none";
+            this.continuous = (options === null || options === void 0 ? void 0 : options.continuous) != void 0 ? options.continuous : false;
+            this.time = (options === null || options === void 0 ? void 0 : options.time) != void 0 ? options.time : this.time;
+            this.originalStyle = window.getComputedStyle(this.side1).display;
+            if ((options === null || options === void 0 ? void 0 : options.axis) === "x")
+                this.prop = "rotateX";
+            else if ((options === null || options === void 0 ? void 0 : options.axis) === "y")
+                this.prop = "rotateY";
             if (this.prop === "rotateX") {
                 this.side2.style.transform = "scale(1, -1)";
             }
             else {
                 this.side2.style.transform = "scale(-1, 1)";
             }
-            this.continuous = (options === null || options === void 0 ? void 0 : options.continuous) != void 0 ? options.continuous : false;
-            this.time = (options === null || options === void 0 ? void 0 : options.time) != void 0 ? options.time : this.time;
-            this.originalStyle = window.getComputedStyle(this.side1).display;
         }
         flip() {
             glide$1.to(this.el, this.time, { [this.prop]: this.deg }, { ease: "quadIn" })

@@ -63,24 +63,35 @@ export class Flip {
     time = 400;
     continuous = false;
     deg = "+=90";
-    incr = "+=";
     originalStyle = "block";
 
+    /**
+     * Constructor
+     * @param el
+     * @param side1
+     * @param side2
+     * @param options: continuous:bool, time:number, axis:string('x' or 'y')
+     */
     constructor(el: HTMLElement, side1: HTMLElement, side2: HTMLElement, options:any = null) {
         this.el = el;
         this.side1 = side1;
         this.side2 = side2;
         this.side2.style.display = "none";
 
+        this.continuous = options?.continuous != void 0? options.continuous : false;
+        this.time = options?.time != void 0? options.time : this.time;
+        this.originalStyle = window.getComputedStyle(this.side1).display;
+
+        if (options?.axis === "x")
+            this.prop = "rotateX";
+        else if (options?.axis === "y")
+            this.prop = "rotateY";
+
         if (this.prop === "rotateX") {
             this.side2.style.transform = "scale(1, -1)";
         } else {
             this.side2.style.transform = "scale(-1, 1)";
         }
-
-        this.continuous = options?.continuous != void 0? options.continuous : false;
-        this.time = options?.time != void 0? options.time : this.time;
-        this.originalStyle = window.getComputedStyle(this.side1).display;
 
     }
 
@@ -97,7 +108,6 @@ export class Flip {
                         if (!this.continuous) {
                             this.deg = this.deg === "+=90"? "-=90" : "+=90";
                         }
-
                     });
             });
     }
