@@ -25,14 +25,15 @@ function setEditor() {
 function parseData() {
 
     let str = "";
-
+    let n = 0;
     for (let i = 0; i < data.sections.length; i++) {
         const section = data.sections[i];
         str += `<h3>${section.title}</h3>`;
         for (let j = 0; j < section.content.length; j++) {
             const item = section.content[j];
-            str += `<div data-id="${i}">${item.title}</div>`;
-            dataMap[i] = item;
+            str += `<div class="nav-item" data-id="${n}">${item.title}</div>`;
+            dataMap[n] = item;
+            n++;
         }
 
     }
@@ -60,14 +61,18 @@ function loadAnimation(id) {
     codeMirror.setValue(item.code);
     aside.innerHTML = item.doc;
     currentId = id;
+    const newItem = document.querySelector(`.nav-item[data-id='${id}']`);
+    const oldItem = document.querySelector(".selected");
+    if (oldItem) oldItem.classList.remove("selected");
+    newItem.classList.add("selected");
 }
 
 function runAnimation() {
-
     let item = dataMap[currentId];
     let str = "";
     for (let i = 0; i < item.numItems; i++) {
-        str += `<div class="el"></div>`;
+        const style = item.css? `style='${item.css}'` : "";
+        str += `<div class="el" ${style}></div>`;
     }
     stage.innerHTML = str;
 
@@ -91,7 +96,8 @@ window.onload = ()=> {
     setEditor();
     parseData();
     setListeners();
-
+    loadAnimation("0");
+    runAnimation();
 
 };
 
