@@ -8,6 +8,7 @@
     --txt-color: #ececec;
     --highlight-color: #a8d153;
     --highlight2-color: #C3E88D;
+    --highlight3-color: #e8e770;
     --test: rgba(255, 36, 252, 0.73);
 }
 
@@ -182,6 +183,11 @@ svg {
 svg text {
     font-size: 2rem;
     fill: var(--border-color);
+}
+
+.highlight {
+    color: var(--highlight3-color);
+    font-weight: bold;
 }
 
 

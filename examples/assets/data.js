@@ -214,7 +214,74 @@ glide.to(".el", 3000, {path: path}, {offset:'-50%', delay:500});
 `,
                 },
             ]
-        }
+        },
+
+
+        {
+            title: "Options",
+            content: [
+                {
+                    title: "Delay",
+                    doc: `<p>The following options can be set:<br>
+                        <code>
+                            <br>&nbsp;<span class="highlight">delay: 500,</span>
+                            <br>&nbsp;stagger: 50,
+                            <br>&nbsp;repeat: 3,
+                            <br>&nbsp;loop: true,
+                            <br>&nbsp;keep: false,
+                            <br>&nbsp;paused: false,
+                        </code></p>`,
+                    numItems: 1,
+                    css: ``,
+                    code: `glide.to(".el", 1000, {left:200}, {delay:500});`,
+                },
+                {
+                    title: "Stagger",
+                    doc: `<p>The following options can be set:<br>
+                        <code>
+                            <br>&nbsp;delay: 500,
+                            <br>&nbsp;<span class="highlight">stagger: 50</span>,
+                            <br>&nbsp;repeat: 3,
+                            <br>&nbsp;loop: true,
+                            <br>&nbsp;keep: false,
+                            <br>&nbsp;paused: false,
+                        </code></p>`,
+                    numItems: 10,
+                    css: ``,
+                    code: `glide.to(".el", 1000, {x:200, rotate:180}, {stagger:50});`,
+                },
+                {
+                    title: "Repeat",
+                    doc: `<p>The following options can be set:<br>
+                        <code>
+                            <br>&nbsp;delay: 500,
+                            <br>&nbsp;stagger: 50,
+                            <br>&nbsp;<span class="highlight">repeat: 3,</span>
+                            <br>&nbsp;loop: true,
+                            <br>&nbsp;keep: false,
+                            <br>&nbsp;paused: false,
+                        </code></p>`,
+                    numItems: 1,
+                    css: ``,
+                    code: `glide.to(".el", 1000, {x:200, rotate:180}, {repeat:3});`,
+                },
+                {
+                    title: "Loop",
+                    doc: `<p>The following options can be set:<br>
+                        <code>
+                            <br>&nbsp;delay: 500,
+                            <br>&nbsp;stagger: 50,
+                            <br>&nbsp;<span class="highlight">repeat: 3,</span>
+                            <br>&nbsp;<span class="highlight">loop: false,</span>
+                            <br>&nbsp;keep: false,
+                            <br>&nbsp;paused: false,
+                        </code></p>`,
+                    numItems: 1,
+                    css: ``,
+                    code: `glide.to(".el", 1000, {x:200, rotate:180}, {repeat:3, loop:false});`,
+                },
+            ]
+        },
     ]
 
 

@@ -120,6 +120,7 @@ window.onload = ()=> {
     }
     loadAnimation(id);
     runAnimation();
+    nav.querySelector(`.nav-item[data-id='${id}']`).scrollIntoView();
 
 };
 
