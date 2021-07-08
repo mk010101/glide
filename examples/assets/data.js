@@ -66,7 +66,7 @@ glide.to(els[3], 1000, {x:['10rem', 0]}); // from - to.
 glide.to(els[0], 1000, {left:'+=100'});
 glide.to(els[1], 1000, {left:'-=4rem'});
 glide.to(els[2], 1000, {left:'*=2'});
-glide.to(els[3], 1000, {left:'/=10'});
+glide.to(els[3], 1000, {left:'/=4'});
 `,
                 },
                 {

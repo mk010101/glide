@@ -399,7 +399,7 @@ export function normalizeTween(tw, target) {
                 to.numbers[i] *= from.numbers[i];
             }
             else if (incr === "/") {
-                to.numbers[i] /= from.numbers[i];
+                to.numbers[i] = from.numbers[i] / to.numbers[i];
             }
         }
     }

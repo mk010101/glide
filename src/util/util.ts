@@ -537,7 +537,7 @@ export function normalizeTween(tw: Tween, target: Target) {
             } else if (incr === "*") {
                 to.numbers[i] *= from.numbers[i];
             } else if (incr === "/") {
-                to.numbers[i] /= from.numbers[i];
+                to.numbers[i] = from.numbers[i] / to.numbers[i];
             }
 
         }
