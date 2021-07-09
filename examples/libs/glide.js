@@ -40,7 +40,7 @@
                 return;
             }
             let el = document.createElement("div");
-            el.style.position = "absolute";
+            el.style.position = "relative";
             el.style.visibility = "invisible";
             el.style.width = "1px";
             el.style.height = "1px";
@@ -1045,10 +1045,12 @@
     }
 
     const progress = "progress";
+    const start = "start";
     const end = "end";
     const loopend = "loopend";
     const Evt = {
         progress: progress,
+        start: start,
         end: end,
         loopend: loopend,
     };
@@ -1072,7 +1074,11 @@
             this._seeking = false;
             this._preSeekState = 1;
             this._dir = 1;
-            if (duration != void 0) ;
+            this.repeat = (options.repeat != (void 0) && options.repeat > 0) ? options.repeat + 1 : this.repeat;
+            this.loop = options.loop != (void 0) ? options.loop : this.loop;
+            this.paused = options.paused != (void 0) ? options.paused : this.paused;
+            this.keep = options.keep != (void 0) ? options.keep : this.keep;
+            if (targets != void 0 && duration != void 0) ;
             else {
                 this.status = 0;
             }
@@ -1086,10 +1092,6 @@
         }
         to(duration, params, options = {}) {
             let kf = new Keyframe();
-            this.repeat = (options.repeat != (void 0) && options.repeat > 0) ? options.repeat + 1 : this.repeat;
-            this.loop = options.loop != (void 0) ? options.loop : this.loop;
-            this.paused = options.paused != (void 0) ? options.paused : this.paused;
-            this.keep = options.keep != (void 0) ? options.keep : this.keep;
             for (let i = 0; i < this.targets.length; i++) {
                 const tg = Animation._getTweens(this.targets[i], duration, params, options);
                 kf.push(tg);
@@ -1120,6 +1122,7 @@
             if (!this._currentKf.initialized) {
                 Animation._initTweens(this._currentKf);
                 this._currentKf.initialized = true;
+                this.dispatch(Evt.start, null);
             }
             this.time += t * this._dir;
             this.currentTime += t;
@@ -1140,9 +1143,9 @@
                     this._pos--;
                     this._currentKf = this.keyframes[this._pos];
                     this.time = this._currentKf.totalDuration;
-                    this.dispatch(Evt.loopend, null);
                 }
                 else {
+                    this.dispatch(Evt.loopend, null);
                     this.playedTimes++;
                     if (this.playedTimes < this.repeat) {
                         if (this.loop) {
@@ -1189,7 +1192,7 @@
                 const tgs = this.keyframes[i].tgs;
                 if (this.keyframes[i].initialized) {
                     for (let j = 0; j < tgs.length; j++) {
-                        Animation._render(tgs, 0, 1);
+                        Animation._render(tgs, 0, -1);
                     }
                 }
             }

@@ -44,7 +44,12 @@ export class Animation extends Dispatcher {
     constructor(targets: any, duration: number, params: any, options: any = {}) {
         super();
 
-        if (duration != void 0) {
+        this.repeat = (options.repeat != (void 0) && options.repeat > 0) ? options.repeat + 1 : this.repeat;
+        this.loop = options.loop != (void 0) ? options.loop : this.loop;
+        this.paused = options.paused != (void 0) ? options.paused : this.paused;
+        this.keep = options.keep != (void 0) ? options.keep : this.keep;
+
+        if (targets!= void 0 && duration != void 0) {
 
         } else {
             this.status = 0;
@@ -67,10 +72,6 @@ export class Animation extends Dispatcher {
 
         let kf = new Keyframe();
 
-        this.repeat = (options.repeat != (void 0) && options.repeat > 0) ? options.repeat + 1 : this.repeat;
-        this.loop = options.loop != (void 0) ? options.loop : this.loop;
-        this.paused = options.paused != (void 0) ? options.paused : this.paused;
-        this.keep = options.keep != (void 0) ? options.keep : this.keep;
 
         for (let i = 0; i < this.targets.length; i++) {
             const tg = Animation._getTweens(this.targets[i], duration, params, options);
@@ -110,6 +111,7 @@ export class Animation extends Dispatcher {
         if (!this._currentKf.initialized) {
             Animation._initTweens(this._currentKf);
             this._currentKf.initialized = true;
+            this.dispatch(Evt.start, null);
         }
         //*/
 
@@ -139,8 +141,9 @@ export class Animation extends Dispatcher {
                 this._pos--;
                 this._currentKf = this.keyframes[this._pos];
                 this.time = this._currentKf.totalDuration;
-                this.dispatch(Evt.loopend, null);
+
             } else {
+                this.dispatch(Evt.loopend, null);
                 this.playedTimes++;
                 if (this.playedTimes < this.repeat) {
                     if (this.loop) {
@@ -198,7 +201,7 @@ export class Animation extends Dispatcher {
             const tgs = this.keyframes[i].tgs;
             if (this.keyframes[i].initialized) {
                 for (let j = 0; j < tgs.length; j++) {
-                    Animation._render(tgs, 0, 1);
+                    Animation._render(tgs, 0, -1);
                 }
             }
         }
@@ -526,6 +529,7 @@ export class Animation extends Dispatcher {
         }
 
         if (options.stagger) {
+            // let del = options.stagger > 0? target.pos * options.stagger : ???
             let del = target.pos * options.stagger;
             tw.start = del;
             tw.totalDuration += del;

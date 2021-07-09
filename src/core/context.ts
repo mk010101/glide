@@ -51,7 +51,7 @@ export default class Context {
             return;
         }
         let el = document.createElement("div");
-        el.style.position = "absolute";
+        el.style.position = "relative";
         el.style.visibility = "invisible";
         el.style.width = "1px";
         el.style.height = "1px";

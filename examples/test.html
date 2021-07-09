@@ -125,6 +125,7 @@
 
         // console.log(window.getComputedStyle(el).background);
         // console.log(window.getComputedStyle(el).transform);
+        // console.log(window.getComputedStyle(el).position);
 
 
         function run() {
@@ -141,7 +142,7 @@
                     // marginLeft: "12rem",
                     // margin: "10% 12rem 10% 25",
                     // width: ["50%", 10],
-                    // width: "15%",
+                    // width: "50%",
                     // height: "10%",
                     // "drop-shadow": "#330033 6px 6px 3px",
                     // "drop-shadow": "6px 6px 3px #330033",
@@ -154,9 +155,9 @@
                     // saturate: 200,
                     // sepia: 90,
                     // translateX: "14rem",
-                    // x: 270,
+                    x: 270,
                     // x: "+=270px",
-                    x: {value: "12rem", ease: "bounceOut", duration: 2000},
+                    // x: {value: "12rem", ease: "bounceOut", duration: 2000},
                     // y: 50,
                     // y: "+=20",
                     // translateY: 50,
@@ -166,7 +167,7 @@
                     // x: 120,
                     // transform: "rotate(+=33) translate(50, 70)",
                     // rotate: {value: "2rad", duration: 1500},
-                    rotate: -45,
+                    // rotate: -45,
                     // scaleX: -1,
                     // scale: "1.75, 1.75",
                     // matrix: "1, 0, 0, 1, 30, 10",
@@ -178,21 +179,21 @@
                     // background: "linear-gradient(#ff0000, #0000ff)",
                     // background: ["linear-gradient(#ff0000, #0000ff)", "linear-gradient(#cc00ff, #336699)"],
                     // bg: "hsla(15deg, 100% 50%, .5)",
-                    bg: "rgba(139, 210, 136, 0.5)",
+                    // bg: "rgba(139, 210, 136, 0.5)",
                     // borderColor: "rgba(153,215,255,0.8)",
                     // borderWidth: "4 9 12",
                     // borderWidth: "+=4px",
                     // border: "5px solid #00ff55"
                 }, {
                     delay: 500,
-                    // repeat: 1,
-                    // loop: false,
+                    repeat: 1,
+                    loop: false,
                     // ease: "stepped(5)",
                     stagger: 50,
                     // paused: true,
                     // keep: true
                 })
-            // .to(500, {left:"10%"}, {stagger:30})
+            .to(500, {top:100})
             // .call((params) => {console.log("called!", params)}, 123, 334)
             // .to(500, {top: 150})
             // .to(500, {bg: "#cccccc"})

@@ -97,10 +97,11 @@ glide.to(els[1], 500, {borderWidth: '6px 1rem 25', borderColor:'#61b5a4'});`,
                     </ul>`,
                     numItems: 4,
                     text: "{{i}}",
-                    css: ``,
+                    css: `width:2rem;`,
+                    cssProp: "width",
                     code: `const els = document.querySelectorAll(".el");
                     
-glide.to(els[0], 1000, {width:200});
+glide.to(els[0], 1000, {width:12});
 glide.to(els[1], 1000, {width:'8rem'});
 glide.to(els[2], 1000, {width:'70%'});
 glide.to(els[3], 1000, {width: '150px'});
@@ -108,6 +109,44 @@ glide.to(els[3], 1000, {width: '150px'});
                 },
             ]
         },
+
+        {
+            title: "Chaining & Events",
+            content: [
+                {
+                    title: "Chain of Tweens",
+                    doc: `<p>It's easy to build complex animations by simply chaining the <code>.to(...)</code> method.`,
+                    numItems: 1,
+                    css: ``,
+                    code: `glide.to(".el", 500, {x:200, rotate:180})
+\t.to(500, {y:-100, bg:'#ff3399'})
+\t.to(500, {x:0, width:100})
+\t.to(500, {width:25, rotate:0, y:0, bg:'#a8d153'});`,
+                },
+                {
+                    title: "Events",
+                    doc: `<p>It's easy to build complex animations by simply chaining the <code>.to(...)</code> method.`,
+                    numItems: 0,
+                    css: ``,
+                    innerHTML: `<div class="el"></div>
+<div class="stage-data">
+    <div class="a-start">Start</div>
+    <div class="a-call">Function call</div>
+    <div class="a-loopend">Loop end</div>
+    <div class="a-end">End</div>
+</div>
+`,
+                    code: `glide.to(".el", 1000, {x:200, rotate:180}, {delay:500, repeat:1})
+\t.on("start", ()=> stage.querySelector('.a-start').classList.add('selected'))
+\t.call(()=> stage.querySelector('.a-call').classList.add('selected'))
+\t.to(1000, {top:100, bg:'#ff3399'})
+\t.on("loopend", ()=> stage.querySelector('.a-loopend').classList.add('selected'))
+\t.on("end", ()=> stage.querySelector('.a-end').classList.add('selected'));`,
+                },
+            ]
+        },
+
+
         {
             title: "CSS",
             content: [
@@ -187,9 +226,9 @@ xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
     <ellipse id="ellipse" cx="60" cy="280" rx="100" ry="40" fill="rgba(0, 138, 55, 0.7)"/>
 </svg>`,
                     css: ``,
-                    code: `glide.to("#rect-1", 1000, {x:200});
-glide.to("#rect-2", 1000, {rx:20, translate:190});
-glide.to("#ellipse", 1000, {rx:60, ry:70, translate:"190, 20", fill:'rgba(255, 0, 0, 0.7)'});
+                    code: `glide.to("#rect-1", 1500, {translate:"250", rotate:180});
+glide.to("#rect-2", 1500, {rx:20, translate:180, width:250});
+glide.to("#ellipse", 1500, {rx:60, ry:70, translate:"250, 20", fill:'rgba(255, 0, 0, 0.7)'});
 `,
                 },
                 {
@@ -209,8 +248,8 @@ c42.5,0,77,28.3,77,63.2" fill="none" stroke="#3399FF" stroke-width="4"/>
                     css: `background-color: rgba(255, 36, 252, 0.73); position:absolute;`,
                     code: `const path = document.querySelector('#path-1');
                     
-glide.to("#rect-1", 3000, {path: path}, {offset:'-50%'});
-glide.to(".el", 3000, {path: path}, {offset:'-50%', delay:500});
+glide.to("#rect-1", 3000, {path: path}, {offset:'-50%'}); //SVG element
+glide.to(".el", 3000, {path: path}, {offset:'-50%', delay:500}); //HTML element
 `,
                 },
             ]
@@ -228,6 +267,7 @@ glide.to(".el", 3000, {path: path}, {offset:'-50%', delay:500});
                             <br>&nbsp;stagger: 50,
                             <br>&nbsp;repeat: 3,
                             <br>&nbsp;loop: true,
+                            <br>&nbsp;ease: 'quadInOut',
                             <br>&nbsp;keep: false,
                             <br>&nbsp;paused: false,
                         </code></p>`,
@@ -243,6 +283,7 @@ glide.to(".el", 3000, {path: path}, {offset:'-50%', delay:500});
                             <br>&nbsp;<span class="highlight">stagger: 50</span>,
                             <br>&nbsp;repeat: 3,
                             <br>&nbsp;loop: true,
+                            <br>&nbsp;ease: 'quadInOut',
                             <br>&nbsp;keep: false,
                             <br>&nbsp;paused: false,
                         </code></p>`,
@@ -258,6 +299,7 @@ glide.to(".el", 3000, {path: path}, {offset:'-50%', delay:500});
                             <br>&nbsp;stagger: 50,
                             <br>&nbsp;<span class="highlight">repeat: 3,</span>
                             <br>&nbsp;loop: true,
+                            <br>&nbsp;ease: 'quadInOut',
                             <br>&nbsp;keep: false,
                             <br>&nbsp;paused: false,
                         </code></p>`,
@@ -273,12 +315,36 @@ glide.to(".el", 3000, {path: path}, {offset:'-50%', delay:500});
                             <br>&nbsp;stagger: 50,
                             <br>&nbsp;<span class="highlight">repeat: 3,</span>
                             <br>&nbsp;<span class="highlight">loop: false,</span>
+                            <br>&nbsp;ease: 'quadInOut',
                             <br>&nbsp;keep: false,
                             <br>&nbsp;paused: false,
                         </code></p>`,
                     numItems: 1,
                     css: ``,
                     code: `glide.to(".el", 1000, {x:200, rotate:180}, {repeat:3, loop:false});`,
+                },
+                {
+                    title: "Easing",
+                    doc: `<p>Glide supports all Penner's easing functions. Additionally, there's stepped and custom easing.</p>`,
+                    numItems: 8,
+                    text: "{{i}}",
+                    css: ``,
+                    code: `const els = document.querySelectorAll(".el");
+
+function myEase(t) {
+  return 1 - (Math.cos(Math.PI*t) + 1) / 2;
+}
+                    
+glide.to(els[0], 2000, {x:200, rotate:360}); //No easing specified, default is quadInOut.
+glide.to(els[1], 2000, {x:200, rotate:360}, {ease:'circleInOut'});
+glide.to(els[2], 2000, {x:200, rotate:360}, {ease:'expoInOut'});
+glide.to(els[3], 2000, {x:200, rotate:360}, {ease:'bounceOut'});
+glide.to(els[4], 2000, {x:200, rotate:360}, {ease:'elasticOut'});
+glide.to(els[5], 2000, {x:200, rotate:360}, {ease:'backOut'});
+glide.to(els[6], 2000, {x:200, rotate:360}, {ease:'stepped(8)'});
+glide.to(els[7], 2000, {x:200, rotate:360}, {ease: myEase});
+                    
+                    `,
                 },
             ]
         },

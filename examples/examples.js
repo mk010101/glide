@@ -84,7 +84,7 @@ function runAnimation() {
 
     if (item.cssProp) {
         const st = document.querySelector(".el").style[item.cssProp];
-        cssEl.innerHTML = "CSS: " + item.cssProp + " " + st + ";";
+        cssEl.innerHTML = "CSS &#8594;  " + item.cssProp + ": " + st + ";";
     } else {
         cssEl.innerHTML = "";
     }

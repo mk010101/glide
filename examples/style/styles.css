@@ -112,6 +112,7 @@ nav {
     color: var(--border-color);
     font-size: .9rem;
     padding-bottom: 4px;
+    pointer-events: none;
 }
 
 .stage {
@@ -188,6 +189,13 @@ svg text {
 .highlight {
     color: var(--highlight3-color);
     font-weight: bold;
+}
+
+
+.stage-data {
+    text-align: right;
+    color: var(--border-color);
+    line-height: 1.6;
 }
 
 
