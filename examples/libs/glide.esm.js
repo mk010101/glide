@@ -638,7 +638,7 @@ function getDefaultUnit(prop, targetType) {
     return "px";
 }
 function getDefaultValue(prop) {
-    if (prop === "saturate")
+    if (prop === "saturate" || prop === "contrast")
         return 100;
     else if (is.valueOne(prop))
         return 1;

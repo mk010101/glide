@@ -104,7 +104,7 @@ export function getDefaultUnit(prop: string, targetType: TargetType): string {
 
 
 export function getDefaultValue(prop: string): number {
-    if (prop === "saturate")
+    if (prop === "saturate" || prop === "contrast")
         return 100;
     else if (is.valueOne(prop))
         return 1;

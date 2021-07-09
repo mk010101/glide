@@ -136,7 +136,7 @@ glide.to(els[3], 1000, {width: '150px'});
     <div class="a-end">End</div>
 </div>
 `,
-                    code: `glide.to(".el", 1000, {x:200, rotate:180}, {delay:500, repeat:1})
+                    code: `glide.to(".el", 1000, {x:200, rotate:180}, {repeat:1})
 \t.on("start", ()=> stage.querySelector('.a-start').classList.add('selected'))
 \t.call(()=> stage.querySelector('.a-call').classList.add('selected'))
 \t.to(1000, {top:100, bg:'#ff3399'})
@@ -243,6 +243,28 @@ c42.5,0,77,28.3,77,63.2" fill="none" stroke="#3399FF" stroke-width="4"/>
                     
 glide.to("#rect-1", 3000, {path: path}, {offset:'-50%'}); //SVG element
 glide.to(".el", 3000, {path: path}, {offset:'-50%', delay:500}); //HTML element
+`,
+                },
+                {
+                    title: "Filters",
+                    doc: `All filters are supported. Glide will try to preserve the order of filters: 
+                    applying <code>drop-shadow()</code> and then <code>hue-rotate()</code> will produce a different 
+                    result if you swap their order.`,
+                    numItems: 9,
+                    text: "{{i}}",
+                    cssProp: "",
+                    css: `float:left; margin:25px;`,
+                    code: `const els = document.querySelectorAll(".el");
+                    
+glide.to(els[0], 1000, {dropShadow:'6px 6px 3px #00cccc'});
+glide.to(els[1], 1000, {hueRotate:70});
+glide.to(els[2], 1000, {blur:'3px'});
+glide.to(els[3], 1000, {sepia:90});
+glide.to(els[4], 1000, {grayscale:90});
+glide.to(els[5], 1000, {contrast:200});
+glide.to(els[6], 1000, {saturate:500});
+glide.to(els[7], 1000, {saturate:500, hueRotate:-70, dropShadow:'6px 6px 3px #00cccc'});
+glide.to(els[8], 1000, {dropShadow:'6px 6px 3px #00cccc', saturate:500, hueRotate:-70});
 `,
                 },
             ]
