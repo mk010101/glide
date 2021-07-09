@@ -1643,6 +1643,11 @@ class Glide {
         Glide.items.push(a);
         return a;
     }
+    static removeAll() {
+        for (let i = Glide.items.length - 1; i >= 0; i--) {
+            Glide.items[i].status = -1;
+        }
+    }
     static tick(t) {
         let delta = t - Glide.lastTick;
         for (let i = Glide.items.length - 1; i >= 0; i--) {

@@ -9,6 +9,11 @@
     --highlight-color: #a8d153;
     --highlight2-color: #C3E88D;
     --highlight3-color: #e8e770;
+
+    --scrollbar-bg: #2d2d2d;
+    --scrollbar-width: 10px;
+    --thumb-bg: #6d6d6d;
+
     --test: rgba(255, 36, 252, 0.73);
 }
 
@@ -68,7 +73,7 @@ select {
 html, body, main {
     width: 100vw;
     height: 100vh;
-    overflow: hidden;
+    /*overflow: hidden;*/
     font-family: Mfont, Arial, sans-serif;
     font-size: 16px;
     color: var(--txt-color);
@@ -121,6 +126,25 @@ nav {
     linear-gradient(to bottom, var(--grid-color) 1px, transparent 1px);
     border-right: var(--border-color) 1px solid;
 }
+
+
+*::-webkit-scrollbar {
+    width: var(--scrollbar-width);
+}
+* {
+    scrollbar-width: thin;
+    scrollbar-color: var(--thumb-bg) var(--scrollbar-bg);
+}
+*::-webkit-scrollbar-track {
+    background: var(--scrollbar-bg);
+}
+*::-webkit-scrollbar-thumb {
+    background-color: var(--thumb-bg) ;
+    border-radius: 6px;
+    border: 3px solid var(--scrollbar-bg);
+}
+
+
 
 .side {
 
@@ -205,6 +229,10 @@ svg text {
 ======================================================================================================================*/
 .nav-item {
     cursor: pointer;
+    border-left: 4px solid transparent;
+    padding-left: 4px;
+    line-height: .8;
+    margin: .6rem 0;
 }
 
 .nav-item:hover {
@@ -216,7 +244,8 @@ svg text {
 }
 
 .selected {
-    color: var(--highlight-color);
+    color: var(--highlight2-color);
+    border-color: var(--highlight2-color);
 }
 
 
