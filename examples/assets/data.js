@@ -148,10 +148,10 @@ glide.to(els[3], 1000, {width: '150px'});
 
 
         {
-            title: "CSS",
+            title: "Properties",
             content: [
                 {
-                    title: "General",
+                    title: "CSS",
                     doc: `You can tween any CSS property.`,
                     numItems: 4,
                     text: "{{i}}",
@@ -179,7 +179,7 @@ glide.to(els[3], 1000, {bg: 'hsla(180, 100, 50, .5)'});
                 },
                 {
                     title: "Backgrounds",
-                    doc: `<code>background</code> has complex structure, so always provide to-from values.`,
+                    doc: `<code>background</code> has a complex structure, so always provide to-from values.`,
                     numItems: 1,
                     text: "",
                     css: `width:150px; height:150px;`,
@@ -206,13 +206,6 @@ glide.to(els[2], 1000, {scale: '1.5, 2', rotate:'+=45deg'});
 glide.to(els[3], 1000, {x:200, skewX:-25, rotate:0});
 `,
                 },
-            ]
-        },
-
-
-        {
-            title: "SVG",
-            content: [
                 {
                     title: "SVG",
                     doc: `Glide can animate all SVG elements' properties.`,
@@ -222,8 +215,8 @@ xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
      viewBox="0 0 600 600" style="enable-background:new 0 0 600 600;" xml:space="preserve">
     <text x="10" y="50">SVG</text>
     <rect id="rect-1" x="10" y="80" width="100" height="50" fill="rgba(255, 138, 55, 0.7)"/>
-    <rect id="rect-2" x="10" y="160" width="100" height="50" fill="rgba(255, 255, 0, 0.7)"/>
-    <ellipse id="ellipse" cx="60" cy="280" rx="100" ry="40" fill="rgba(0, 138, 55, 0.7)"/>
+    <rect id="rect-2" x="10" y="180" width="100" height="50" fill="rgba(255, 255, 0, 0.7)"/>
+    <ellipse id="ellipse" cx="60" cy="320" rx="100" ry="40" fill="rgba(0, 138, 55, 0.7)"/>
 </svg>`,
                     css: ``,
                     code: `glide.to("#rect-1", 1500, {translate:"250", rotate:180});
@@ -236,8 +229,8 @@ glide.to("#ellipse", 1500, {rx:60, ry:70, translate:"250, 20", fill:'rgba(255, 0
                     doc: `For elements, you can specify offset value in the options: <code>{offset:'-50%'}</code>. 
                     This useful to keep elements centred on the path.`,
                     numItems: 1,
-                    innerHTML: `<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px"
-     y="0px"
+                    innerHTML: `<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" 
+x="0px" y="0px"
      viewBox="0 0 600 600" style="enable-background:new 0 0 600 600;" xml:space="preserve">
      <text x="10" y="50">SVG</text>
      <path id="path-1" d="M59.1,458.8C59.1,352.3,164.3,266,294.1,266 
@@ -254,6 +247,7 @@ glide.to(".el", 3000, {path: path}, {offset:'-50%', delay:500}); //HTML element
                 },
             ]
         },
+
 
 
         {
