@@ -45,7 +45,7 @@ export class Animation extends Dispatcher {
         return this;
     }
     to(duration, params, options = {}) {
-        let kf = new Keyframe();
+        let kf = new Keyframe(this.keyframes.length);
         for (let i = 0; i < this.targets.length; i++) {
             const tg = Animation._getTweens(this.targets[i], duration, params, options);
             kf.push(tg);
@@ -67,6 +67,9 @@ export class Animation extends Dispatcher {
         let p = Math.floor(this.runningTime * 100 / this.totalDuration);
         return minMax(p, 0, 100);
     }
+    getCurrentKeyframe() {
+        return this._currentKf;
+    }
     update(t) {
         if ((this.paused || this.status < 1) && !this._seeking)
             return;
@@ -82,6 +85,7 @@ export class Animation extends Dispatcher {
         Animation._render(tgs, this.time, this._dir);
         this.dispatch(Evt.progress, null);
         if (this.currentTime >= this._currentKf.totalDuration) {
+            this.dispatch(Evt.keyframeend, null);
             if (this._currentKf.callFunc) {
                 this._currentKf.callFunc(this._currentKf.callParams);
             }
@@ -116,23 +120,31 @@ export class Animation extends Dispatcher {
         }
     }
     call(func, ...params) {
-        let kf = new Keyframe();
+        let kf = new Keyframe(this.keyframes.length);
         kf.callFunc = func;
         kf.callParams = params;
         this.keyframes.push(kf);
         return this;
     }
-    remove(target) {
-        for (let i = this.keyframes.length - 1; i >= 0; i--) {
-            let kf = this.keyframes[i];
-            for (let j = kf.tgs.length - 1; j >= 0; j--) {
-                const tg = kf.tgs[j];
-                if (tg.target.el === target) {
-                    kf.tgs.splice(j, 1);
+    remove(target = null) {
+        if (!target) {
+            this.status = -1;
+            this.keep = false;
+            this.keyframes = [];
+            this.targets = [];
+        }
+        else {
+            for (let i = this.keyframes.length - 1; i >= 0; i--) {
+                let kf = this.keyframes[i];
+                for (let j = kf.tgs.length - 1; j >= 0; j--) {
+                    const tg = kf.tgs[j];
+                    if (tg.target.el === target) {
+                        kf.tgs.splice(j, 1);
+                    }
                 }
-            }
-            if (kf.tgs.length === 0) {
-                this.keyframes.splice(i, 1);
+                if (kf.tgs.length === 0) {
+                    this.keyframes.splice(i, 1);
+                }
             }
         }
     }

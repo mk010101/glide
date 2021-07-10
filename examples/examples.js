@@ -57,7 +57,6 @@ function setListeners() {
 }
 
 function loadAnimation(id) {
-    glide.removeAll();
     let item = dataMap[id];
     codeMirror.setValue(item.code);
     aside.innerHTML = item.doc;
@@ -69,6 +68,7 @@ function loadAnimation(id) {
 }
 
 function runAnimation() {
+    glide.removeAll();
     let item = dataMap[currentId];
     let str = "";
     for (let i = 0; i < item.numItems; i++) {

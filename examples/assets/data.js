@@ -144,6 +144,7 @@ glide.to(els[1], 1000, {x:200, rotate:180})
                     <ul>
                         <li><code>start</code>: animation start.</li>
                         <li><code>end</code>: animation ended (including all repeats and delays).</li>
+                        <li><code>keyframeend</code>: keyframe ended.</li>
                         <li><code>loopend</code>: end of repeat cycle.</li>
                         <li><code>progress</code>: animation progress.</li>
                     </ul>`,
@@ -154,11 +155,13 @@ glide.to(els[1], 1000, {x:200, rotate:180})
     <div class="a-start">Start</div>
     <div class="a-progress">Progress:</div>
     <div class="a-call">Function call</div>
+    <div class="a-keyframe">Keyframe end</div>
     <div class="a-loopend">Loop end</div>
     <div class="a-end">End</div>
 </div>
 `,
                     code: `const progress = stage.querySelector('.a-progress');
+const kf = stage.querySelector('.a-keyframe');
                     
 const animation = glide.to(".el", 500, {y:50, scaleY:2, rotate:180, bg:'rgba(50,250,100,0.7)'}, {repeat:1, stagger:30})
 \t.on("start", ()=> stage.querySelector('.a-start').classList.add('selected'))
@@ -167,6 +170,7 @@ const animation = glide.to(".el", 500, {y:50, scaleY:2, rotate:180, bg:'rgba(50,
 \t\tprogress.innerHTML = 'Progress: ' + animation.getProgress() + '%';})
 \t.call(()=> stage.querySelector('.a-call').classList.add('selected'))
 \t.to(500, {y:100, scaleY:1, bg:'#ff3399'}, {stagger:30})
+\t.on("keyframeend", ()=> {kf.classList.add('selected'); kf.innerHTML = 'Keyframe end: ' + animation.getCurrentKeyframe().id;})
 \t.on("loopend", ()=> stage.querySelector('.a-loopend').classList.add('selected'))
 \t.on("end", ()=> stage.querySelector('.a-end').classList.add('selected'));`,
                 },

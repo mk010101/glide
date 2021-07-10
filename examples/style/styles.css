@@ -9,7 +9,7 @@
     --highlight: #a8d153;
     --highlight2: #C3E88D;
     --highlight3: #e8e770;
-    --highlight4: #f1be0e;
+    --highlight4: #ff6102;
 
     --scrollbar-bg: #2d2d2d;
     --scrollbar-width: 10px;
@@ -189,7 +189,7 @@ p {
 h2 {
     font-size: 1.2rem;
     font-family: Title, sans-serif;
-    color: var(--highlight);
+    color: var(--highlight4);
 }
 
 h4 {
