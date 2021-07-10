@@ -160,13 +160,13 @@ glide.to(els[1], 1000, {x:200, rotate:180})
 `,
                     code: `const progress = stage.querySelector('.a-progress');
                     
-const animation = glide.to(".el", 500, {y:50, scaleY:2, bg:'rgba(50,250,100,0.7)'}, {repeat:1, stagger:40})
+const animation = glide.to(".el", 500, {y:50, scaleY:2, rotate:180, bg:'rgba(50,250,100,0.7)'}, {repeat:1, stagger:30})
 \t.on("start", ()=> stage.querySelector('.a-start').classList.add('selected'))
 \t.on("progress", ()=> {
 \t\tprogress.classList.add('selected'); 
 \t\tprogress.innerHTML = 'Progress: ' + animation.getProgress() + '%';})
 \t.call(()=> stage.querySelector('.a-call').classList.add('selected'))
-\t.to(500, {y:100, scaleY:1, bg:'#ff3399'}, {stagger:40})
+\t.to(500, {y:100, scaleY:1, bg:'#ff3399'}, {stagger:30})
 \t.on("loopend", ()=> stage.querySelector('.a-loopend').classList.add('selected'))
 \t.on("end", ()=> stage.querySelector('.a-end').classList.add('selected'));`,
                 },
@@ -378,14 +378,14 @@ function myEase(t) {
   return 1 - (Math.cos(Math.PI*t) + 1) / 2;
 }
                     
-glide.to(els[0], 3000, {x:200, rotate:360}); //No easing specified, default is quadInOut.
-glide.to(els[1], 3000, {x:200, rotate:360}, {ease:'circleInOut'});
-glide.to(els[2], 3000, {x:200, rotate:360}, {ease:'expoInOut'});
-glide.to(els[3], 3000, {x:200, rotate:360}, {ease:'bounceOut'});
-glide.to(els[4], 3000, {x:200, rotate:360}, {ease:'elasticOut'});
-glide.to(els[5], 3000, {x:200, rotate:360}, {ease:'backOut'});
-glide.to(els[6], 3000, {x:200, rotate:360}, {ease:'stepped(12)'});
-glide.to(els[7], 3000, {x:200, rotate:360}, {ease: myEase});
+glide.to(els[0], 3000, {width:200}); //No easing specified, default is quadInOut.
+glide.to(els[1], 3000, {width:200}, {ease:'circleInOut'});
+glide.to(els[2], 3000, {width:200}, {ease:'expoInOut'});
+glide.to(els[3], 3000, {width:200}, {ease:'bounceOut'});
+glide.to(els[4], 3000, {width:200}, {ease:'elasticOut'});
+glide.to(els[5], 3000, {width:200}, {ease:'backOut'});
+glide.to(els[6], 3000, {width:200}, {ease:'stepped(12)'});
+glide.to(els[7], 3000, {width:200}, {ease: myEase});
 `,
                 },
             ]
