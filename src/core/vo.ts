@@ -28,9 +28,6 @@ export class TweenGroup {
     target: Target = null;
 
     tweens: Tween[] = [];
-    // transforms: Map<string, Tween> = new Map<string, Tween>();
-    // directTransforms: Map<string, Tween> = new Map<string, Tween>();
-    // filters: Map<string, Tween> = new Map<string, Tween>();
 
     constructor(target: any) {
         this.target = target;

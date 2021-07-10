@@ -32,7 +32,7 @@
         .el {
             position: relative;
             /*margin: 1px;*/
-            float: left;
+            /*float: left;*/
             width: 50px;
             height: 50px;
             padding: 2px;
@@ -72,7 +72,7 @@
 
         let stage = document.querySelector(".stage");
 
-        const num = 1;
+        const num = 3;
 
         let str = "";
         for (let i = 0; i < num; i++) {
@@ -185,26 +185,27 @@
                     // borderWidth: "+=4px",
                     // border: "5px solid #00ff55"
                 }, {
-                    delay: 500,
+                    // delay: 500,
                     repeat: 1,
-                    loop: false,
+                    // loop: false,
                     // ease: "stepped(5)",
-                    stagger: 50,
+                    stagger: -50,
                     // paused: true,
                     // keep: true
                 })
-            .to(500, {top:100})
+            // .to(500, {top:100})
             // .call((params) => {console.log("called!", params)}, 123, 334)
             // .to(500, {top: 150})
             // .to(500, {bg: "#cccccc"})
             // .to(500, {rotate:"90", bg:"#89a4bd"})
                 .on("progress", () => {
-                    updRange(a.runningTime)
+                    updRange(a.runningTime);
+                    // console.log(a.getProgress())
                 })
                 .on('end', () => {
                     console.log(a);
-                    // console.log(a.keyframes[0].tgs[0].tweens);
-                    console.log("end", (performance.now() - t0));
+                    // console.log(a.keyframes[0].tgs);
+                    // console.log("end", (performance.now() - t0));
                     // console.log(window.getComputedStyle(el).transform);
                 });
 

@@ -49,7 +49,7 @@ export class Animation extends Dispatcher {
         this.paused = options.paused != (void 0) ? options.paused : this.paused;
         this.keep = options.keep != (void 0) ? options.keep : this.keep;
 
-        if (targets!= void 0 && duration != void 0) {
+        if (targets != void 0 && duration != void 0) {
 
         } else {
             this.status = 0;
@@ -62,8 +62,9 @@ export class Animation extends Dispatcher {
 
     }
 
-    target(targets: any, options: any) {
+    target(targets: any, options: any = {}) {
         this.targets = Animation._getTargets(targets, options);
+        options.numTargets = this.targets.length;
         return this;
     }
 
@@ -90,7 +91,11 @@ export class Animation extends Dispatcher {
         return this;
     }
 
-    set(params: any) {
+    set(params: any, options:any) {
+
+        return this.to(1, params, options);
+
+        /*
         let kf = new Keyframe();
 
         for (let i = 0; i < this.targets.length; i++) {
@@ -100,6 +105,12 @@ export class Animation extends Dispatcher {
             Animation._render(kf.tgs, 1, 1)
         }
         return this;
+         */
+    }
+
+    getProgress() {
+        let p = Math.floor(this.runningTime * 100 / this.totalDuration);
+        return minMax(p, 0, 100);
     }
 
 
@@ -391,7 +402,7 @@ export class Animation extends Dispatcher {
                 // console.log(transStr)
                 if (tg.target.type === "dom")
                     tweenable.transform = transStr;
-                else if(tg.target.type === "svg")
+                else if (tg.target.type === "svg")
                     tweenable.setAttribute("transform", transStr);
             }
 
@@ -529,8 +540,9 @@ export class Animation extends Dispatcher {
         }
 
         if (options.stagger) {
-            // let del = options.stagger > 0? target.pos * options.stagger : ???
-            let del = target.pos * options.stagger;
+
+            let del = options.stagger > 0 ? target.pos * options.stagger : options.numTargets * -options.stagger + target.pos * options.stagger;
+            // let del = target.pos * options.stagger;
             tw.start = del;
             tw.totalDuration += del;
         }

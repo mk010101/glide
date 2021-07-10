@@ -12,6 +12,7 @@ const data = {
                     <p>Use the code editor below to change values. Click on the stage to run animation.</p>`,
                     numItems: 1,
                     css: ``,
+                    innerHTML: "Stage",
                     code: `glide.to(".el", 1000, {left:200});`,
                 },
                 {
@@ -76,7 +77,7 @@ glide.to(els[3], 1000, {left:'/=4'});
                     `,
                     numItems: 1,
                     css: ``,
-                    code: `glide.to(".el", 1000, {x:200, rotate:{value:180, duration:1200, ease:'cubicIn'}});`,
+                    code: `glide.to(".el", 1500, {x:200, y:{value:100, duration:1000, ease:'bounceOut'}});`,
                 },
                 {
                     title: "Complex Values",
@@ -85,8 +86,8 @@ glide.to(els[3], 1000, {left:'/=4'});
                     css: `width:100px; height:100px; float:left; margin-right:25px;`,
                     code: `const els = document.querySelectorAll(".el");
                     
-glide.to(els[0], 500, {border: '8px solid #61b5a4'});
-glide.to(els[1], 500, {borderWidth: '6px 1rem 25', borderColor:'#61b5a4'});`,
+glide.to(els[0], 500, {border: '8px solid #ff5500'});
+glide.to(els[1], 500, {borderWidth: '6px 1rem 25', borderColor:'#ff5500'});`,
                 },
                 {
                     title: "Units",
@@ -124,22 +125,48 @@ glide.to(els[3], 1000, {width: '150px'});
 \t.to(500, {width:25, rotate:0, y:0, bg:'#a8d153'});`,
                 },
                 {
-                    title: "Events",
-                    doc: `<p>It's easy to build complex animations by simply chaining the <code>.to(...)</code> method.`,
-                    numItems: 0,
+                    title: "Set",
+                    doc: `<p>You can use <code>.set(...)</code> command to instantly apply property to a target.`,
+                    numItems: 2,
                     css: ``,
-                    innerHTML: `<div class="el"></div>
+                    code: `const els = document.querySelectorAll(".el");
+                    
+glide.to(els[0], 1000, {x:200, rotate:180})
+\t.set({bg:'#ff3399'}); // Set immediately.
+
+glide.to(els[1], 1000, {x:200, rotate:180})
+\t.set({bg:'#ff3399'}, {delay:500}); // Set after a delay.
+`,
+                },
+                {
+                    title: "Events",
+                    doc: `Following events are emitted:
+                    <ul>
+                        <li><code>start</code>: animation start.</li>
+                        <li><code>end</code>: animation ended (including all repeats and delays).</li>
+                        <li><code>loopend</code>: end of repeat cycle.</li>
+                        <li><code>progress</code>: animation progress.</li>
+                    </ul>`,
+                    numItems: 20,
+                    css: `float:left; width:5px; `,
+                    innerHTML: `
 <div class="stage-data">
     <div class="a-start">Start</div>
+    <div class="a-progress">Progress:</div>
     <div class="a-call">Function call</div>
     <div class="a-loopend">Loop end</div>
     <div class="a-end">End</div>
 </div>
 `,
-                    code: `glide.to(".el", 1000, {x:200, rotate:180}, {repeat:1})
+                    code: `const progress = stage.querySelector('.a-progress');
+                    
+const animation = glide.to(".el", 500, {y:50, scaleY:2, bg:'rgba(50,250,100,0.7)'}, {repeat:1, stagger:40})
 \t.on("start", ()=> stage.querySelector('.a-start').classList.add('selected'))
+\t.on("progress", ()=> {
+\t\tprogress.classList.add('selected'); 
+\t\tprogress.innerHTML = 'Progress: ' + animation.getProgress() + '%';})
 \t.call(()=> stage.querySelector('.a-call').classList.add('selected'))
-\t.to(1000, {top:100, bg:'#ff3399'})
+\t.to(500, {y:100, scaleY:1, bg:'#ff3399'}, {stagger:40})
 \t.on("loopend", ()=> stage.querySelector('.a-loopend').classList.add('selected'))
 \t.on("end", ()=> stage.querySelector('.a-end').classList.add('selected'));`,
                 },
@@ -351,16 +378,15 @@ function myEase(t) {
   return 1 - (Math.cos(Math.PI*t) + 1) / 2;
 }
                     
-glide.to(els[0], 2000, {x:200, rotate:360}); //No easing specified, default is quadInOut.
-glide.to(els[1], 2000, {x:200, rotate:360}, {ease:'circleInOut'});
-glide.to(els[2], 2000, {x:200, rotate:360}, {ease:'expoInOut'});
-glide.to(els[3], 2000, {x:200, rotate:360}, {ease:'bounceOut'});
-glide.to(els[4], 2000, {x:200, rotate:360}, {ease:'elasticOut'});
-glide.to(els[5], 2000, {x:200, rotate:360}, {ease:'backOut'});
-glide.to(els[6], 2000, {x:200, rotate:360}, {ease:'stepped(8)'});
-glide.to(els[7], 2000, {x:200, rotate:360}, {ease: myEase});
-                    
-                    `,
+glide.to(els[0], 3000, {x:200, rotate:360}); //No easing specified, default is quadInOut.
+glide.to(els[1], 3000, {x:200, rotate:360}, {ease:'circleInOut'});
+glide.to(els[2], 3000, {x:200, rotate:360}, {ease:'expoInOut'});
+glide.to(els[3], 3000, {x:200, rotate:360}, {ease:'bounceOut'});
+glide.to(els[4], 3000, {x:200, rotate:360}, {ease:'elasticOut'});
+glide.to(els[5], 3000, {x:200, rotate:360}, {ease:'backOut'});
+glide.to(els[6], 3000, {x:200, rotate:360}, {ease:'stepped(12)'});
+glide.to(els[7], 3000, {x:200, rotate:360}, {ease: myEase});
+`,
                 },
             ]
         },

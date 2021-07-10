@@ -1080,8 +1080,9 @@ class Animation extends Dispatcher {
         if (duration !== void 0)
             this.to(duration, params, options);
     }
-    target(targets, options) {
+    target(targets, options = {}) {
         this.targets = Animation._getTargets(targets, options);
+        options.numTargets = this.targets.length;
         return this;
     }
     to(duration, params, options = {}) {
@@ -1100,15 +1101,12 @@ class Animation extends Dispatcher {
             this.status = 1;
         return this;
     }
-    set(params) {
-        let kf = new Keyframe();
-        for (let i = 0; i < this.targets.length; i++) {
-            const tg = Animation._getTweens(this.targets[i], 0, params, {});
-            kf.push(tg);
-            Animation._initTweens(kf);
-            Animation._render(kf.tgs, 1, 1);
-        }
-        return this;
+    set(params, options) {
+        return this.to(1, params, options);
+    }
+    getProgress() {
+        let p = Math.floor(this.runningTime * 100 / this.totalDuration);
+        return minMax(p, 0, 100);
     }
     update(t) {
         if ((this.paused || this.status < 1) && !this._seeking)
@@ -1442,7 +1440,7 @@ class Animation extends Dispatcher {
             tw.tweenable = target.tweenable;
         }
         if (options.stagger) {
-            let del = target.pos * options.stagger;
+            let del = options.stagger > 0 ? target.pos * options.stagger : options.numTargets * -options.stagger + target.pos * options.stagger;
             tw.start = del;
             tw.totalDuration += del;
         }
