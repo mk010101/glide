@@ -181,10 +181,11 @@ code {
 .slider {
     -webkit-appearance: none;
 
-    height: 6px;
-    background: #252525;
+    height: 4px;
+    background: var(--border-color);
     border-radius: 3px;
-    border: 1px solid var(--border-color);
+    zborder: 1px solid var(--border-color);
+    border:none;
     outline: none;
     opacity: 0.7;
     -webkit-transition: .2s;
@@ -200,18 +201,18 @@ code {
     appearance: none;
     width: 15px;
     height: 15px;
-    background: #252525;
+    background: #cccccc;
     border-radius: 50%;
-    border: 1px solid var(--border-color);
+    border: 1px solid #333333;
     cursor: pointer;
 }
 
 .slider::-moz-range-thumb {
     width: 15px;
     height: 15px;
-    background: #252525;
+    background: #cccccc;
     border-radius: 50%;
-    border: 1px solid var(--border-color);
+    border: 1px solid #333333;
     cursor: pointer;
 }
 
@@ -235,7 +236,7 @@ h2 {
 h4 {
     font-weight: normal;
     /*color: #849cae;*/
-    color: #787878;
+    color: #969696;
     font-size: 1rem;
 }
 
