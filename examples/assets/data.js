@@ -543,21 +543,21 @@ flip2.target.addEventListener("click", ()=> flip2.flip());
                     doc: `<p>Seeks animation to a specified position in time</p>`,
                     numItems: 5,
                     text: "{{i}}",
-                    css: ``,
+                    css: `top:50px;`,
                     disableStage: true,
                     innerHTML: `
                     <style>
                         input {left:25px; bottom:25px; position:absolute; width: 50%}
                     </style>
-                    <input type="range" min="0" value="0" class="range">
+                    <input type="range" min="0" value="0" class="slider">
                     `,
-                    code: `const range = stage.querySelector('.range');
+                    code: `const slider = stage.querySelector('.slider');
 const a = glide.to('.el', 1000, {x:100, rotate:360, bg:'#ffcc00'}, {stagger:100})
     .to(1000, {width:100, rotate:0}, {stagger:50})
-    .on('progress', ()=> range.value = a.runningTime);
+    .on('progress', ()=> slider.value = a.runningTime);
 
-range.max = a.totalDuration;
-range.addEventListener('input', ()=> a.seek(parseFloat(range.value)));
+slider.max = a.totalDuration;
+slider.addEventListener('input', ()=> a.seek(parseFloat(slider.value)));
 `,
 
                 },
