@@ -302,7 +302,6 @@ glide.to(els[8], 1000, {dropShadow:'6px 6px 3px #00cccc', saturate:500, hueRotat
         },
 
 
-
         {
             title: "Options",
             content: [
@@ -394,6 +393,101 @@ glide.to(els[7], 3000, {width:200}, {ease: myEase});
                 },
             ]
         },
+
+
+        {
+            title: "fx",
+            content: [
+
+                {
+                    title: "Shake",
+                    doc: `<p>Options:
+                        <ul>
+                            <li><code>axis: 'x'</code> 'x' or 'y'. Default: 'x'</li>
+                            <li><code>speed: 20</code> Speed of shaking. Default: 20.</li>
+                            <li><code>distance: 20</code> Distance of movement. Default: 10.</li>
+                            <li><code>times: 5</code> Times to shake. Default: 4.</li>
+                        </ul>
+
+</p>`,
+                    numItems: 2,
+                    text: "{{i}}",
+                    css: `width:125px; height:75px; float:left; margin-right:25px;`,
+                    code: `const els = document.querySelectorAll(".el");
+                    
+glide.fx.shake(els[0]);
+glide.fx.shake(els[1], {axis:'y', speed:10, distance:20, times:6});
+`,
+                },
+                {
+                    title: "Flap",
+                    doc: `<p>Options:
+                        <ul>
+                            <li><code>axis: 'x'</code> 'x', 'y' or 'z'. Default: 'y'</li>
+                            <li><code>speed: 20</code> Speed of shaking. Default: 15.</li>
+                            <li><code>angle: 30</code> Angle of movement. Default: 20deg.</li>
+                            <li><code>times: 5</code> Times to shake. Default: 4.</li>
+                        </ul>
+
+</p>`,
+                    numItems: 3,
+                    text: "{{i}}",
+                    css: `width:100px; height:75px; float:left; margin-right:25px; margin-bottom:25px;`,
+                    code: `const els = document.querySelectorAll(".el");
+                    
+glide.fx.flap(els[0]);
+glide.fx.flap(els[1], {axis:'x', speed:10, distance:20, times:6});
+glide.fx.flap(els[2], {axis:'z'});
+`,
+                },
+                {
+                    title: "Flip",
+                    doc: `<p>Flips elements around X or Y-axis.</p>
+                        <p>Options:
+                        <ul>
+                            <li><code>axis: 'x'</code> 'x' or 'y'. Default: 'y'.</li>
+                            <li><code>speed: 3</code> Speed of rotation. Default: 2.5.</li>
+                            <li><code>continuous: false</code> If set to true, element will keep flipping in the same direction. Default: false.</li>
+                        </ul>
+
+</p>`,
+                    numItems: 0,
+                    text: "",
+                    disableStage: true,
+                    css: ``,
+                    innerHTML: `
+                    <style>
+                        .el {
+                            margin-right: 25px;
+                            float:left;
+                        }
+                        .el, .face {
+                            width: 125px;
+                            height: 100px;
+                            cursor: pointer;
+                        }
+                        .face {
+                            padding: 10px;
+                        }
+                        .f2 {
+                            display: none;
+                        }
+                    </style>
+                    <div class="el n1"><div class="face f1">Side 1<p>Click me</p></div><div class="face f2">Side 2<p>Click me too!</p></div></div>
+                    <div class="el n2"><div class="face f1">Side 1<p>Click me</p></div><div class="face f2">Side 2<p>Click me too!</p></div></div>
+`,
+                    code: `const flip1 = new glide.fx.Flip('.n1', '.n1 > .f1', '.n1 > .f2', {continuous:true});
+flip1.flip();
+flip1.target.addEventListener("click", ()=> flip1.flip());
+   
+const flip2 = new glide.fx.Flip('.n2', '.n2 > .f1', '.n2 > .f2', {axis:'x', speed:1.5});
+flip2.flip();
+flip2.target.addEventListener("click", ()=> flip2.flip());                 
+
+`,
+                },
+            ]
+        }
     ]
 
 

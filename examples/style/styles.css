@@ -140,6 +140,7 @@ nav {
     linear-gradient(to bottom, var(--grid-color) 1px, transparent 1px);
     border-right: var(--border-color) 1px solid;
     color: var(--border-color);
+    perspective: 400px;
 }
 
 
@@ -187,7 +188,7 @@ p {
 }
 
 h2 {
-    font-size: 1.2rem;
+    font-size: 1.6rem;
     font-family: Title, sans-serif;
     color: var(--highlight4);
 }
@@ -200,7 +201,7 @@ h4 {
 }
 
 ul {
-    padding: 1rem;
+    padding-left: 1rem;
 }
 
 li {

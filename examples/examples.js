@@ -2,6 +2,7 @@ import data from "./assets/data.js";
 import glide from "./libs/glide.esm.js";
 
 let nav, stage, cssEl, codeMirror, aside, dataMap = {}, currentId = 0;
+let disableStage = false;
 
 function setEditor() {
     codeMirror = CodeMirror(document.querySelector(".code"), {
@@ -52,7 +53,10 @@ function setListeners() {
         runAnimation();
     });
 
-    stage.addEventListener("click", runAnimation);
+    stage.addEventListener("click", ()=> {
+        if (!disableStage)
+            runAnimation();
+    });
 
 }
 
@@ -78,6 +82,7 @@ function runAnimation() {
     }
 
     if (item.innerHTML) str = str + item.innerHTML;
+    disableStage = item.disableStage;
 
     stage.innerHTML = str;
     location.hash = "#" + currentId;

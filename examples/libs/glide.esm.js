@@ -1568,18 +1568,18 @@ function int($glide) {
     glide$1 = $glide;
 }
 function shake(target, options = null) {
-    const t = (options === null || options === void 0 ? void 0 : options.speed) ? options.speed : 60;
+    const t = (options === null || options === void 0 ? void 0 : options.speed) ? 1000 / options.speed : 1000 / 20;
     const dist = (options === null || options === void 0 ? void 0 : options.distance) ? options.distance : 10;
     const times = (options === null || options === void 0 ? void 0 : options.times) ? options.times : 4;
     const prop = (options === null || options === void 0 ? void 0 : options.axis) ? options.axis : "x";
-    glide$1.to(target, t / 2, { [prop]: -dist })
+    return glide$1.to(target, t / 2, { [prop]: -dist })
         .on("end", () => {
         glide$1.to(target, t, { [prop]: dist }, { repeat: times })
             .on("end", () => glide$1.to(target, t / 2, { [prop]: 0 }));
     });
 }
 function flap(target, options = null) {
-    const t = (options === null || options === void 0 ? void 0 : options.speed) ? options.speed : 70;
+    const t = (options === null || options === void 0 ? void 0 : options.speed) ? 1000 / options.speed : 1000 / 15;
     const anlge = (options === null || options === void 0 ? void 0 : options.angle) ? options.angle : 20;
     const times = (options === null || options === void 0 ? void 0 : options.times) ? options.times : 4;
     let prop = "rotateY";
@@ -1591,25 +1591,25 @@ function flap(target, options = null) {
         if (options.axis === "z")
             prop = "rotateZ";
     }
-    glide$1.to(target, t / 2, { [prop]: -anlge })
+    return glide$1.to(target, t / 2, { [prop]: -anlge })
         .on("end", () => {
         glide$1.to(target, t, { [prop]: anlge }, { repeat: times })
             .on("end", () => glide$1.to(target, t / 2, { [prop]: 0 }));
     });
 }
 class Flip {
-    constructor(el, side1, side2, options = null) {
+    constructor(target, side1, side2, options = null) {
         this.prop = "rotateY";
-        this.time = 400;
+        this.speed = 1000 / 2.5;
         this.continuous = false;
         this.deg = "+=90";
         this.originalStyle = "block";
-        this.el = el;
-        this.side1 = side1;
-        this.side2 = side2;
+        this.target = getElement(target);
+        this.side1 = getElement(side1);
+        this.side2 = getElement(side2);
         this.side2.style.display = "none";
         this.continuous = (options === null || options === void 0 ? void 0 : options.continuous) != void 0 ? options.continuous : false;
-        this.time = (options === null || options === void 0 ? void 0 : options.time) != void 0 ? options.time : this.time;
+        this.speed = (options === null || options === void 0 ? void 0 : options.speed) != void 0 ? 1000 / options.speed : this.speed;
         this.originalStyle = window.getComputedStyle(this.side1).display;
         if ((options === null || options === void 0 ? void 0 : options.axis) === "x")
             this.prop = "rotateX";
@@ -1623,11 +1623,12 @@ class Flip {
         }
     }
     flip() {
-        glide$1.to(this.el, this.time, { [this.prop]: this.deg }, { ease: "quadIn" })
+        this.target.style.pointerEvents = "none";
+        glide$1.to(this.target, this.speed, { [this.prop]: this.deg }, { ease: "quadIn" })
             .on("end", () => {
             this.side1.style.display = "none";
             this.side2.style.display = this.originalStyle;
-            glide$1.to(this.el, this.time, { [this.prop]: this.deg }, { ease: "quadOut" })
+            glide$1.to(this.target, this.speed, { [this.prop]: this.deg }, { ease: "quadOut" })
                 .on("end", () => {
                 let tmp = this.side2;
                 this.side2 = this.side1;
@@ -1635,9 +1636,16 @@ class Flip {
                 if (!this.continuous) {
                     this.deg = this.deg === "+=90" ? "-=90" : "+=90";
                 }
+                this.target.style.pointerEvents = "";
             });
         });
     }
+}
+function getElement(el) {
+    if (is.string(el))
+        return document.querySelector(el);
+    else if (is.dom(el))
+        return el;
 }
 
 var fx = /*#__PURE__*/Object.freeze({
