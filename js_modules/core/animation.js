@@ -194,7 +194,12 @@ export class Animation extends Dispatcher {
         let from = tw.from;
         let to = tw.to;
         if (to.numbers.length === 1 && to.units[0] == null) {
-            return from.numbers[0] + t * (to.numbers[0] - from.numbers[0]);
+            let val = from.numbers[0] + t * (to.numbers[0] - from.numbers[0]);
+            if (to.floats[0] === 0)
+                val = ~~val;
+            else if (to.round > 0)
+                val = Math.round(val * to.round) / to.round;
+            return val;
         }
         for (let i = 0; i < to.numbers.length; i++) {
             let nfrom = from.numbers[i];
@@ -203,6 +208,8 @@ export class Animation extends Dispatcher {
                 let val = nfrom + t * (nto - nfrom);
                 if (to.floats[i] === 0)
                     val = ~~val;
+                else if (to.round > 0)
+                    val = Math.round(val * to.round) / to.round;
                 str += val + to.units[i];
             }
             else {

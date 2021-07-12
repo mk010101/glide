@@ -5,6 +5,7 @@ export class Vo {
         this.units = [];
         this.increments = [];
         this.strings = [];
+        this.round = -1;
     }
 }
 export class SvgVo extends Vo {

@@ -210,7 +210,7 @@ export function unwrapValues(prop: string, val: any): any {
     }
 }
 
-function getDefaultVo(prop: string, val: number = null): Vo {
+function getDefaultVo(prop: string, val: number = null, options:any = null): Vo {
 
     let vo = new Vo();
     if (val == null) return vo;
@@ -229,7 +229,7 @@ function getDefaultVo(prop: string, val: number = null): Vo {
         vo.strings.push(null);
         vo.increments.push(null);
     }
-
+    vo.round = options?.round != void 0? options.round : -1;
     return vo;
 }
 
@@ -264,13 +264,14 @@ export function getVo(target: Target, prop: any, val: any, options: any = null):
 
 
     if (val == void 0) {
-        vo = getDefaultVo(prop, val);
+        vo = getDefaultVo(prop, val, options);
         // addBraces(vo, prop);
         return vo;
     } else if (is.number(val)) {
-        return getDefaultVo(prop, val);
+        return getDefaultVo(prop, val, options);
     }
 
+    vo.round = options?.round != void 0? options.round : -1;
 
     if (prop === "path") {
         const pVo = new SvgVo();

@@ -278,6 +278,7 @@ class Vo {
         this.units = [];
         this.increments = [];
         this.strings = [];
+        this.round = -1;
     }
 }
 class SvgVo extends Vo {
@@ -718,7 +719,7 @@ function unwrapValues(prop, val) {
         ];
     }
 }
-function getDefaultVo(prop, val = null) {
+function getDefaultVo(prop, val = null, options = null) {
     let vo = new Vo();
     if (val == null)
         return vo;
@@ -736,6 +737,7 @@ function getDefaultVo(prop, val = null) {
         vo.strings.push(null);
         vo.increments.push(null);
     }
+    vo.round = (options === null || options === void 0 ? void 0 : options.round) != void 0 ? options.round : -1;
     return vo;
 }
 function addBraces(vo, prop) {
@@ -756,12 +758,13 @@ function getVo(target, prop, val, options = null) {
     let vo = new Vo();
     let res = [];
     if (val == void 0) {
-        vo = getDefaultVo(prop, val);
+        vo = getDefaultVo(prop, val, options);
         return vo;
     }
     else if (is.number(val)) {
-        return getDefaultVo(prop, val);
+        return getDefaultVo(prop, val, options);
     }
+    vo.round = (options === null || options === void 0 ? void 0 : options.round) != void 0 ? options.round : -1;
     if (prop === "path") {
         const pVo = new SvgVo();
         let path;
@@ -1239,7 +1242,12 @@ class Animation extends Dispatcher {
         let from = tw.from;
         let to = tw.to;
         if (to.numbers.length === 1 && to.units[0] == null) {
-            return from.numbers[0] + t * (to.numbers[0] - from.numbers[0]);
+            let val = from.numbers[0] + t * (to.numbers[0] - from.numbers[0]);
+            if (to.floats[0] === 0)
+                val = ~~val;
+            else if (to.round > 0)
+                val = Math.round(val * to.round) / to.round;
+            return val;
         }
         for (let i = 0; i < to.numbers.length; i++) {
             let nfrom = from.numbers[i];
@@ -1248,6 +1256,8 @@ class Animation extends Dispatcher {
                 let val = nfrom + t * (nto - nfrom);
                 if (to.floats[i] === 0)
                     val = ~~val;
+                else if (to.round > 0)
+                    val = Math.round(val * to.round) / to.round;
                 str += val + to.units[i];
             }
             else {

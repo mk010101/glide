@@ -6,7 +6,7 @@ const data = {
             title: "Basics",
             content: [
                 {
-                    title: "Begin",
+                    title: "Basic Example",
                     doc: `<p><code>glide.to()</code> accepts 4 arguments: target(s), duration in milliseconds, 
                     animation properties object, and options object (optional).</p>
                     <p>Use the code editor below to change values. Click on the stage to run animation.</p>`,
@@ -189,8 +189,8 @@ const animation = glide.to(".el", 500, {y:50, scaleY:2, rotate:180, bg:'rgba(50,
                     css: ``,
                     code: `const els = document.querySelectorAll(".el");
                     
-glide.to(els[0], 1000, {width:200});
-glide.to(els[1], 1000, {marginLeft:'8rem', width:50});
+glide.to(els[0], 1000, {marginLeft:'8rem', width:50, border:'#ff0000 4px dashed'});
+glide.to(els[1], 1000, {width:200});
 glide.to(els[2], 1000, {color:'#ff0000'});
 glide.to(els[3], 1000, {height:50, width:50, fontSize:36});
 `,
@@ -298,6 +298,42 @@ glide.to(els[7], 1000, {saturate:500, hueRotate:-70, dropShadow:'6px 6px 3px #00
 glide.to(els[8], 1000, {dropShadow:'6px 6px 3px #00cccc', saturate:500, hueRotate:-70});
 `,
                 },
+                {
+                    title: "Objects",
+                    doc: `Glide can tween Object properties. If the value specified is a number, Glide will keep the number as a value`,
+                    numItems: 0,
+                    text: "",
+                    cssProp: "",
+                    css: ``,
+                    innerHTML: `<style>
+                        .obj { color: var(--highlight);}
+                        .obj > div {margin-left: 1rem;}
+                        .obj > div > span { color: var(--highlight4);}
+                    </style>
+                    <div class="obj">{
+                        <div>x: <span class="f-x">10</span></div>
+                        <div>y: <span class="f-y">'50%'</span></div>
+                        <div>n: <span class="f-n">'-3px, 15%, 40xyz'</span></div>
+                    }</div>`,
+                    code: `const obj = {
+    x: 10,
+    y: '50%',
+    n: '-3px, 15%, 40xyz'             
+};
+
+const elX = stage.querySelector('.f-x');
+const elY = stage.querySelector('.f-y');
+const elN = stage.querySelector('.f-n');
+
+glide.to(obj, 2000, {x:'+=5', y:60, n:'5, 10, 15'}, {round:10})
+    .on('progress', _=> {
+        elX.textContent = obj.x;
+        elY.textContent = obj.y;
+        elN.textContent = obj.n;
+     }
+);   
+`,
+                },
             ]
         },
 
@@ -313,7 +349,8 @@ glide.to(els[8], 1000, {dropShadow:'6px 6px 3px #00cccc', saturate:500, hueRotat
                             <br>&nbsp;stagger: 50,
                             <br>&nbsp;repeat: 3,
                             <br>&nbsp;loop: true,
-                            <br>&nbsp;ease: 'quadInOut',
+                            <br>&nbsp;ease: 'quadInOut', 
+                            <br>&nbsp;round: 0,
                             <br>&nbsp;keep: false,
                             <br>&nbsp;paused: false,
                         </code></p>`,
@@ -323,48 +360,21 @@ glide.to(els[8], 1000, {dropShadow:'6px 6px 3px #00cccc', saturate:500, hueRotat
                 },
                 {
                     title: "Stagger",
-                    doc: `<p>The following options can be set:<br>
-                        <code>
-                            <br>&nbsp;delay: 500,
-                            <br>&nbsp;<span class="highlight">stagger: 50</span>,
-                            <br>&nbsp;repeat: 3,
-                            <br>&nbsp;loop: true,
-                            <br>&nbsp;ease: 'quadInOut',
-                            <br>&nbsp;keep: false,
-                            <br>&nbsp;paused: false,
-                        </code></p>`,
+                    doc: `<p>Causes multiple targets animate with a time offset.</p>`,
                     numItems: 10,
                     css: ``,
                     code: `glide.to(".el", 1000, {x:200, rotate:180}, {stagger:50});`,
                 },
                 {
                     title: "Repeat",
-                    doc: `<p>The following options can be set:<br>
-                        <code>
-                            <br>&nbsp;delay: 500,
-                            <br>&nbsp;stagger: 50,
-                            <br>&nbsp;<span class="highlight">repeat: 3,</span>
-                            <br>&nbsp;loop: true,
-                            <br>&nbsp;ease: 'quadInOut',
-                            <br>&nbsp;keep: false,
-                            <br>&nbsp;paused: false,
-                        </code></p>`,
+                    doc: `<p>Repeats animation.</p>`,
                     numItems: 1,
                     css: ``,
                     code: `glide.to(".el", 1000, {x:200, rotate:180}, {repeat:3});`,
                 },
                 {
                     title: "Loop",
-                    doc: `<p>The following options can be set:<br>
-                        <code>
-                            <br>&nbsp;delay: 500,
-                            <br>&nbsp;stagger: 50,
-                            <br>&nbsp;<span class="highlight">repeat: 3,</span>
-                            <br>&nbsp;<span class="highlight">loop: false,</span>
-                            <br>&nbsp;ease: 'quadInOut',
-                            <br>&nbsp;keep: false,
-                            <br>&nbsp;paused: false,
-                        </code></p>`,
+                    doc: `<p>If set to false, will restart animation at each repetition. Default is <code>true</code>.</p>`,
                     numItems: 1,
                     css: ``,
                     code: `glide.to(".el", 1000, {x:200, rotate:180}, {repeat:3, loop:false});`,
@@ -391,12 +401,49 @@ glide.to(els[6], 3000, {width:200}, {ease:'stepped(12)'});
 glide.to(els[7], 3000, {width:200}, {ease: myEase});
 `,
                 },
+                {
+                    title: "Round",
+                    doc: `You can round any value by adding <code>round:10</code> option. 0 means no rounding; 
+                        100 means the value is rounded to 2 decimal places.`,
+                    numItems: 0,
+                    text: "",
+                    cssProp: "",
+                    css: ``,
+                    innerHTML: `<style>
+                        .obj { color: var(--highlight);}
+                        .obj > div {margin-left: 1rem;}
+                        .obj > div > span { color: var(--highlight4);}
+                    </style>
+                    <div class="obj">{
+                        <div>x: <span class="f-x">10</span></div>
+                        <div>y: <span class="f-y">'50%'</span></div>
+                        <div>n: <span class="f-n">'-3px, 15%, 40xyz'</span></div>
+                    }</div>`,
+                    code: `const obj = {
+    x: 10,
+    y: '50%',
+    n: '-3px, 15%, 40xyz'             
+};
+
+const elX = stage.querySelector('.f-x');
+const elY = stage.querySelector('.f-y');
+const elN = stage.querySelector('.f-n');
+
+glide.to(obj, 2000, {x:'+=5.56', y:60.77, n:'5.1, 10, 15'}, {round:100})
+    .on('progress', _=> {
+        elX.textContent = obj.x;
+        elY.textContent = obj.y;
+        elN.textContent = obj.n;
+     }
+);   
+`,
+                },
             ]
         },
 
 
         {
-            title: "fx",
+            title: "FX",
             content: [
 
                 {
@@ -487,7 +534,14 @@ flip2.target.addEventListener("click", ()=> flip2.flip());
 `,
                 },
             ]
-        }
+        },
+        {
+            title: "Methods",
+            content: [
+
+            ]
+        },
+
     ]
 
 

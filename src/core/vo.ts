@@ -8,19 +8,18 @@ export class Vo {
     units: string[] = [];
     increments: string[] = [];
     strings: string[] = [];
-
-    // isNum:boolean = false;
+    round: number = -1;
 
 }
 
 
 export class SvgVo extends Vo {
     path: SVGPathElement = null;
-    offsetX:number = 0;
-    offsetY:number = 0;
-    len:number = 0;
-    bBox:any;
-    svg:any;
+    offsetX: number = 0;
+    offsetY: number = 0;
+    len: number = 0;
+    bBox: any;
+    svg: any;
 }
 
 
