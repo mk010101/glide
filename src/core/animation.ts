@@ -134,11 +134,9 @@ export class Animation extends Dispatcher {
         this.currentTime += t;
         this.runningTime += t;
 
-        // console.log(~~this.time, ~~this.currentTime)
 
         const tgs = this._currentKf.tgs;
 
-        //this.dispatch(Evt.progress, null);
         Animation._render(tgs, this.time, this._dir);
         this.dispatch(Evt.progress, null);
 
