@@ -1182,16 +1182,20 @@ class Animation extends Dispatcher {
             this.targets = [];
         }
         else {
-            for (let i = this.keyframes.length - 1; i >= 0; i--) {
-                let kf = this.keyframes[i];
-                for (let j = kf.tgs.length - 1; j >= 0; j--) {
-                    const tg = kf.tgs[j];
-                    if (tg.target.el === target) {
-                        kf.tgs.splice(j, 1);
+            let targets = Animation._parseTargets(target);
+            for (let k = 0; k < targets.length; k++) {
+                const trg = targets[k];
+                for (let i = this.keyframes.length - 1; i >= 0; i--) {
+                    let kf = this.keyframes[i];
+                    for (let j = kf.tgs.length - 1; j >= 0; j--) {
+                        const tg = kf.tgs[j];
+                        if (tg.target.el === trg) {
+                            kf.tgs.splice(j, 1);
+                        }
                     }
-                }
-                if (kf.tgs.length === 0) {
-                    this.keyframes.splice(i, 1);
+                    if (kf.tgs.length === 0) {
+                        this.keyframes.splice(i, 1);
+                    }
                 }
             }
         }
@@ -1365,28 +1369,33 @@ class Animation extends Dispatcher {
                 tweenable.filter = filtersStr;
         }
     }
-    static _getTargets(targets, options) {
-        if (is.string(targets)) {
-            targets = document.querySelectorAll(targets);
+    static _parseTargets(target) {
+        let targs = [];
+        if (is.string(target)) {
+            targs = document.querySelectorAll(target);
         }
-        let t = [];
-        if (is.list(targets)) {
-            for (let i = 0; i < targets.length; i++) {
-                let targ;
-                if (is.string(targets[i]))
-                    targ = document.querySelector(targets[i]);
+        else if (is.list(target)) {
+            for (let i = 0; i < target.length; i++) {
+                let t = target[i];
+                if (is.string(t))
+                    targs.push(document.querySelector(t));
                 else
-                    targ = targets[i];
-                let target = new Target(targ, options.context);
-                target.pos = i;
-                t.push(target);
+                    targs.push(t);
             }
         }
-        else if (is.tweenable(targets)) {
-            t.push(new Target(targets, options.context));
-        }
-        else {
+        else if (is.tweenable(target))
+            targs.push(target);
+        else
             throw (new TypeError("Target type is not valid."));
+        return targs;
+    }
+    static _getTargets(targets, options) {
+        let t = [];
+        let ts = Animation._parseTargets(targets);
+        for (let i = 0; i < ts.length; i++) {
+            let trg = new Target(ts[i], options.context);
+            trg.pos = i;
+            t.push(trg);
         }
         return t;
     }

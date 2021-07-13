@@ -306,7 +306,7 @@ glide.to(els[8], 1000, {dropShadow:'6px 6px 3px #00cccc', saturate:500, hueRotat
                     cssProp: "",
                     css: ``,
                     innerHTML: `<style>
-                        .obj { color: var(--highlight);}
+                        .obj { color: var(--highlight); pointer-events: none;}
                         .obj > div {margin-left: 1rem;}
                         .obj > div > span { color: var(--highlight4);}
                     </style>
@@ -343,17 +343,18 @@ glide.to(obj, 2000, {x:'+=5', y:60, n:'5, 10, 15'}, {round:10})
             content: [
                 {
                     title: "Delay",
-                    doc: `<p>The following options can be set:<br>
-                        <code>
-                            <br>&nbsp;<span class="highlight">delay: 500,</span>
-                            <br>&nbsp;stagger: 50,
-                            <br>&nbsp;repeat: 3,
-                            <br>&nbsp;loop: true,
-                            <br>&nbsp;ease: 'quadInOut', 
-                            <br>&nbsp;round: 0,
-                            <br>&nbsp;keep: false,
-                            <br>&nbsp;paused: false,
-                        </code></p>`,
+                    doc: `<p>The following options can be set:
+                            <ul>
+                            <li><code><span class="highlight">delay: 500</code></span> delays animation by 500ms.</li>
+                            <li><code>stagger: 50</code> staggers animation by 50ms.</li>
+                            <li><code>repeat: 3</code> repeats animation 3 times.</li>
+                            <li><code>loop: false</code> if false, animation will reset at each repetition.</li>
+                            <li><code>ease: 'quadInOut'</code> easing function.</li>
+                            <li><code>round: 10</code> rounds result to 1 decimal point.</li>
+                            <li><code>keep: true</code> will keep animaion alive, even when it has ended.</li>
+                            <li><code>paused: true</code> will pause animation at start.</li>
+                            </ul>
+                        </p>`,
                     numItems: 1,
                     css: ``,
                     code: `glide.to(".el", 1000, {left:200}, {delay:500});`,
@@ -410,7 +411,7 @@ glide.to(els[7], 3000, {width:200}, {ease: myEase});
                     cssProp: "",
                     css: ``,
                     innerHTML: `<style>
-                        .obj { color: var(--highlight);}
+                        .obj { color: var(--highlight); pointer-events: none;}
                         .obj > div {margin-left: 1rem;}
                         .obj > div > span { color: var(--highlight4);}
                     </style>
@@ -429,7 +430,7 @@ const elX = stage.querySelector('.f-x');
 const elY = stage.querySelector('.f-y');
 const elN = stage.querySelector('.f-n');
 
-glide.to(obj, 2000, {x:'+=5.56', y:60.77, n:'5.1, 10, 15'}, {round:100})
+glide.to(obj, 2000, {x:'+=5.56', y:60.77, n:'5.12, 10, 15'}, {round:100})
     .on('progress', _=> {
         elX.textContent = obj.x;
         elY.textContent = obj.y;
@@ -593,9 +594,37 @@ stage.querySelector('.btn-play').addEventListener('click', ()=> a.play());
 
                 },
                 {
+                    title: "Reset",
+                    doc: `<p>Resets animation.
+                    </p>`,
+                    numItems: 5,
+                    text: "{{i}}",
+                    css: `top:50px;`,
+                    innerHTML: `
+                    <style>
+                        .btns {position:absolute; bottom: 25px;}
+                        button {
+                            background-color: var(--highlight);
+                            padding: 4px 8px;
+                            cursor: pointer;
+                        }
+                        button:hover {background-color: var(--highlight2)}
+                    </style>
+                    <div class="btns">
+                        <button class="btn-reset">Reset</button>
+                    </div>
+                    `,
+                    code: `const a = glide.to('.el', 3000, {x:100, rotate:360, bg:'#ffcc00'}, {stagger:100, keep:true})
+    .to(1000, {width:100, rotate:0}, {stagger:50});
+    
+stage.querySelector('.btn-reset').addEventListener('click', ()=> a.reset());
+`,
+
+                },
+                {
                     title: "Remove",
-                    doc: `<p>You can pause or resume animations at any point. If, however, the animation has reached its end,
-                    it will be taken out of the animation loop. To avoid it, set option <code>keep:true</code>.
+                    doc: `<p><code>glide.remove(target(s))</code>Removes tweens of target(s), or all tweens 
+                        if no targets specified. It's equivalent of calling <code>glide.removeAll()</code>
                     </p>`,
                     numItems: 5,
                     text: "{{i}}",

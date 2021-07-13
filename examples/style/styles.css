@@ -146,6 +146,7 @@ nav {
 
 .side {
     font-size: .9rem;
+    overflow-y: auto;
 }
 
 .code {
