@@ -360,7 +360,7 @@ glide.to(obj, 2000, {x:'+=5', y:60, n:'5, 10, 15'}, {round:10})
                 },
                 {
                     title: "Stagger",
-                    doc: `<p>Causes multiple targets animate with a time offset.</p>`,
+                    doc: `<p>Causes multiple targets to animate with a time offset.</p>`,
                     numItems: 10,
                     css: ``,
                     code: `glide.to(".el", 1000, {x:200, rotate:180}, {stagger:50});`,
@@ -500,8 +500,8 @@ glide.fx.flap(els[2], {axis:'z'});
 </p>`,
                     numItems: 0,
                     text: "",
-                    disableStage: true,
                     css: ``,
+                    enableElementPointer: true,
                     innerHTML: `
                     <style>
                         .el {
@@ -540,11 +540,10 @@ flip2.target.addEventListener("click", ()=> flip2.flip());
             content: [
                 {
                     title: "Seek",
-                    doc: `<p>Seeks animation to a specified position in time</p>`,
+                    doc: `<p>Seeks animation to a specified position in time.</p>`,
                     numItems: 5,
                     text: "{{i}}",
                     css: `top:50px;`,
-                    disableStage: true,
                     innerHTML: `
                     <style>
                         input {left:25px; bottom:25px; position:absolute; width: 50%}
@@ -558,6 +557,71 @@ const a = glide.to('.el', 1000, {x:100, rotate:360, bg:'#ffcc00'}, {stagger:100}
 
 slider.max = a.totalDuration;
 slider.addEventListener('input', ()=> a.seek(parseFloat(slider.value)));
+`,
+
+                },
+                {
+                    title: "Pause/Play",
+                    doc: `<p>You can pause or resume animations at any point. If, however, the animation has reached its end,
+                    it will be taken out of the animation loop. To avoid it, set option <code>keep:true</code>.
+                    </p>`,
+                    numItems: 5,
+                    text: "{{i}}",
+                    css: `top:50px;`,
+                    innerHTML: `
+                    <style>
+                        .btns {position:absolute; bottom: 25px;}
+                        button {
+                            background-color: var(--highlight);
+                            padding: 4px 8px;
+                            cursor: pointer;
+                        }
+                        button:hover {background-color: var(--highlight2)}
+                    </style>
+                    <div class="btns">
+                        <button class="btn-pause">Pause</button>
+                        <button class="btn-play">Play</button>
+                    </div>
+                    `,
+                    code: `const a = glide.to('.el', 3000, {x:100, rotate:360, bg:'#ffcc00'}, {stagger:100, keep:true})
+    .to(1000, {width:100, rotate:0}, {stagger:50});
+    
+stage.querySelector('.btn-pause').addEventListener('click', ()=> a.pause());
+stage.querySelector('.btn-play').addEventListener('click', ()=> a.play());
+
+`,
+
+                },
+                {
+                    title: "Remove",
+                    doc: `<p>You can pause or resume animations at any point. If, however, the animation has reached its end,
+                    it will be taken out of the animation loop. To avoid it, set option <code>keep:true</code>.
+                    </p>`,
+                    numItems: 5,
+                    text: "{{i}}",
+                    css: `top:50px;`,
+                    innerHTML: `
+                    <style>
+                        .btns {position:absolute; bottom: 25px;}
+                        button {
+                            background-color: var(--highlight);
+                            padding: 4px 8px;
+                            cursor: pointer;
+                        }
+                        button:hover {background-color: var(--highlight2)}
+                    </style>
+                    <div class="btns">
+                        <button class="btn-remove">Remove Target(s)</button>
+                        <button class="btn-remove-all">Remove All</button>
+                    </div>
+                    `,
+                    code: `const els = stage.querySelectorAll('.el');
+const a = glide.to('.el', 1000, {x:100, rotate:360, bg:'#ffcc00'}, {stagger:100, repeat:10})
+    .to(1000, {width:100, rotate:0}, {stagger:50});
+    
+stage.querySelector('.btn-remove').addEventListener('click', ()=> glide.remove(els[1]));
+stage.querySelector('.btn-remove-all').addEventListener('click', ()=> glide.remove());
+
 `,
 
                 },

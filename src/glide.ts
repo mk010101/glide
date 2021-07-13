@@ -22,6 +22,16 @@ class Glide {
         return a;
     }
 
+    static remove(targets:any) {
+        if (!targets) {
+            Glide.removeAll();
+        } else {
+            for (let i = Glide.items.length - 1; i >= 0; i--) {
+                Glide.items[i].remove(targets);
+            }
+        }
+    }
+
     static removeAll() {
         for (let i = Glide.items.length - 1; i >= 0; i--) {
             Glide.items[i].remove();
@@ -41,6 +51,7 @@ class Glide {
         }
         Glide.lastTick = t;
         requestAnimationFrame(Glide.tick);
+        // console.log(Glide.items.length)
     }
 
     /**

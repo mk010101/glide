@@ -1218,9 +1218,16 @@ class Animation extends Dispatcher {
     }
     play() {
         if (this.status > -1) {
+            if (this.runningTime >= this.totalDuration) {
+                this.runningTime = 0;
+                this.reset();
+            }
             this.status = 1;
             this.paused = false;
         }
+    }
+    pause() {
+        this.paused = true;
     }
     seek(ms) {
         ms = minMax(ms, 0, this.totalDuration);
@@ -1674,6 +1681,16 @@ class Glide {
         let a = new Animation(targets, duration, params, options);
         Glide.items.push(a);
         return a;
+    }
+    static remove(targets) {
+        if (!targets) {
+            Glide.removeAll();
+        }
+        else {
+            for (let i = Glide.items.length - 1; i >= 0; i--) {
+                Glide.items[i].remove(targets);
+            }
+        }
     }
     static removeAll() {
         for (let i = Glide.items.length - 1; i >= 0; i--) {

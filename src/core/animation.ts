@@ -245,9 +245,17 @@ export class Animation extends Dispatcher {
 
     play() {
         if (this.status > -1) {
+            if (this.runningTime >= this.totalDuration) {
+                this.runningTime = 0;
+                this.reset();
+            }
             this.status = 1;
             this.paused = false;
         }
+    }
+
+    pause() {
+        this.paused = true;
     }
 
     seek(ms: number) {

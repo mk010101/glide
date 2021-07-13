@@ -53,8 +53,8 @@ function setListeners() {
         runAnimation();
     });
 
-    stage.addEventListener("click", ()=> {
-        if (!disableStage)
+    stage.addEventListener("click", (e)=> {
+        if (e.target.classList.contains("stage"))
             runAnimation();
     });
 
@@ -77,7 +77,8 @@ function runAnimation() {
     let str = "";
     for (let i = 0; i < item.numItems; i++) {
         let itemTxt = item.text? item.text === "{{i}}"? i : item.text : "";
-        const style = item.css? `style='${item.css}'` : "";
+        const pointerOn = item.enableElementPointer? ";pointer-events:''" : ";pointer-events:none";
+        const style = item.css? `style='${item.css}${pointerOn}' ` : `style='${pointerOn}'`;
         str += `<div class="el" ${style}>${itemTxt}</div>`;
     }
 

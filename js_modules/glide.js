@@ -10,6 +10,16 @@ class Glide {
         Glide.items.push(a);
         return a;
     }
+    static remove(targets) {
+        if (!targets) {
+            Glide.removeAll();
+        }
+        else {
+            for (let i = Glide.items.length - 1; i >= 0; i--) {
+                Glide.items[i].remove(targets);
+            }
+        }
+    }
     static removeAll() {
         for (let i = Glide.items.length - 1; i >= 0; i--) {
             Glide.items[i].remove();
