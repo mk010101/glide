@@ -26,7 +26,11 @@ export class Animation extends Dispatcher {
         this._seeking = false;
         this._preSeekState = 1;
         this._dir = 1;
-        if (duration != void 0) {
+        this.repeat = (options.repeat != (void 0) && options.repeat > 0) ? options.repeat + 1 : this.repeat;
+        this.loop = options.loop != (void 0) ? options.loop : this.loop;
+        this.paused = options.paused != (void 0) ? options.paused : this.paused;
+        this.keep = options.keep != (void 0) ? options.keep : this.keep;
+        if (targets != void 0 && duration != void 0) {
         }
         else {
             this.status = 0;
@@ -35,16 +39,13 @@ export class Animation extends Dispatcher {
         if (duration !== void 0)
             this.to(duration, params, options);
     }
-    target(targets, options) {
+    target(targets, options = {}) {
         this.targets = Animation._getTargets(targets, options);
+        options.numTargets = this.targets.length;
         return this;
     }
     to(duration, params, options = {}) {
-        let kf = new Keyframe();
-        this.repeat = (options.repeat != (void 0) && options.repeat > 0) ? options.repeat + 1 : this.repeat;
-        this.loop = options.loop != (void 0) ? options.loop : this.loop;
-        this.paused = options.paused != (void 0) ? options.paused : this.paused;
-        this.keep = options.keep != (void 0) ? options.keep : this.keep;
+        let kf = new Keyframe(this.keyframes.length);
         for (let i = 0; i < this.targets.length; i++) {
             const tg = Animation._getTweens(this.targets[i], duration, params, options);
             kf.push(tg);
@@ -59,15 +60,15 @@ export class Animation extends Dispatcher {
             this.status = 1;
         return this;
     }
-    set(params) {
-        let kf = new Keyframe();
-        for (let i = 0; i < this.targets.length; i++) {
-            const tg = Animation._getTweens(this.targets[i], 0, params, {});
-            kf.push(tg);
-            Animation._initTweens(kf);
-            Animation._render(kf.tgs, 1, 1);
-        }
-        return this;
+    set(params, options) {
+        return this.to(1, params, options);
+    }
+    getProgress() {
+        let p = Math.floor(this.runningTime * 100 / this.totalDuration);
+        return minMax(p, 0, 100);
+    }
+    getCurrentKeyframe() {
+        return this._currentKf;
     }
     update(t) {
         if ((this.paused || this.status < 1) && !this._seeking)
@@ -75,6 +76,7 @@ export class Animation extends Dispatcher {
         if (!this._currentKf.initialized) {
             Animation._initTweens(this._currentKf);
             this._currentKf.initialized = true;
+            this.dispatch(Evt.start, null);
         }
         this.time += t * this._dir;
         this.currentTime += t;
@@ -83,6 +85,7 @@ export class Animation extends Dispatcher {
         Animation._render(tgs, this.time, this._dir);
         this.dispatch(Evt.progress, null);
         if (this.currentTime >= this._currentKf.totalDuration) {
+            this.dispatch(Evt.keyframeend, null);
             if (this._currentKf.callFunc) {
                 this._currentKf.callFunc(this._currentKf.callParams);
             }
@@ -95,9 +98,9 @@ export class Animation extends Dispatcher {
                 this._pos--;
                 this._currentKf = this.keyframes[this._pos];
                 this.time = this._currentKf.totalDuration;
-                this.dispatch(Evt.loopend, null);
             }
             else {
+                this.dispatch(Evt.loopend, null);
                 this.playedTimes++;
                 if (this.playedTimes < this.repeat) {
                     if (this.loop) {
@@ -117,23 +120,35 @@ export class Animation extends Dispatcher {
         }
     }
     call(func, ...params) {
-        let kf = new Keyframe();
+        let kf = new Keyframe(this.keyframes.length);
         kf.callFunc = func;
         kf.callParams = params;
         this.keyframes.push(kf);
         return this;
     }
-    remove(target) {
-        for (let i = this.keyframes.length - 1; i >= 0; i--) {
-            let kf = this.keyframes[i];
-            for (let j = kf.tgs.length - 1; j >= 0; j--) {
-                const tg = kf.tgs[j];
-                if (tg.target.el === target) {
-                    kf.tgs.splice(j, 1);
+    remove(target = null) {
+        if (!target) {
+            this.status = -1;
+            this.keep = false;
+            this.keyframes = [];
+            this.targets = [];
+        }
+        else {
+            let targets = Animation._parseTargets(target);
+            for (let k = 0; k < targets.length; k++) {
+                const trg = targets[k];
+                for (let i = this.keyframes.length - 1; i >= 0; i--) {
+                    let kf = this.keyframes[i];
+                    for (let j = kf.tgs.length - 1; j >= 0; j--) {
+                        const tg = kf.tgs[j];
+                        if (tg.target.el === trg) {
+                            kf.tgs.splice(j, 1);
+                        }
+                    }
+                    if (kf.tgs.length === 0) {
+                        this.keyframes.splice(i, 1);
+                    }
                 }
-            }
-            if (kf.tgs.length === 0) {
-                this.keyframes.splice(i, 1);
             }
         }
     }
@@ -144,7 +159,7 @@ export class Animation extends Dispatcher {
             const tgs = this.keyframes[i].tgs;
             if (this.keyframes[i].initialized) {
                 for (let j = 0; j < tgs.length; j++) {
-                    Animation._render(tgs, 0, 1);
+                    Animation._render(tgs, 0, -1);
                 }
             }
         }
@@ -159,9 +174,16 @@ export class Animation extends Dispatcher {
     }
     play() {
         if (this.status > -1) {
+            if (this.runningTime >= this.totalDuration) {
+                this.runningTime = 0;
+                this.reset();
+            }
             this.status = 1;
             this.paused = false;
         }
+    }
+    pause() {
+        this.paused = true;
     }
     seek(ms) {
         ms = minMax(ms, 0, this.totalDuration);
@@ -183,7 +205,12 @@ export class Animation extends Dispatcher {
         let from = tw.from;
         let to = tw.to;
         if (to.numbers.length === 1 && to.units[0] == null) {
-            return from.numbers[0] + t * (to.numbers[0] - from.numbers[0]);
+            let val = from.numbers[0] + t * (to.numbers[0] - from.numbers[0]);
+            if (to.floats[0] === 0)
+                val = ~~val;
+            else if (to.round > 0)
+                val = Math.round(val * to.round) / to.round;
+            return val;
         }
         for (let i = 0; i < to.numbers.length; i++) {
             let nfrom = from.numbers[i];
@@ -192,6 +219,8 @@ export class Animation extends Dispatcher {
                 let val = nfrom + t * (nto - nfrom);
                 if (to.floats[i] === 0)
                     val = ~~val;
+                else if (to.round > 0)
+                    val = Math.round(val * to.round) / to.round;
                 str += val + to.units[i];
             }
             else {
@@ -292,28 +321,33 @@ export class Animation extends Dispatcher {
                 tweenable.filter = filtersStr;
         }
     }
-    static _getTargets(targets, options) {
-        if (is.string(targets)) {
-            targets = document.querySelectorAll(targets);
+    static _parseTargets(target) {
+        let targs = [];
+        if (is.string(target)) {
+            targs = document.querySelectorAll(target);
         }
-        let t = [];
-        if (is.list(targets)) {
-            for (let i = 0; i < targets.length; i++) {
-                let targ;
-                if (is.string(targets[i]))
-                    targ = document.querySelector(targets[i]);
+        else if (is.list(target)) {
+            for (let i = 0; i < target.length; i++) {
+                let t = target[i];
+                if (is.string(t))
+                    targs.push(document.querySelector(t));
                 else
-                    targ = targets[i];
-                let target = new Target(targ, options.context);
-                target.pos = i;
-                t.push(target);
+                    targs.push(t);
             }
         }
-        else if (is.tweenable(targets)) {
-            t.push(new Target(targets, options.context));
-        }
-        else {
+        else if (is.tweenable(target))
+            targs.push(target);
+        else
             throw (new TypeError("Target type is not valid."));
+        return targs;
+    }
+    static _getTargets(targets, options) {
+        let t = [];
+        let ts = Animation._parseTargets(targets);
+        for (let i = 0; i < ts.length; i++) {
+            let trg = new Target(ts[i], options.context);
+            trg.pos = i;
+            t.push(trg);
         }
         return t;
     }
@@ -400,7 +434,7 @@ export class Animation extends Dispatcher {
             tw.tweenable = target.tweenable;
         }
         if (options.stagger) {
-            let del = target.pos * options.stagger;
+            let del = options.stagger > 0 ? target.pos * options.stagger : options.numTargets * -options.stagger + target.pos * options.stagger;
             tw.start = del;
             tw.totalDuration += del;
         }

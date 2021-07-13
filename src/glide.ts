@@ -22,6 +22,22 @@ class Glide {
         return a;
     }
 
+    static remove(targets:any) {
+        if (!targets) {
+            Glide.removeAll();
+        } else {
+            for (let i = Glide.items.length - 1; i >= 0; i--) {
+                Glide.items[i].remove(targets);
+            }
+        }
+    }
+
+    static removeAll() {
+        for (let i = Glide.items.length - 1; i >= 0; i--) {
+            Glide.items[i].remove();
+        }
+    }
+
 
     static tick(t: number) {
         let delta = t - Glide.lastTick;
@@ -35,6 +51,7 @@ class Glide {
         }
         Glide.lastTick = t;
         requestAnimationFrame(Glide.tick);
+        // console.log(Glide.items.length)
     }
 
     /**
@@ -53,7 +70,7 @@ Glide.tick(performance.now());
 const glide = Glide;
 export default glide;
 
-import * as fx from "./fx/shake";
+import * as fx from "./fx/fx";
 fx.int(glide);
 glide.fx = fx;
 

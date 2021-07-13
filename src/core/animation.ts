@@ -44,7 +44,12 @@ export class Animation extends Dispatcher {
     constructor(targets: any, duration: number, params: any, options: any = {}) {
         super();
 
-        if (duration != void 0) {
+        this.repeat = (options.repeat != (void 0) && options.repeat > 0) ? options.repeat + 1 : this.repeat;
+        this.loop = options.loop != (void 0) ? options.loop : this.loop;
+        this.paused = options.paused != (void 0) ? options.paused : this.paused;
+        this.keep = options.keep != (void 0) ? options.keep : this.keep;
+
+        if (targets != void 0 && duration != void 0) {
 
         } else {
             this.status = 0;
@@ -57,20 +62,17 @@ export class Animation extends Dispatcher {
 
     }
 
-    target(targets: any, options: any) {
+    target(targets: any, options: any = {}) {
         this.targets = Animation._getTargets(targets, options);
+        options.numTargets = this.targets.length;
         return this;
     }
 
 
     to(duration: number, params: any, options: any = {}) {
 
-        let kf = new Keyframe();
+        let kf = new Keyframe(this.keyframes.length);
 
-        this.repeat = (options.repeat != (void 0) && options.repeat > 0) ? options.repeat + 1 : this.repeat;
-        this.loop = options.loop != (void 0) ? options.loop : this.loop;
-        this.paused = options.paused != (void 0) ? options.paused : this.paused;
-        this.keep = options.keep != (void 0) ? options.keep : this.keep;
 
         for (let i = 0; i < this.targets.length; i++) {
             const tg = Animation._getTweens(this.targets[i], duration, params, options);
@@ -89,7 +91,11 @@ export class Animation extends Dispatcher {
         return this;
     }
 
-    set(params: any) {
+    set(params: any, options: any) {
+
+        return this.to(1, params, options);
+
+        /*
         let kf = new Keyframe();
 
         for (let i = 0; i < this.targets.length; i++) {
@@ -99,6 +105,16 @@ export class Animation extends Dispatcher {
             Animation._render(kf.tgs, 1, 1)
         }
         return this;
+         */
+    }
+
+    getProgress() {
+        let p = Math.floor(this.runningTime * 100 / this.totalDuration);
+        return minMax(p, 0, 100);
+    }
+
+    getCurrentKeyframe() {
+        return this._currentKf;
     }
 
 
@@ -110,6 +126,7 @@ export class Animation extends Dispatcher {
         if (!this._currentKf.initialized) {
             Animation._initTweens(this._currentKf);
             this._currentKf.initialized = true;
+            this.dispatch(Evt.start, null);
         }
         //*/
 
@@ -117,15 +134,15 @@ export class Animation extends Dispatcher {
         this.currentTime += t;
         this.runningTime += t;
 
-        // console.log(~~this.time, ~~this.currentTime)
 
         const tgs = this._currentKf.tgs;
 
-        //this.dispatch(Evt.progress, null);
         Animation._render(tgs, this.time, this._dir);
         this.dispatch(Evt.progress, null);
 
         if (this.currentTime >= this._currentKf.totalDuration) {
+
+            this.dispatch(Evt.keyframeend, null);
 
             if (this._currentKf.callFunc) {
                 this._currentKf.callFunc(this._currentKf.callParams);
@@ -139,8 +156,9 @@ export class Animation extends Dispatcher {
                 this._pos--;
                 this._currentKf = this.keyframes[this._pos];
                 this.time = this._currentKf.totalDuration;
-                this.dispatch(Evt.loopend, null);
+
             } else {
+                this.dispatch(Evt.loopend, null);
                 this.playedTimes++;
                 if (this.playedTimes < this.repeat) {
                     if (this.loop) {
@@ -154,7 +172,6 @@ export class Animation extends Dispatcher {
                     this.dispatch(Evt.end, null);
                 }
             }
-
             this.currentTime = 0;
 
         }
@@ -167,7 +184,7 @@ export class Animation extends Dispatcher {
 
 
     call(func: Function, ...params: any) {
-        let kf = new Keyframe();
+        let kf = new Keyframe(this.keyframes.length);
         kf.callFunc = func;
         kf.callParams = params;
         this.keyframes.push(kf);
@@ -175,17 +192,30 @@ export class Animation extends Dispatcher {
     }
 
 
-    remove(target: any) {
-        for (let i = this.keyframes.length - 1; i >= 0; i--) {
-            let kf = this.keyframes[i];
-            for (let j = kf.tgs.length - 1; j >= 0; j--) {
-                const tg = kf.tgs[j];
-                if (tg.target.el === target) {
-                    kf.tgs.splice(j, 1);
+    remove(target: any = null) {
+
+        if (!target) {
+            this.status = -1;
+            this.keep = false;
+            this.keyframes = [];
+            this.targets = [];
+        } else {
+
+            let targets:any = Animation._parseTargets(target);
+            for (let k = 0; k < targets.length; k++) {
+                const trg = targets[k];
+                for (let i = this.keyframes.length - 1; i >= 0; i--) {
+                    let kf = this.keyframes[i];
+                    for (let j = kf.tgs.length - 1; j >= 0; j--) {
+                        const tg = kf.tgs[j];
+                        if (tg.target.el === trg) {
+                            kf.tgs.splice(j, 1);
+                        }
+                    }
+                    if (kf.tgs.length === 0) {
+                        this.keyframes.splice(i, 1);
+                    }
                 }
-            }
-            if (kf.tgs.length === 0) {
-                this.keyframes.splice(i, 1);
             }
         }
     }
@@ -198,7 +228,7 @@ export class Animation extends Dispatcher {
             const tgs = this.keyframes[i].tgs;
             if (this.keyframes[i].initialized) {
                 for (let j = 0; j < tgs.length; j++) {
-                    Animation._render(tgs, 0, 1);
+                    Animation._render(tgs, 0, -1);
                 }
             }
         }
@@ -218,9 +248,17 @@ export class Animation extends Dispatcher {
 
     play() {
         if (this.status > -1) {
+            if (this.runningTime >= this.totalDuration) {
+                this.runningTime = 0;
+                this.reset();
+            }
             this.status = 1;
             this.paused = false;
         }
+    }
+
+    pause() {
+        this.paused = true;
     }
 
     seek(ms: number) {
@@ -247,6 +285,7 @@ export class Animation extends Dispatcher {
         STATIC METHODS
      =================================================================================================================*/
 
+
     static _getRenderStr(tw: Tween, t: number): any {
         let str = "";
 
@@ -254,7 +293,12 @@ export class Animation extends Dispatcher {
         let to = tw.to;
 
         if (to.numbers.length === 1 && to.units[0] == null) {
-            return from.numbers[0] + t * (to.numbers[0] - from.numbers[0]);
+            let val = from.numbers[0] + t * (to.numbers[0] - from.numbers[0]);
+            if (to.floats[0] === 0)
+                val = ~~val;
+            else if (to.round > 0)
+                val = Math.round(val * to.round) / to.round;
+            return val;
         }
 
         for (let i = 0; i < to.numbers.length; i++) {
@@ -262,7 +306,10 @@ export class Animation extends Dispatcher {
             let nto = to.numbers[i];
             if (nto != null) {
                 let val = nfrom + t * (nto - nfrom);
-                if (to.floats[i] === 0) val = ~~val;
+                if (to.floats[i] === 0)
+                    val = ~~val;
+                else if (to.round > 0)
+                    val = Math.round(val * to.round) / to.round;
                 str += val + to.units[i];
             } else {
                 str += to.strings[i];
@@ -388,7 +435,7 @@ export class Animation extends Dispatcher {
                 // console.log(transStr)
                 if (tg.target.type === "dom")
                     tweenable.transform = transStr;
-                else if(tg.target.type === "svg")
+                else if (tg.target.type === "svg")
                     tweenable.setAttribute("transform", transStr);
             }
 
@@ -400,31 +447,39 @@ export class Animation extends Dispatcher {
     }
 
 
-    static _getTargets(targets: any, options: any): Target[] {
-        if (is.string(targets)) {
-            targets = document.querySelectorAll(targets);
-        }
+    static _parseTargets(target:any):any {
 
-        let t: Target[] = [];
+        let targs:any = [];
 
-        if (is.list(targets)) {
-            for (let i = 0; i < targets.length; i++) {
-                let targ: any;
-
-                if (is.string(targets[i]))
-                    targ = document.querySelector(targets[i]);
+        if (is.string(target)) {
+            targs = document.querySelectorAll(target);
+        } else if (is.list(target)) {
+            for (let i = 0; i < target.length; i++) {
+                let t = target[i];
+                if (is.string(t))
+                    targs.push(document.querySelector(t));
                 else
-                    targ = targets[i];
-
-                let target = new Target(targ, options.context);
-                target.pos = i;
-                t.push(target);
+                    targs.push(t);
             }
-        } else if (is.tweenable(targets)) {
-            t.push(new Target(targets, options.context));
-        } else {
+        } else if (is.tweenable(target))
+            targs.push(target);
+        else
             throw (new TypeError("Target type is not valid."));
+        return targs;
+    }
+
+
+    static _getTargets(targets: any, options: any): Target[] {
+
+        let t:Target[] = [];
+        let ts:any = Animation._parseTargets(targets);
+
+        for (let i = 0; i < ts.length; i++) {
+            let trg = new Target(ts[i], options.context);
+            trg.pos = i;
+            t.push(trg);
         }
+
         return t;
     }
 
@@ -526,7 +581,9 @@ export class Animation extends Dispatcher {
         }
 
         if (options.stagger) {
-            let del = target.pos * options.stagger;
+
+            let del = options.stagger > 0 ? target.pos * options.stagger : options.numTargets * -options.stagger + target.pos * options.stagger;
+            // let del = target.pos * options.stagger;
             tw.start = del;
             tw.totalDuration += del;
         }

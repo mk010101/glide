@@ -60,27 +60,17 @@
 <body>
 <div class="el">El</div>
 
-<div class="el-flip">
-    <div class="face f1">Side 1</div>
-    <div class="face f2">Side 2</div>
-</div>
 
 <script type="module">
 
     import glide from "./libs/glide.esm.js";
 
     const el = document.querySelector(".el");
-    const flipEl = document.querySelector(".el-flip");
-    const side1 = document.querySelector(".f1");
-    const side2 = document.querySelector(".f2");
 
 
     // glide.fx.shake(el);
     // glide.fx.flap(el, {speed:60, axis:"z"});
 
-    const flip = new glide.fx.Flip(flipEl, side1, side2, {continuous:true});
-    flip.flip();
-    flipEl.addEventListener("click", ()=> flip.flip());
 
 
 </script>

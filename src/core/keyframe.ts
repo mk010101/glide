@@ -1,8 +1,7 @@
 import {TweenGroup} from "./vo";
 
 export class Keyframe {
-
-
+    id = 0;
     duration: number = 0;
     totalDuration: number = 0;
     initialized = false;
@@ -11,6 +10,9 @@ export class Keyframe {
     callParams:any = null;
     startTime = 0;
 
+    constructor(id:number) {
+        this.id = id;
+    }
 
 
     push(tg: TweenGroup) {

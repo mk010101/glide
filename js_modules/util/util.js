@@ -65,7 +65,7 @@ export function getDefaultUnit(prop, targetType) {
     return "px";
 }
 export function getDefaultValue(prop) {
-    if (prop === "saturate")
+    if (prop === "saturate" || prop === "contrast")
         return 100;
     else if (is.valueOne(prop))
         return 1;
@@ -149,7 +149,7 @@ export function unwrapValues(prop, val) {
         ];
     }
 }
-function getDefaultVo(prop, val = null) {
+function getDefaultVo(prop, val = null, options = null) {
     let vo = new Vo();
     if (val == null)
         return vo;
@@ -167,6 +167,7 @@ function getDefaultVo(prop, val = null) {
         vo.strings.push(null);
         vo.increments.push(null);
     }
+    vo.round = (options === null || options === void 0 ? void 0 : options.round) != void 0 ? options.round : -1;
     return vo;
 }
 function addBraces(vo, prop) {
@@ -187,12 +188,13 @@ export function getVo(target, prop, val, options = null) {
     let vo = new Vo();
     let res = [];
     if (val == void 0) {
-        vo = getDefaultVo(prop, val);
+        vo = getDefaultVo(prop, val, options);
         return vo;
     }
     else if (is.number(val)) {
-        return getDefaultVo(prop, val);
+        return getDefaultVo(prop, val, options);
     }
+    vo.round = (options === null || options === void 0 ? void 0 : options.round) != void 0 ? options.round : -1;
     if (prop === "path") {
         const pVo = new SvgVo();
         let path;
@@ -399,7 +401,7 @@ export function normalizeTween(tw, target) {
                 to.numbers[i] *= from.numbers[i];
             }
             else if (incr === "/") {
-                to.numbers[i] /= from.numbers[i];
+                to.numbers[i] = from.numbers[i] / to.numbers[i];
             }
         }
     }

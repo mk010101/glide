@@ -1,5 +1,6 @@
 export class Keyframe {
-    constructor() {
+    constructor(id) {
+        this.id = 0;
         this.duration = 0;
         this.totalDuration = 0;
         this.initialized = false;
@@ -7,6 +8,7 @@ export class Keyframe {
         this.callFunc = null;
         this.callParams = null;
         this.startTime = 0;
+        this.id = id;
     }
     push(tg) {
         for (let i = 0; i < tg.tweens.length; i++) {

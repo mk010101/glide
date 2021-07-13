@@ -40,7 +40,7 @@
                 return;
             }
             let el = document.createElement("div");
-            el.style.position = "absolute";
+            el.style.position = "relative";
             el.style.visibility = "invisible";
             el.style.width = "1px";
             el.style.height = "1px";
@@ -284,6 +284,7 @@
             this.units = [];
             this.increments = [];
             this.strings = [];
+            this.round = -1;
         }
     }
     class SvgVo extends Vo {
@@ -644,7 +645,7 @@
         return "px";
     }
     function getDefaultValue(prop) {
-        if (prop === "saturate")
+        if (prop === "saturate" || prop === "contrast")
             return 100;
         else if (is.valueOne(prop))
             return 1;
@@ -724,7 +725,7 @@
             ];
         }
     }
-    function getDefaultVo(prop, val = null) {
+    function getDefaultVo(prop, val = null, options = null) {
         let vo = new Vo();
         if (val == null)
             return vo;
@@ -742,6 +743,7 @@
             vo.strings.push(null);
             vo.increments.push(null);
         }
+        vo.round = (options === null || options === void 0 ? void 0 : options.round) != void 0 ? options.round : -1;
         return vo;
     }
     function addBraces(vo, prop) {
@@ -762,12 +764,13 @@
         let vo = new Vo();
         let res = [];
         if (val == void 0) {
-            vo = getDefaultVo(prop, val);
+            vo = getDefaultVo(prop, val, options);
             return vo;
         }
         else if (is.number(val)) {
-            return getDefaultVo(prop, val);
+            return getDefaultVo(prop, val, options);
         }
+        vo.round = (options === null || options === void 0 ? void 0 : options.round) != void 0 ? options.round : -1;
         if (prop === "path") {
             const pVo = new SvgVo();
             let path;
@@ -973,7 +976,7 @@
                     to.numbers[i] *= from.numbers[i];
                 }
                 else if (incr === "/") {
-                    to.numbers[i] /= from.numbers[i];
+                    to.numbers[i] = from.numbers[i] / to.numbers[i];
                 }
             }
         }
@@ -1024,7 +1027,8 @@
     }
 
     class Keyframe {
-        constructor() {
+        constructor(id) {
+            this.id = 0;
             this.duration = 0;
             this.totalDuration = 0;
             this.initialized = false;
@@ -1032,6 +1036,7 @@
             this.callFunc = null;
             this.callParams = null;
             this.startTime = 0;
+            this.id = id;
         }
         push(tg) {
             for (let i = 0; i < tg.tweens.length; i++) {
@@ -1045,12 +1050,16 @@
     }
 
     const progress = "progress";
+    const start = "start";
     const end = "end";
     const loopend = "loopend";
+    const keyframeend = "keyframeend";
     const Evt = {
         progress: progress,
+        start: start,
         end: end,
         loopend: loopend,
+        keyframeend: keyframeend,
     };
 
     const Ease = ease;
@@ -1072,7 +1081,11 @@
             this._seeking = false;
             this._preSeekState = 1;
             this._dir = 1;
-            if (duration != void 0) ;
+            this.repeat = (options.repeat != (void 0) && options.repeat > 0) ? options.repeat + 1 : this.repeat;
+            this.loop = options.loop != (void 0) ? options.loop : this.loop;
+            this.paused = options.paused != (void 0) ? options.paused : this.paused;
+            this.keep = options.keep != (void 0) ? options.keep : this.keep;
+            if (targets != void 0 && duration != void 0) ;
             else {
                 this.status = 0;
             }
@@ -1080,16 +1093,13 @@
             if (duration !== void 0)
                 this.to(duration, params, options);
         }
-        target(targets, options) {
+        target(targets, options = {}) {
             this.targets = Animation._getTargets(targets, options);
+            options.numTargets = this.targets.length;
             return this;
         }
         to(duration, params, options = {}) {
-            let kf = new Keyframe();
-            this.repeat = (options.repeat != (void 0) && options.repeat > 0) ? options.repeat + 1 : this.repeat;
-            this.loop = options.loop != (void 0) ? options.loop : this.loop;
-            this.paused = options.paused != (void 0) ? options.paused : this.paused;
-            this.keep = options.keep != (void 0) ? options.keep : this.keep;
+            let kf = new Keyframe(this.keyframes.length);
             for (let i = 0; i < this.targets.length; i++) {
                 const tg = Animation._getTweens(this.targets[i], duration, params, options);
                 kf.push(tg);
@@ -1104,15 +1114,15 @@
                 this.status = 1;
             return this;
         }
-        set(params) {
-            let kf = new Keyframe();
-            for (let i = 0; i < this.targets.length; i++) {
-                const tg = Animation._getTweens(this.targets[i], 0, params, {});
-                kf.push(tg);
-                Animation._initTweens(kf);
-                Animation._render(kf.tgs, 1, 1);
-            }
-            return this;
+        set(params, options) {
+            return this.to(1, params, options);
+        }
+        getProgress() {
+            let p = Math.floor(this.runningTime * 100 / this.totalDuration);
+            return minMax(p, 0, 100);
+        }
+        getCurrentKeyframe() {
+            return this._currentKf;
         }
         update(t) {
             if ((this.paused || this.status < 1) && !this._seeking)
@@ -1120,6 +1130,7 @@
             if (!this._currentKf.initialized) {
                 Animation._initTweens(this._currentKf);
                 this._currentKf.initialized = true;
+                this.dispatch(Evt.start, null);
             }
             this.time += t * this._dir;
             this.currentTime += t;
@@ -1128,6 +1139,7 @@
             Animation._render(tgs, this.time, this._dir);
             this.dispatch(Evt.progress, null);
             if (this.currentTime >= this._currentKf.totalDuration) {
+                this.dispatch(Evt.keyframeend, null);
                 if (this._currentKf.callFunc) {
                     this._currentKf.callFunc(this._currentKf.callParams);
                 }
@@ -1140,9 +1152,9 @@
                     this._pos--;
                     this._currentKf = this.keyframes[this._pos];
                     this.time = this._currentKf.totalDuration;
-                    this.dispatch(Evt.loopend, null);
                 }
                 else {
+                    this.dispatch(Evt.loopend, null);
                     this.playedTimes++;
                     if (this.playedTimes < this.repeat) {
                         if (this.loop) {
@@ -1162,23 +1174,35 @@
             }
         }
         call(func, ...params) {
-            let kf = new Keyframe();
+            let kf = new Keyframe(this.keyframes.length);
             kf.callFunc = func;
             kf.callParams = params;
             this.keyframes.push(kf);
             return this;
         }
-        remove(target) {
-            for (let i = this.keyframes.length - 1; i >= 0; i--) {
-                let kf = this.keyframes[i];
-                for (let j = kf.tgs.length - 1; j >= 0; j--) {
-                    const tg = kf.tgs[j];
-                    if (tg.target.el === target) {
-                        kf.tgs.splice(j, 1);
+        remove(target = null) {
+            if (!target) {
+                this.status = -1;
+                this.keep = false;
+                this.keyframes = [];
+                this.targets = [];
+            }
+            else {
+                let targets = Animation._parseTargets(target);
+                for (let k = 0; k < targets.length; k++) {
+                    const trg = targets[k];
+                    for (let i = this.keyframes.length - 1; i >= 0; i--) {
+                        let kf = this.keyframes[i];
+                        for (let j = kf.tgs.length - 1; j >= 0; j--) {
+                            const tg = kf.tgs[j];
+                            if (tg.target.el === trg) {
+                                kf.tgs.splice(j, 1);
+                            }
+                        }
+                        if (kf.tgs.length === 0) {
+                            this.keyframes.splice(i, 1);
+                        }
                     }
-                }
-                if (kf.tgs.length === 0) {
-                    this.keyframes.splice(i, 1);
                 }
             }
         }
@@ -1189,7 +1213,7 @@
                 const tgs = this.keyframes[i].tgs;
                 if (this.keyframes[i].initialized) {
                     for (let j = 0; j < tgs.length; j++) {
-                        Animation._render(tgs, 0, 1);
+                        Animation._render(tgs, 0, -1);
                     }
                 }
             }
@@ -1204,9 +1228,16 @@
         }
         play() {
             if (this.status > -1) {
+                if (this.runningTime >= this.totalDuration) {
+                    this.runningTime = 0;
+                    this.reset();
+                }
                 this.status = 1;
                 this.paused = false;
             }
+        }
+        pause() {
+            this.paused = true;
         }
         seek(ms) {
             ms = minMax(ms, 0, this.totalDuration);
@@ -1228,7 +1259,12 @@
             let from = tw.from;
             let to = tw.to;
             if (to.numbers.length === 1 && to.units[0] == null) {
-                return from.numbers[0] + t * (to.numbers[0] - from.numbers[0]);
+                let val = from.numbers[0] + t * (to.numbers[0] - from.numbers[0]);
+                if (to.floats[0] === 0)
+                    val = ~~val;
+                else if (to.round > 0)
+                    val = Math.round(val * to.round) / to.round;
+                return val;
             }
             for (let i = 0; i < to.numbers.length; i++) {
                 let nfrom = from.numbers[i];
@@ -1237,6 +1273,8 @@
                     let val = nfrom + t * (nto - nfrom);
                     if (to.floats[i] === 0)
                         val = ~~val;
+                    else if (to.round > 0)
+                        val = Math.round(val * to.round) / to.round;
                     str += val + to.units[i];
                 }
                 else {
@@ -1337,28 +1375,33 @@
                     tweenable.filter = filtersStr;
             }
         }
-        static _getTargets(targets, options) {
-            if (is.string(targets)) {
-                targets = document.querySelectorAll(targets);
+        static _parseTargets(target) {
+            let targs = [];
+            if (is.string(target)) {
+                targs = document.querySelectorAll(target);
             }
-            let t = [];
-            if (is.list(targets)) {
-                for (let i = 0; i < targets.length; i++) {
-                    let targ;
-                    if (is.string(targets[i]))
-                        targ = document.querySelector(targets[i]);
+            else if (is.list(target)) {
+                for (let i = 0; i < target.length; i++) {
+                    let t = target[i];
+                    if (is.string(t))
+                        targs.push(document.querySelector(t));
                     else
-                        targ = targets[i];
-                    let target = new Target(targ, options.context);
-                    target.pos = i;
-                    t.push(target);
+                        targs.push(t);
                 }
             }
-            else if (is.tweenable(targets)) {
-                t.push(new Target(targets, options.context));
-            }
-            else {
+            else if (is.tweenable(target))
+                targs.push(target);
+            else
                 throw (new TypeError("Target type is not valid."));
+            return targs;
+        }
+        static _getTargets(targets, options) {
+            let t = [];
+            let ts = Animation._parseTargets(targets);
+            for (let i = 0; i < ts.length; i++) {
+                let trg = new Target(ts[i], options.context);
+                trg.pos = i;
+                t.push(trg);
             }
             return t;
         }
@@ -1445,7 +1488,7 @@
                 tw.tweenable = target.tweenable;
             }
             if (options.stagger) {
-                let del = target.pos * options.stagger;
+                let del = options.stagger > 0 ? target.pos * options.stagger : options.numTargets * -options.stagger + target.pos * options.stagger;
                 tw.start = del;
                 tw.totalDuration += del;
             }
@@ -1557,18 +1600,18 @@
         glide$1 = $glide;
     }
     function shake(target, options = null) {
-        const t = (options === null || options === void 0 ? void 0 : options.speed) ? options.speed : 60;
+        const t = (options === null || options === void 0 ? void 0 : options.speed) ? 1000 / options.speed : 1000 / 20;
         const dist = (options === null || options === void 0 ? void 0 : options.distance) ? options.distance : 10;
         const times = (options === null || options === void 0 ? void 0 : options.times) ? options.times : 4;
         const prop = (options === null || options === void 0 ? void 0 : options.axis) ? options.axis : "x";
-        glide$1.to(target, t / 2, { [prop]: -dist })
+        return glide$1.to(target, t / 2, { [prop]: -dist })
             .on("end", () => {
             glide$1.to(target, t, { [prop]: dist }, { repeat: times })
                 .on("end", () => glide$1.to(target, t / 2, { [prop]: 0 }));
         });
     }
     function flap(target, options = null) {
-        const t = (options === null || options === void 0 ? void 0 : options.speed) ? options.speed : 70;
+        const t = (options === null || options === void 0 ? void 0 : options.speed) ? 1000 / options.speed : 1000 / 15;
         const anlge = (options === null || options === void 0 ? void 0 : options.angle) ? options.angle : 20;
         const times = (options === null || options === void 0 ? void 0 : options.times) ? options.times : 4;
         let prop = "rotateY";
@@ -1580,25 +1623,25 @@
             if (options.axis === "z")
                 prop = "rotateZ";
         }
-        glide$1.to(target, t / 2, { [prop]: -anlge })
+        return glide$1.to(target, t / 2, { [prop]: -anlge })
             .on("end", () => {
             glide$1.to(target, t, { [prop]: anlge }, { repeat: times })
                 .on("end", () => glide$1.to(target, t / 2, { [prop]: 0 }));
         });
     }
     class Flip {
-        constructor(el, side1, side2, options = null) {
+        constructor(target, side1, side2, options = null) {
             this.prop = "rotateY";
-            this.time = 400;
+            this.speed = 1000 / 2.5;
             this.continuous = false;
             this.deg = "+=90";
             this.originalStyle = "block";
-            this.el = el;
-            this.side1 = side1;
-            this.side2 = side2;
+            this.target = getElement(target);
+            this.side1 = getElement(side1);
+            this.side2 = getElement(side2);
             this.side2.style.display = "none";
             this.continuous = (options === null || options === void 0 ? void 0 : options.continuous) != void 0 ? options.continuous : false;
-            this.time = (options === null || options === void 0 ? void 0 : options.time) != void 0 ? options.time : this.time;
+            this.speed = (options === null || options === void 0 ? void 0 : options.speed) != void 0 ? 1000 / options.speed : this.speed;
             this.originalStyle = window.getComputedStyle(this.side1).display;
             if ((options === null || options === void 0 ? void 0 : options.axis) === "x")
                 this.prop = "rotateX";
@@ -1612,11 +1655,12 @@
             }
         }
         flip() {
-            glide$1.to(this.el, this.time, { [this.prop]: this.deg }, { ease: "quadIn" })
+            this.target.style.pointerEvents = "none";
+            glide$1.to(this.target, this.speed, { [this.prop]: this.deg }, { ease: "quadIn" })
                 .on("end", () => {
                 this.side1.style.display = "none";
                 this.side2.style.display = this.originalStyle;
-                glide$1.to(this.el, this.time, { [this.prop]: this.deg }, { ease: "quadOut" })
+                glide$1.to(this.target, this.speed, { [this.prop]: this.deg }, { ease: "quadOut" })
                     .on("end", () => {
                     let tmp = this.side2;
                     this.side2 = this.side1;
@@ -1624,9 +1668,16 @@
                     if (!this.continuous) {
                         this.deg = this.deg === "+=90" ? "-=90" : "+=90";
                     }
+                    this.target.style.pointerEvents = "";
                 });
             });
         }
+    }
+    function getElement(el) {
+        if (is.string(el))
+            return document.querySelector(el);
+        else if (is.dom(el))
+            return el;
     }
 
     var fx = /*#__PURE__*/Object.freeze({
@@ -1645,6 +1696,21 @@
             let a = new Animation(targets, duration, params, options);
             Glide.items.push(a);
             return a;
+        }
+        static remove(targets) {
+            if (!targets) {
+                Glide.removeAll();
+            }
+            else {
+                for (let i = Glide.items.length - 1; i >= 0; i--) {
+                    Glide.items[i].remove(targets);
+                }
+            }
+        }
+        static removeAll() {
+            for (let i = Glide.items.length - 1; i >= 0; i--) {
+                Glide.items[i].remove();
+            }
         }
         static tick(t) {
             let delta = t - Glide.lastTick;
