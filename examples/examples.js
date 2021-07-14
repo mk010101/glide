@@ -138,11 +138,11 @@ window.onload = ()=> {
     runAnimation();
     const viewEl = nav.querySelector(`.nav-item[data-id='${id}']`);
     const rect = viewEl.getBoundingClientRect();
-    // nav.scrollTo({
-    //     top: rect.top + window.pageYOffset - 50,
-    //     behavior: "smooth"
-    // })
-    nav.querySelector(`.nav-item[data-id='${id}']`).scrollIntoView();
+    nav.scrollTo({
+        top: viewEl.offsetTop - 80,
+        behavior: "smooth"
+    });
+    // nav.querySelector(`.nav-item[data-id='${id}']`).scrollIntoView();
 
 };
 

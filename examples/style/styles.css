@@ -119,6 +119,7 @@ nav {
     grid-row-end: -1;
     border-right: var(--border-color) 1px solid;
     overflow-y: auto;
+    padding-bottom: 2rem;
 }
 
 .stage, .css {
@@ -287,6 +288,7 @@ svg {
     width: 100%;
     height: 90%;
     padding: 10px;
+    pointer-events: none;
 }
 
 svg text {
