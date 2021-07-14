@@ -8,6 +8,7 @@
 
         body {
             background-color: #2B2B2B;
+            padding: 4rem;
         }
 
         .el2 {
@@ -33,12 +34,12 @@
 <body>
 <img class="src-img" src="assets/glide.png">
 <canvas class="canvas"></canvas>
-<div class="res"></div>
+<div class="animation"></div>
 <script>
 
     window.onload = () => {
         const img = document.querySelector(".src-img");
-        const res = document.querySelector(".res");
+        const res = document.querySelector(".animation");
         const canvas = document.querySelector('.canvas');
 
         const arr = [];
@@ -92,7 +93,7 @@
                 // let rgb = `rbg(200, 0, 0)`;
 
                 glide.to(els[i], time, {x: x, y: {value:y, duration: time + 500}, scale:scStr, bg:rgb}, {delay: del, repeat: 1})
-                    .to(500, {y:"+=20"})
+                    .to(500, {y:"+=10"})
 
 
             }

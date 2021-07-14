@@ -6,6 +6,12 @@ const data = {
             title: "Basics",
             content: [
                 {
+                    title: "Glide",
+                    doc: ``,
+                    animation: true,
+                    code: '',
+                },
+                {
                     title: "Basic Example",
                     doc: `<p><code>glide.to()</code> accepts 4 arguments: target(s), duration in milliseconds, 
                     animation properties object, and options object (optional).</p>

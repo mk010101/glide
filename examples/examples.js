@@ -1,5 +1,6 @@
 import data from "./assets/data.js";
 import glide from "./libs/glide.esm.js";
+import * as animation from "./animation.js";
 
 let nav, stage, cssEl, codeMirror, aside, dataMap = {}, currentId = 0;
 let disableStage = false;
@@ -72,8 +73,10 @@ function loadAnimation(id) {
 }
 
 function runAnimation() {
+
     glide.removeAll();
     let item = dataMap[currentId];
+
     let str = "";
     for (let i = 0; i < item.numItems; i++) {
         let itemTxt = item.text? item.text === "{{i}}"? i : item.text : "";
@@ -93,6 +96,12 @@ function runAnimation() {
         cssEl.innerHTML = "CSS &#8594;  " + item.cssProp + ": " + st + ";";
     } else {
         cssEl.innerHTML = "";
+    }
+
+    if (item.animation === true) {
+        animation.init();
+    } else {
+        stage.classList.remove("animate");
     }
 
     setTimeout(()=> {
@@ -126,6 +135,12 @@ window.onload = ()=> {
     }
     loadAnimation(id);
     runAnimation();
+    const viewEl = nav.querySelector(`.nav-item[data-id='${id}']`);
+    const rect = viewEl.getBoundingClientRect();
+    // nav.scrollTo({
+    //     top: rect.top + window.pageYOffset - 50,
+    //     behavior: "smooth"
+    // })
     nav.querySelector(`.nav-item[data-id='${id}']`).scrollIntoView();
 
 };
