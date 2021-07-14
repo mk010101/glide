@@ -1,9 +1,12 @@
 import glide from "./libs/glide.esm.js";
 
-const num = 1000;
-let img, res, stage, canvas, ctx, rect, n;
+let img, res, stage, canvas, ctx, rect, n, dur;
 let arr = [];
 let els;
+
+const funcs = [explode, explode2, melt];
+let index = 0;
+let timeout;
 
 
 export async function init() {
@@ -28,11 +31,26 @@ export async function init() {
     // stage.appendChild(canvas);
     stage.appendChild(res);
 
+    window.clearTimeout(timeout);
+    dur = 0;
     parseCtx();
     setElements();
 
-    explode();
+    // explode();
+    // explode2();
+    // melt();
+    run();
 
+}
+
+function run() {
+    timeout = setTimeout(()=> {
+        dur = 0;
+        funcs[index]();
+        index++;
+        if (index > funcs.length-1) index = 0;
+        run();
+    }, dur);
 }
 
 
@@ -78,8 +96,9 @@ function setElements() {
 
 
 function explode() {
+
     for (let i = 0; i < n; i++) {
-        let del = 500 + Math.random() * 100 + i * 2;
+        let del = 100 + Math.random() * 100 + i * 2;
         let time = 1000 + Math.random() * 1000;
         const obj = arr[i];
         let x = obj.x + Math.random() * rect.width / 2 - Math.random() * rect.width / 2;
@@ -92,14 +111,62 @@ function explode() {
         let rgb = `rgb(${r}, ${g}, ${b})`;
         let sc = Math.random() * 3;
         let scStr = `${sc}, ${sc}`;
-        // let rgb = `rbg(200, 0, 0)`;
 
-        // glide.to(els[i], time, {x: x, y: {value:y, duration: time + 500}, scale:scStr, opacity:0}, {delay: del, repeat: 1})
-        glide.to(els[i], time,
+        const a = glide.to(els[i], time,
             {x: x, y: {value: y, duration: time + 500}, scale: scStr, bg: rgb},
             {delay: del, repeat: 1, ease: 'quadInOut'})
-            .to(500, {y: "+=10"})
+            .to(500, {y: "+=10"});
 
+        if (dur < a.totalDuration) dur = a.totalDuration;
 
     }
 }
+
+
+function explode2() {
+    for (let i = 0; i < n; i++) {
+        // let del = 500 + Math.random() * 100 + i * 4;
+        let del = arr[i].y * 15;
+        let time = 1000 + Math.random() * 1000;
+        const obj = arr[i];
+        let x = obj.x + Math.random() * rect.width / 5 - Math.random() * rect.width / 5;
+        let y = obj.y + Math.random() * rect.height / 2 - Math.random() * rect.height;
+
+        const a = glide.to(els[i], time, {
+                x: x,
+                y: {value: y, duration: time + 500},
+                opacity: .6,
+                bg: {value: '#04e7ff', time: time / 2}
+            },
+            {delay: del, repeat: 1})
+            .to(time, {y: 150});
+
+        if (dur < a.totalDuration) dur = a.totalDuration;
+
+
+        // glide.to(els[i], time, {x: x, y: {value:y, duration: time + 500}, opacity:0}, {delay: del, repeat: 1})
+
+    }
+}
+
+
+function melt() {
+
+    for (let i = 0; i < n; i++) {
+        const obj = arr[i];
+        let del = n * 2 - arr[i].y * 15 + Math.random() * 300 + 100;
+        let x = obj.x + Math.random() * rect.width / 5 - Math.random() * rect.width / 5;
+        const a = glide.to(els[i], 700,
+            {y: "150", bg:'#04e7ff'},
+            {repeat: 0, delay: del})
+            .to(800, {x:x})
+            .to(500, {x:obj.x, y:obj.y, bg:'#00ee00'});
+            // .to(800, {x:-obj.x + 250,
+            //     y:-obj.y + 100})
+
+        if (dur < a.totalDuration) dur = a.totalDuration;
+
+    }
+
+}
+
