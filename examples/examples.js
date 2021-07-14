@@ -102,6 +102,7 @@ function runAnimation() {
         animation.init();
     } else {
         stage.classList.remove("animate");
+        animation.stop();
     }
 
     setTimeout(()=> {

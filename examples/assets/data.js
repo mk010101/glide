@@ -7,15 +7,16 @@ const data = {
             content: [
                 {
                     title: "Glide",
-                    doc: ``,
+                    doc: `Click on the stage to re-run animations`,
                     animation: true,
-                    code: '',
+                    code: `//You can try out features by editing code here!
+`,
                 },
                 {
                     title: "Basic Example",
                     doc: `<p><code>glide.to()</code> accepts 4 arguments: target(s), duration in milliseconds, 
                     animation properties object, and options object (optional).</p>
-                    <p>Use the code editor below to change values. Click on the stage to run animation.</p>`,
+                    <p>Use the code editor below to change values. Click on the stage to re-run animations.</p>`,
                     numItems: 1,
                     css: ``,
                     innerHTML: "Stage",
@@ -189,16 +190,18 @@ const animation = glide.to(".el", 500, {y:50, scaleY:2, rotate:180, bg:'rgba(50,
             content: [
                 {
                     title: "CSS",
-                    doc: `You can tween any CSS property.`,
-                    numItems: 4,
+                    doc: `Glide can animate nearly all CSS properties, as long as they're numeric/hex; 
+                    for example, <code>color: 'red'</code> or <code>transformOrigin: 'center'</code> will NOT work.`,
+                    numItems: 5,
                     text: "{{i}}",
                     css: ``,
                     code: `const els = document.querySelectorAll(".el");
                     
-glide.to(els[0], 1000, {marginLeft:'8rem', width:50, border:'#ff0000 4px dashed'});
+glide.to(els[0], 1000, {width:50, border:'#ff0000 4px dashed'});
 glide.to(els[1], 1000, {width:200});
 glide.to(els[2], 1000, {color:'#ff0000'});
-glide.to(els[3], 1000, {height:50, width:50, fontSize:36});
+glide.to(els[3], 1000, {height:50, width:50, fontSize:36, boxShadow:'#ffff00 3px 3px 10px'});
+glide.to(els[4], 1000, {marginTop:25});
 `,
                 },
                 {
