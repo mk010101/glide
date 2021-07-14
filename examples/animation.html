@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>animation</title>
+    <script src="libs/glide.js"></script>
+    <style>
+
+        body {
+            background-color: #2B2B2B;
+        }
+
+        .el2 {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background-color: #00bb00;
+            border-radius: 50%;
+        }
+
+        canvas, .src-img {
+            width: 30%;
+            position: absolute;
+            visibility: hidden;
+        }
+
+        .src-img {
+            /*display: none;*/
+        }
+
+    </style>
+</head>
+<body>
+<img class="src-img" src="assets/glide.png">
+<canvas class="canvas"></canvas>
+<div class="res"></div>
+<script>
+
+    window.onload = () => {
+        const img = document.querySelector(".src-img");
+        const res = document.querySelector(".res");
+        const canvas = document.querySelector('.canvas');
+
+        const arr = [];
+        let els;
+
+
+
+        const rect = img.getBoundingClientRect();
+        canvas.width = rect.width;
+        canvas.height = rect.height;
+
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, rect.width, rect.height);
+
+
+
+        function parseCtx() {
+
+            const step = 4;
+            let str = '';
+            let n = 0;
+            for (let i = 0; i < canvas.width; i += step) {
+                for (let j = 0; j < canvas.height; j += step) {
+                    const px = ctx.getImageData(i, j, 1, 1).data[3];
+                    if (px > 0) {
+                        str += `<div class="el2" style="transform: translate(${i}px, ${j}px)"></div>`;
+                        arr.push({x: i, y: j});
+                        n++;
+                    }
+                }
+            }
+            console.log(n);
+            res.innerHTML = str;
+            els = document.querySelectorAll(".el2");
+
+
+            for (let i = 0; i < n; i++) {
+                let del = 500 + Math.random() * 100 + i*2;
+                let time = 800 + Math.random() * 1000;
+                const obj = arr[i];
+                let x = obj.x + Math.random() * rect.width/2 - Math.random() * rect.width/2;
+                let y = obj.y + Math.random() * rect.height - Math.random() * rect.height;
+                // let rot = Math.random() * 180 - Math.random() * 180;
+
+                let r = Math.floor(Math.random() * 255);
+                let g = Math.floor(Math.random() * 255);
+                let b = Math.floor(Math.random() * 255);
+                let rgb = `rgb(${r}, ${g}, ${b})`;
+                let sc = Math.random() * 3;
+                let scStr = `${sc}, ${sc}`;
+                // let rgb = `rbg(200, 0, 0)`;
+
+                glide.to(els[i], time, {x: x, y: {value:y, duration: time + 500}, scale:scStr, bg:rgb}, {delay: del, repeat: 1})
+                    .to(500, {y:"+=20"})
+
+
+            }
+
+
+        }
+
+        parseCtx();
+
+
+    }
+
+
+</script>
+
+
+</body>
+</html>

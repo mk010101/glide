@@ -108,6 +108,9 @@ export class Animation extends Dispatcher {
          */
     }
 
+    /**
+     * Returns % completed.
+     */
     getProgress() {
         let p = Math.floor(this.runningTime * 100 / this.totalDuration);
         return minMax(p, 0, 100);

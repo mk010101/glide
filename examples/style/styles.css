@@ -250,6 +250,15 @@ li {
 }
 
 
+button {
+    background-color: var(--highlight);
+    padding: 4px 8px;
+    cursor: pointer;
+    border: #b2b2b2 1px solid;
+}
+button:hover {background-color: var(--highlight2)}
+
+
 /* =====================================================================================================================
     ANIMATIONS
 ======================================================================================================================*/
@@ -299,7 +308,7 @@ svg text {
     border-left: 4px solid transparent;
     padding-left: 4px;
     line-height: .8;
-    margin: .6rem 0;
+    margin: .8rem 0;
 }
 
 .nav-item:hover {

@@ -572,12 +572,6 @@ slider.addEventListener('input', ()=> a.seek(parseFloat(slider.value)));
                     innerHTML: `
                     <style>
                         .btns {position:absolute; bottom: 25px;}
-                        button {
-                            background-color: var(--highlight);
-                            padding: 4px 8px;
-                            cursor: pointer;
-                        }
-                        button:hover {background-color: var(--highlight2)}
                     </style>
                     <div class="btns">
                         <button class="btn-pause">Pause</button>
@@ -603,12 +597,6 @@ stage.querySelector('.btn-play').addEventListener('click', ()=> a.play());
                     innerHTML: `
                     <style>
                         .btns {position:absolute; bottom: 25px;}
-                        button {
-                            background-color: var(--highlight);
-                            padding: 4px 8px;
-                            cursor: pointer;
-                        }
-                        button:hover {background-color: var(--highlight2)}
                     </style>
                     <div class="btns">
                         <button class="btn-reset">Reset</button>
@@ -621,6 +609,28 @@ stage.querySelector('.btn-reset').addEventListener('click', ()=> a.reset());
 `,
 
                 },
+
+                {
+                    title: "Progress",
+                    doc: `Returns percent completed.`,
+                    numItems: 5,
+                    text: "",
+                    cssProp: "",
+                    css: ``,
+                    innerHTML: `<style>
+                        .obj { color: var(--highlight); pointer-events: none; bottom: 25px; left: 25px; position: absolute;}
+                        .obj > div > span { color: var(--highlight4);}
+                    </style>
+                    <div class="obj"><div>Completed: <span class="f-x">0%</span></div></div>`,
+                    code: `const elTxt = stage.querySelector('.f-x');
+
+const a = glide.to(".el", 1000, {x:100}, {stagger:50})
+    .to(1000, {x:0, rotate:360})
+    .on('progress', _=> {elTxt.textContent = a.getProgress() + '%';});
+`,
+                },
+
+
                 {
                     title: "Remove",
                     doc: `<p><code>glide.remove(target(s))</code>Removes tweens of target(s), or all tweens 
