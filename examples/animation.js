@@ -219,11 +219,16 @@ function rotate() {
 
 
 function scale() {
+
+
+    glide.to(stage, 1500, {perspective:250}, {delay:100, repeat:1});
+    glide.to(res, 2000, {rotateY:-60}, {delay:100, repeat:1});
+
     for (let i = 0; i < n; i++) {
         const obj = arr[i];
         let del = arr[i].y * 12 + Math.random() * 30 + 200;
         let sc = Math.random() * 60 + 3.2;
-        let rand = Math.random() * 10 - Math.random() * 10;
+        let rand = Math.random() * 10000 - Math.random() * 100;
         const a = glide.to(els[i], 1500,
             {scale: `${sc}, ${.1}`, bg: '#ff07fe'},
             {repeat: 1, delay: del})
