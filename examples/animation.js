@@ -11,7 +11,7 @@ const cg = 0;
 const cb = 255;
 
 
-const funcs = [explode, rotate, explode2, melt];
+const funcs = [explode, rotate, scale, explode2, melt];
 let index = 0;
 let timeout;
 
@@ -48,6 +48,7 @@ export async function init() {
     // explode2();
     // melt();
     // rotate();
+    // scale();
 
     run();
 
@@ -111,6 +112,13 @@ function setElements() {
 }
 
 
+function getRandColor() {
+    let r = Math.floor(Math.random() * 255);
+    let g = Math.floor(Math.random() * 255);
+    let b = Math.floor(Math.random() * 255);
+    return `rgb(${r}, ${g}, ${b})`;
+}
+
 function explode() {
 
     for (let i = 0; i < n; i++) {
@@ -121,10 +129,7 @@ function explode() {
         let y = obj.y + Math.random() * rect.height - Math.random() * rect.height;
         // let rot = Math.random() * 180 - Math.random() * 180;
 
-        let r = Math.floor(Math.random() * 255);
-        let g = Math.floor(Math.random() * 255);
-        let b = Math.floor(Math.random() * 255);
-        let rgb = `rgb(${r}, ${g}, ${b})`;
+        let rgb = getRandColor();
         let sc = Math.random() * 3;
         let scStr = `${sc}, ${sc}`;
 
@@ -203,6 +208,27 @@ function rotate() {
             {rotate: rot, bg: '#ff07fe'},
             {repeat: 0, delay: del})
             .to(1000, {bg: bg}, {delay: Math.random() * 100, ease: 'elasticOut'});
+        // .to(500, {x: obj.x, y: obj.y, bg: '#00ee00'});
+        // .to(800, {x:-obj.x + 250,
+        //     y:-obj.y + 100})
+
+        if (dur < a.totalDuration) dur = a.totalDuration;
+
+    }
+}
+
+
+function scale() {
+    for (let i = 0; i < n; i++) {
+        const obj = arr[i];
+        let del = arr[i].y * 12 + Math.random() * 30 + 200;
+        let sc = Math.random() * 60 + 3.2;
+        let rand = Math.random() * 10 - Math.random() * 10;
+        const a = glide.to(els[i], 1500,
+            {scale: `${sc}, ${.1}`, bg: '#ff07fe'},
+            {repeat: 1, delay: del})
+            .to(1000, {scaleX: '.2', scaleY: 1, bg: bg}, {})
+            .to(1000, {n:100});
         // .to(500, {x: obj.x, y: obj.y, bg: '#00ee00'});
         // .to(800, {x:-obj.x + 250,
         //     y:-obj.y + 100})
