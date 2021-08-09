@@ -3,8 +3,9 @@
   "version": "1.0.0",
   "description": "JS tween library",
   "main": "gulpfile.js",
+  "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js"
   },
   "author": "Max Kostin",
   "license": "ISC",
@@ -12,6 +13,7 @@
     "browser-sync": "^2.26.14",
     "gulp": "^4.0.2",
     "gulp-typescript": "^6.0.0-alpha.1",
+    "jest": "^27.0.6",
     "rollup": "^2.50.1",
     "typescript": "^4.2.4"
   }
