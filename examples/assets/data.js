@@ -6,10 +6,17 @@ const data = {
             title: "Basics",
             content: [
                 {
+                    title: "Glide",
+                    doc: `Click on the stage to re-run animations`,
+                    animation: true,
+                    code: `//You can try out features by editing code here!
+`,
+                },
+                {
                     title: "Basic Example",
                     doc: `<p><code>glide.to()</code> accepts 4 arguments: target(s), duration in milliseconds, 
                     animation properties object, and options object (optional).</p>
-                    <p>Use the code editor below to change values. Click on the stage to run animation.</p>`,
+                    <p>Use the code editor below to change values. Click on the stage to re-run animations.</p>`,
                     numItems: 1,
                     css: ``,
                     innerHTML: "Stage",
@@ -183,16 +190,18 @@ const animation = glide.to(".el", 500, {y:50, scaleY:2, rotate:180, bg:'rgba(50,
             content: [
                 {
                     title: "CSS",
-                    doc: `You can tween any CSS property.`,
-                    numItems: 4,
+                    doc: `Glide can animate nearly all CSS properties, as long as they're numeric/hex; 
+                    for example, <code>color: 'red'</code> or <code>transformOrigin: 'center'</code> will NOT work.`,
+                    numItems: 5,
                     text: "{{i}}",
                     css: ``,
                     code: `const els = document.querySelectorAll(".el");
                     
-glide.to(els[0], 1000, {marginLeft:'8rem', width:50, border:'#ff0000 4px dashed'});
+glide.to(els[0], 1000, {width:50, border:'#ff0000 4px dashed'});
 glide.to(els[1], 1000, {width:200});
 glide.to(els[2], 1000, {color:'#ff0000'});
-glide.to(els[3], 1000, {height:50, width:50, fontSize:36});
+glide.to(els[3], 1000, {height:50, width:50, fontSize:36, boxShadow:'#ffff00 3px 3px 10px'});
+glide.to(els[4], 1000, {marginTop:25});
 `,
                 },
                 {
@@ -572,12 +581,6 @@ slider.addEventListener('input', ()=> a.seek(parseFloat(slider.value)));
                     innerHTML: `
                     <style>
                         .btns {position:absolute; bottom: 25px;}
-                        button {
-                            background-color: var(--highlight);
-                            padding: 4px 8px;
-                            cursor: pointer;
-                        }
-                        button:hover {background-color: var(--highlight2)}
                     </style>
                     <div class="btns">
                         <button class="btn-pause">Pause</button>
@@ -603,12 +606,6 @@ stage.querySelector('.btn-play').addEventListener('click', ()=> a.play());
                     innerHTML: `
                     <style>
                         .btns {position:absolute; bottom: 25px;}
-                        button {
-                            background-color: var(--highlight);
-                            padding: 4px 8px;
-                            cursor: pointer;
-                        }
-                        button:hover {background-color: var(--highlight2)}
                     </style>
                     <div class="btns">
                         <button class="btn-reset">Reset</button>
@@ -621,6 +618,28 @@ stage.querySelector('.btn-reset').addEventListener('click', ()=> a.reset());
 `,
 
                 },
+
+                {
+                    title: "Progress",
+                    doc: `Returns percent completed.`,
+                    numItems: 5,
+                    text: "",
+                    cssProp: "",
+                    css: ``,
+                    innerHTML: `<style>
+                        .obj { color: var(--highlight); pointer-events: none; bottom: 25px; left: 25px; position: absolute;}
+                        .obj > div > span { color: var(--highlight4);}
+                    </style>
+                    <div class="obj"><div>Completed: <span class="f-x">0%</span></div></div>`,
+                    code: `const elTxt = stage.querySelector('.f-x');
+
+const a = glide.to(".el", 1000, {x:100}, {stagger:50})
+    .to(1000, {x:0, rotate:360})
+    .on('progress', _=> {elTxt.textContent = a.getProgress() + '%';});
+`,
+                },
+
+
                 {
                     title: "Remove",
                     doc: `<p><code>glide.remove(target(s))</code>Removes tweens of target(s), or all tweens 

@@ -15,6 +15,9 @@
     --scrollbar-width: 10px;
     --thumb-bg: #6d6d6d;
 
+    --animation-size-w: 60%; /* 2.3 */
+    --animation-size-h: calc(var(--animation-size-w) / 2.3); /* 2.3 */
+
     --test: rgba(255, 36, 252, 0.73);
 }
 
@@ -116,6 +119,7 @@ nav {
     grid-row-end: -1;
     border-right: var(--border-color) 1px solid;
     overflow-y: auto;
+    padding-bottom: 2rem;
 }
 
 .stage, .css {
@@ -165,13 +169,16 @@ code {
 *::-webkit-scrollbar {
     width: var(--scrollbar-width);
 }
+
 * {
     scrollbar-width: thin;
     scrollbar-color: var(--thumb-bg) var(--scrollbar-bg);
 }
+
 *::-webkit-scrollbar-track {
     background: var(--scrollbar-bg);
 }
+
 *::-webkit-scrollbar-thumb {
     background-color: var(--thumb-bg);
     border-radius: 6px;
@@ -186,7 +193,7 @@ code {
     background: var(--border-color);
     border-radius: 3px;
     zborder: 1px solid var(--border-color);
-    border:none;
+    border: none;
     outline: none;
     opacity: 0.7;
     -webkit-transition: .2s;
@@ -218,9 +225,6 @@ code {
 }
 
 
-
-
-
 /* =====================================================================================================================
     ELEMENTS
 ======================================================================================================================*/
@@ -250,6 +254,18 @@ li {
 }
 
 
+button {
+    background-color: var(--highlight);
+    padding: 4px 8px;
+    cursor: pointer;
+    border: #b2b2b2 1px solid;
+}
+
+button:hover {
+    background-color: var(--highlight2)
+}
+
+
 /* =====================================================================================================================
     ANIMATIONS
 ======================================================================================================================*/
@@ -266,11 +282,13 @@ li {
     font-size: .8rem;
 }
 
+
 svg {
     background-color: rgba(50, 100, 150, 0.2);
     width: 100%;
     height: 90%;
-    padding:10px;
+    padding: 10px;
+    pointer-events: none;
 }
 
 svg text {
@@ -290,6 +308,38 @@ svg text {
     line-height: 1.6;
 }
 
+/* =====================================================================================================================
+    ANIMATION
+======================================================================================================================*/
+
+.el2 {
+    position: absolute;
+    width: 3px;
+    height: 3px;
+    background-color: #04e7ff;
+    border-radius: 50%;
+}
+
+.animation_img {
+    width: var(--animation-size-w);
+    max-width: 300px;
+    visibility: hidden;
+}
+
+.animation_res {
+    width: var(--animation-size-w);
+    height: 40%;
+    max-width: 300px;
+    pointer-events: none;
+    /*border: 1px solid rgba(0, 0, 0, 0);*/
+}
+
+.stage.animate {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 
 /* =====================================================================================================================
     NAV
@@ -299,7 +349,7 @@ svg text {
     border-left: 4px solid transparent;
     padding-left: 4px;
     line-height: .8;
-    margin: .6rem 0;
+    margin: .8rem 0;
 }
 
 .nav-item:hover {
